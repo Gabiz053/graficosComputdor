@@ -24,14 +24,14 @@ class VentanaMenu(Ventana):
     una seccion de herramientas para interactuar con el lienzo.
 
     Atributos heredados:
-        width (int): El ancho de la ventana en pixeles.
-        height (int): La altura de la ventana en pixeles.
-        title (str): El titulo de la ventana.
-        ventana (tk.Tk): La instancia de la ventana principal de tkinter.
+        _width (int): El ancho de la ventana en pixeles.
+        _height (int): La altura de la ventana en pixeles.
+        _title (str): El titulo de la ventana.
+        _ventana (tk.Tk): La instancia de la ventana principal de tkinter.
 
     Atributos de instancia:
-        herramienta_seleccionada (str): herramienta seleccionada para dibujar.
-        color_seleccionado (str): color seleccionado para dibujar.
+        _herramienta_seleccionada (str): herramienta seleccionada para dibujar.
+        _color_seleccionado (str): color seleccionado para dibujar.
     """
 
     def __init__(
@@ -39,8 +39,8 @@ class VentanaMenu(Ventana):
         width: int = Default.VENTANA_WIDTH,
         height: int = Default.VENTANA_HEIGHT,
         title: str = Default.VENTANA_TITLE,
-        herramientaSeleccionada: str = Default.HERRAMIENTA,
-        colorSeleccionado: str = Default.COLOR,
+        herramienta_seleccionada: str = Default.HERRAMIENTA,
+        color_seleccionado: str = Default.COLOR,
     ):
         """
         Inicializa la ventana con las dimensiones y el titulo proporcionados.
@@ -53,8 +53,8 @@ class VentanaMenu(Ventana):
             colorSeleccionado (str): Color seleccionado para dibujar.
         """
         super().__init__(width, height, title)
-        self.herramientaSeleccionada = herramientaSeleccionada
-        self.colorSeleccionado = colorSeleccionado
+        self._herramienta_seleccionada = herramienta_seleccionada
+        self._color_seleccionado = color_seleccionado
 
     def _crear_contenido_ventana(self) -> None:
         """
@@ -68,7 +68,7 @@ class VentanaMenu(Ventana):
 
     def _crear_menu_superior(self) -> None:
         """Crea el menu superior con secciones Archivo y Ayuda."""
-        menu_barra = Menu(self.ventana)
+        menu_barra = Menu(self._ventana)
 
         # Menu Archivo
         menu_archivo = Menu(menu_barra, tearoff=0)
@@ -83,7 +83,9 @@ class VentanaMenu(Ventana):
             label=MenuVen.ARCHIVO_GUARDAR, command=self.guardar_archivo
         )
         menu_archivo.add_separator()
-        menu_archivo.add_command(label=MenuVen.ARCHIVO_SALIR, command=self.ventana.quit)
+        menu_archivo.add_command(
+            label=MenuVen.ARCHIVO_SALIR, command=self._ventana.quit
+        )
 
         # Menu Ayuda
         menu_ayuda = Menu(menu_barra, tearoff=0)
@@ -92,13 +94,13 @@ class VentanaMenu(Ventana):
             label=MenuVen.AYUDA_ACERCA, command=self.mostrar_acerca_de
         )
 
-        self.ventana.config(menu=menu_barra)
+        self._ventana.config(menu=menu_barra)
 
     def _crear_menu_herramientas(self) -> None:
         """Crea el menu de herramientas con opciones para el lienzo."""
         self._cambiar_tema(Default.MENU_TEMA)
 
-        menu_herramientas = tk.Frame(self.ventana, bg=Default.BG_MENU)
+        menu_herramientas = tk.Frame(self._ventana, bg=Default.BG_MENU)
         menu_herramientas.pack(side=tk.TOP, fill=tk.X)
 
         # Botones de lapices
@@ -186,17 +188,17 @@ class VentanaMenu(Ventana):
 
     def seleccionar_lapiz_1(self) -> None:
         """Selecciona la herramienta 'Lapiz 1'."""
-        self.herramientaSeleccionada = Herramienta.LAPIZ_1
+        self._herramienta_seleccionada = Herramienta.LAPIZ_1
         print(Texto.LAPIZ1)
 
     def seleccionar_lapiz_2(self) -> None:
         """Selecciona la herramienta 'Lapiz 2'."""
-        self.herramientaSeleccionada = Herramienta.LAPIZ_2
+        self._herramienta_seleccionada = Herramienta.LAPIZ_2
         print(Texto.LAPIZ2)
 
     def seleccionar_lapiz_3(self) -> None:
         """Selecciona la herramienta 'Lapiz 3'."""
-        self.herramientaSeleccionada = Herramienta.LAPIZ_3
+        self._herramienta_seleccionada = Herramienta.LAPIZ_3
         print(Texto.LAPIZ3)
 
     def seleccionar_borrador(self) -> None:
@@ -219,5 +221,26 @@ class VentanaMenu(Ventana):
         print(Texto.COLORCHOSER)
         color = colorchooser.askcolor(title=Texto.COLORCHOSER_TITULO)[1]
         if color:
-            self.colorSeleccionado = color
+            self._color_seleccionado = color
             print(Texto.COLORCHOSER_SELECCION, color)
+
+    ########### getters y setters ##############
+    @property
+    def herramienta_seleccionada(self):
+        """Obtiene la herramienta seleccionadaW."""
+        return self._herramienta_seleccionada
+
+    @herramienta_seleccionada.setter
+    def herramienta_seleccionada(self, valor):
+        """Establece la herramienta seleccionada."""
+        self._herramienta_seleccionada = valor
+
+    @property
+    def color_seleccionado(self):
+        """Obtiene el color seleccionado."""
+        return self._color_seleccionado
+
+    @color_seleccionado.setter
+    def color_seleccionado(self, valor):
+        """Establece el color seleccionado."""
+        self._color_seleccionado = valor

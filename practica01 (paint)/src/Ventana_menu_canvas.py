@@ -74,7 +74,7 @@ class VentanaMenuCanvas(VentanaMenu):
         self.imagen = tk.PhotoImage()
 
         # Crear un Label para mostrar la imagen
-        self.label = tk.Label(self.ventana, image=self.imagen)
+        self.label = tk.Label(self._ventana, image=self.imagen)
         self.label.pack(fill=tk.BOTH, expand=True)
 
         # Asignar eventos para dibujar con el botón izquierdo del ratón
@@ -106,7 +106,7 @@ class VentanaMenuCanvas(VentanaMenu):
             self.punto_inicial = None  # Resetear el primer punto
 
     def dibujar_linea(self, x1, y1, x2, y2) -> None:
-        nueva_linea = Linea(x1, y1, x2, y2, self.colorSeleccionado, 2)
+        nueva_linea = Linea(x1, y1, x2, y2, self._color_seleccionado, 2)
         self.lineas.append(nueva_linea)
         self.redibujar()  # Redibujar todas las líneas
         self.bresenham(
@@ -158,7 +158,7 @@ class VentanaMenuCanvas(VentanaMenu):
     def redibujar(self) -> None:
         # Limpiar el lienzo simulado
         self.imagen.put(
-            self.colorSeleccionado, to=(0, 0, self.label.winfo_width(), self.label.winfo_height())
+            self._color_seleccionado, to=(0, 0, self.label.winfo_width(), self.label.winfo_height())
         )
 
         # Dibujar cada línea almacenada

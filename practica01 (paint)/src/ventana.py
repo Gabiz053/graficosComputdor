@@ -21,10 +21,10 @@ class Ventana(ABC):
     por otras clases que implementen el metodo _crear_contenido_ventana.
 
     Atributos de instancia:
-        width (int): El ancho de la ventana en pixeles.
-        height (int): La altura de la ventana en pixeles.
-        title (str): El titulo de la ventana.
-        ventana (tk.Tk): La instancia de la ventana principal de tkinter.
+        _width (int): El ancho de la ventana en pixeles.
+        _height (int): La altura de la ventana en pixeles.
+        _title (str): El titulo de la ventana.
+        _ventana (tk.Tk): La instancia de la ventana principal de tkinter.
     """
 
     def __init__(
@@ -52,10 +52,10 @@ class Ventana(ABC):
         if not isinstance(title, str):
             raise TypeError(Error.TITLE)
 
-        self.width = width
-        self.height = height
-        self.title = title
-        self.ventana = self._crear_ventana()
+        self._width = width
+        self._height = height
+        self._title = title
+        self._ventana = self._crear_ventana()
 
     def __str__(self) -> str:
         """
@@ -64,7 +64,9 @@ class Ventana(ABC):
         Returns:
             str: Una descripcion de la ventana con su titulo, ancho y altura.
         """
-        return f"Ventana(titulo='{self.title}', ancho={self.width}, alto={self.height})"
+        return (
+            f"Ventana(titulo='{self._title}', ancho={self._width}, alto={self._height})"
+        )
 
     def mostrar_ventana(self) -> None:
         """
@@ -75,7 +77,7 @@ class Ventana(ABC):
 
     def cerrar_ventana(self) -> None:
         """Cierra la ventana de forma segura."""
-        self.ventana.destroy()
+        self._ventana.destroy()
 
     def _crear_ventana(self) -> tk.Tk:
         """
@@ -85,8 +87,8 @@ class Ventana(ABC):
             tkinter.Tk: Una instancia de la ventana de tkinter.
         """
         ventana = tk.Tk()
-        ventana.title(self.title)
-        ventana.geometry(f"{self.width}x{self.height}")
+        ventana.title(self._title)
+        ventana.geometry(f"{self._width}x{self._height}")
         return ventana
 
     @abstractmethod
@@ -106,10 +108,55 @@ class Ventana(ABC):
             RuntimeError: Si ocurre un error general inesperado.
         """
         try:
-            self.ventana.mainloop()
+            self._ventana.mainloop()
         except tk.TclError as e:
             print(e)
             raise RuntimeError(Error.VENTANA)
         except Exception as e:
             print(e)
             raise RuntimeError(Error.GENERAL)
+
+    ########### getters y setters ##############
+    @property
+    def width(self):
+        """Obtiene el ancho de la ventana."""
+        return self._width
+
+    @width.setter
+    def width(self, valor):
+        """Establece el ancho de la ventana."""
+        if not isinstance(valor, int) or valor <= 0:
+            raise ValueError(Error.WIDTH)
+        self._width = valor
+        self._ventana.geometry(f"{self._width}x{self._height}")
+
+    @property
+    def height(self):
+        """Obtiene la altura de la ventana."""
+        return self._height
+
+    @height.setter
+    def height(self, valor):
+        """Establece la altura de la ventana."""
+        if not isinstance(valor, int) or valor <= 0:
+            raise ValueError(Error.HEIGHT)
+        self._height = valor
+        self._ventana.geometry(f"{self._width}x{self._height}")
+
+    @property
+    def title(self):
+        """Obtiene el título de la ventana."""
+        return self._title
+
+    @title.setter
+    def title(self, valor):
+        """Establece el título de la ventana."""
+        if not isinstance(valor, str):
+            raise TypeError(Error.TITLE)
+        self._title = valor
+        self._ventana.title(self._title)
+
+    @property
+    def ventana(self):
+        """Obtiene la instancia de la ventana tkinter."""
+        return self._ventana
