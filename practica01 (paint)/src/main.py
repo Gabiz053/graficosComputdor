@@ -8,7 +8,7 @@ Autor: Gabriel Gomez Garcia
 Fecha: 17 de septiembre de 2024
 """
 
-from VentanaMenuCanvas import VentanaMenuCanvas
+from ventana_menu_canvas import VentanaMenuCanvas
 from constantes import Default
 
 width = Default.VENTANA_WIDTH
@@ -25,7 +25,7 @@ def main():
     ventana = VentanaMenuCanvas(width, height, title, canvasColor)
 
     # Iniciar el bucle principal de la ventana
-    ventana.mostrarVentana()
+    ventana.mostrar_ventana()
 
 
 if __name__ == "__main__":

@@ -1,16 +1,18 @@
 """
-Archivo: VentanaMenu.py
+Archivo: ventana_menu.py
 
-Este archivo define la clase VentanaMenu, la cual extiende la funcionalidad de la clase abstracta Ventana.
-La clase VentanaMenu crea una ventana con un menu en una aplicacion de interfaz grafica.
+Este archivo define la clase VentanaMenu que extiende la funcionalidad
+de la clase abstracta Ventana. Crea una ventana con un menu para la
+aplicacion grafica.
 
 Autor: Gabriel Gomez Garcia
-Fecha: 14 de septiembre de 2024
+Fecha: 21 de septiembre de 2024
 """
 
 import tkinter as tk
 from tkinter import Menu, ttk, colorchooser
-from Ventana import Ventana
+
+from ventana import Ventana
 from constantes import MenuVen, Texto, Herramienta, Default
 
 
@@ -18,8 +20,8 @@ class VentanaMenu(Ventana):
     """
     Clase que representa una ventana con un menu desplegable interactivo.
 
-    Esta clase extiende de la clase abstracta Ventana y anade un menu superior y una seccion
-    de herramientas con opciones para interactuar con el lienzo.
+    Hereda de la clase abstracta Ventana, añadiendo un menu superior y
+    una seccion de herramientas para interactuar con el lienzo.
 
     Atributos heredados:
         width (int): El ancho de la ventana en pixeles.
@@ -27,217 +29,195 @@ class VentanaMenu(Ventana):
         title (str): El titulo de la ventana.
         ventana (tk.Tk): La instancia de la ventana principal de tkinter.
 
-    Atributos:
-        herramientaSeleccionada (str): herramienta seleccionada para dibujar (lapiz por defecto).
+    Atributos de instancia:
+        herramienta_seleccionada (str): herramienta seleccionada para dibujar.
+        color_seleccionado (str): color seleccionado para dibujar.
     """
 
-    def __init__(self, width: int, height: int, title: str):
+    def __init__(
+        self,
+        width: int = Default.VENTANA_WIDTH,
+        height: int = Default.VENTANA_HEIGHT,
+        title: str = Default.VENTANA_TITLE,
+        herramientaSeleccionada: str = Default.HERRAMIENTA,
+        colorSeleccionado: str = Default.COLOR,
+    ):
         """
-        Constructor de la clase VentanaMenu.
-
-        Inicializa la ventana con las dimensiones y el titulo proporcionados, y
-        prepara el contenido.
+        Inicializa la ventana con las dimensiones y el titulo proporcionados.
 
         Args:
             width (int): Ancho de la ventana en pixeles.
             height (int): Alto de la ventana en pixeles.
             title (str): Titulo de la ventana.
+            herramientaSeleccionada (str): Herramienta seleccionada para dibujar.
+            colorSeleccionado (str): Color seleccionado para dibujar.
         """
         super().__init__(width, height, title)
-        self.herramientaSeleccionada = Default.HERRAMIENTA  # Valor por defecto
-        self.colorSeleccionado = Default.COLOR
+        self.herramientaSeleccionada = herramientaSeleccionada
+        self.colorSeleccionado = colorSeleccionado
 
-    def crearContenidoVentana(self):
+    def _crear_contenido_ventana(self) -> None:
         """
-        Configura el contenido de la ventana, anadiendo un menu de opciones y un lienzo.
+        Configura el contenido de la ventana añadiendo un menu de opciones.
 
-        Este metodo sobrescribe la funcion abstracta heredada para implementar un menu superior y
-        una barra de herramientas
-
-        Args:
-            ventana (tk.Tk): La instancia de tkinter donde se agrega el contenido.
+        Este metodo sobrescribe la funcion abstracta heredada para implementar
+        un menu superior y una barra de herramientas
         """
-        self.crearMenuSuperior()
-        self.crearMenuHerramientas()
+        self._crear_menu_superior()
+        self._crear_menu_herramientas()
 
-    def crearMenuSuperior(self):
-        # Crear la barra de menu superior con opciones de archivo
-        menuBarra = Menu(self.ventana)
+    def _crear_menu_superior(self) -> None:
+        """Crea el menu superior con secciones Archivo y Ayuda."""
+        menu_barra = Menu(self.ventana)
 
-        # Crear el submenu 'Archivo' y anadirlo a la barra de menu
-        menuBarraArchivo = Menu(menuBarra, tearoff=0)
-        menuBarra.add_cascade(label=MenuVen.ARCHIVO, menu=menuBarraArchivo)
-
-        # Opciones del menu 'Archivo'
-        menuBarraArchivo.add_command(
-            label=MenuVen.ARCHIVO_NUEVO, command=self.nuevoArchivo
+        # Menu Archivo
+        menu_archivo = Menu(menu_barra, tearoff=0)
+        menu_barra.add_cascade(label=MenuVen.ARCHIVO, menu=menu_archivo)
+        menu_archivo.add_command(
+            label=MenuVen.ARCHIVO_NUEVO, command=self.nuevo_archivo
         )
-        menuBarraArchivo.add_command(
-            label=MenuVen.ARCHIVO_ABRIR, command=self.abrirArchivo
+        menu_archivo.add_command(
+            label=MenuVen.ARCHIVO_ABRIR, command=self.abrir_archivo
         )
-        menuBarraArchivo.add_command(
-            label=MenuVen.ARCHIVO_GUARDAR, command=self.guardarArchivo
+        menu_archivo.add_command(
+            label=MenuVen.ARCHIVO_GUARDAR, command=self.guardar_archivo
         )
-        menuBarraArchivo.add_separator()
-        menuBarraArchivo.add_command(
-            label=MenuVen.ARCHIVO_SALIR, command=self.ventana.quit
-        )
+        menu_archivo.add_separator()
+        menu_archivo.add_command(label=MenuVen.ARCHIVO_SALIR, command=self.ventana.quit)
 
-        # Crear el submenu 'Ayuda' y anadirlo a la barra de menu
-        menuBarraAyuda = Menu(menuBarra, tearoff=0)
-        menuBarra.add_cascade(label=MenuVen.AYUDA, menu=menuBarraAyuda)
-
-        # Opcion del menu 'Ayuda'
-        menuBarraAyuda.add_command(
-            label=MenuVen.AYUDA_ACERCA, command=self.mostrarAcercaDe
+        # Menu Ayuda
+        menu_ayuda = Menu(menu_barra, tearoff=0)
+        menu_barra.add_cascade(label=MenuVen.AYUDA, menu=menu_ayuda)
+        menu_ayuda.add_command(
+            label=MenuVen.AYUDA_ACERCA, command=self.mostrar_acerca_de
         )
 
-        # Asignar la barra de menu a la ventana
-        self.ventana.config(menu=menuBarra)
+        self.ventana.config(menu=menu_barra)
 
-    def crearMenuHerramientas(self):
+    def _crear_menu_herramientas(self) -> None:
+        """Crea el menu de herramientas con opciones para el lienzo."""
+        self._cambiar_tema(Default.MENU_TEMA)
 
-        ## cambiamos a un tema para que se vea mas bonito
-        self.cambiar_tema(Default.MENU_TEMA)
+        menu_herramientas = tk.Frame(self.ventana, bg=Default.BG_MENU)
+        menu_herramientas.pack(side=tk.TOP, fill=tk.X)
 
-        menuHerramientas = tk.Frame(self.ventana, bg=Default.BG_MENU)
-        menuHerramientas.pack(side=tk.TOP, fill=tk.X)
-
-        # Botones de lápices
+        # Botones de lapices
         btn_lapiz_1 = ttk.Button(
-            menuHerramientas, text=MenuVen.BOTON_LAPIZ1, command=self.seleccionarLapiz1
+            menu_herramientas,
+            text=MenuVen.BOTON_LAPIZ_1,
+            command=self.seleccionar_lapiz_1,
         )
         btn_lapiz_1.grid(row=0, column=0, padx=5, pady=5)
 
         btn_lapiz_2 = ttk.Button(
-            menuHerramientas, text=MenuVen.BOTON_LAPIZ2, command=self.seleccionarLapiz2
+            menu_herramientas,
+            text=MenuVen.BOTON_LAPIZ_2,
+            command=self.seleccionar_lapiz_2,
         )
         btn_lapiz_2.grid(row=0, column=1, padx=5, pady=5)
 
         btn_lapiz_3 = ttk.Button(
-            menuHerramientas, text=MenuVen.BOTON_LAPIZ3, command=self.seleccionarLapiz3
+            menu_herramientas,
+            text=MenuVen.BOTON_LAPIZ_3,
+            command=self.seleccionar_lapiz_3,
         )
         btn_lapiz_3.grid(row=0, column=2, padx=5, pady=5)
 
-        # Barra separadora entre las herramientas de lápiz y las demás herramientas
-        separador1 = ttk.Separator(menuHerramientas, orient="vertical")
-        separador1.grid(row=0, column=3, rowspan=2, sticky="ns", padx=10)
+        # Separador entre herramientas
+        separador_1 = ttk.Separator(menu_herramientas, orient="vertical")
+        separador_1.grid(row=0, column=3, rowspan=2, sticky="ns", padx=10)
 
         # Botones de otras herramientas
         btn_borrador = ttk.Button(
-            menuHerramientas,
+            menu_herramientas,
             text=MenuVen.BOTON_BORRADOR,
-            command=self.seleccionarBorrador,
+            command=self.seleccionar_borrador,
         )
         btn_borrador.grid(row=0, column=4, padx=5, pady=5)
 
         btn_borrar_todo = ttk.Button(
-            menuHerramientas,
-            text=MenuVen.BOTON_BORRARTODO,
-            command=self.seleccionarBorrarTodo,
+            menu_herramientas,
+            text=MenuVen.BOTON_BORRAR_TODO,
+            command=self.seleccionar_borrar_todo,
         )
         btn_borrar_todo.grid(row=0, column=5, padx=5, pady=5)
 
-        # Separador antes del botón "Elegir Color"
-        separador2 = ttk.Separator(menuHerramientas, orient="vertical")
-        separador2.grid(row=0, column=6, rowspan=2, sticky="ns", padx=10)
+        # Separador antes del boton Elegir Color
+        separador_2 = ttk.Separator(menu_herramientas, orient="vertical")
+        separador_2.grid(row=0, column=6, rowspan=2, sticky="ns", padx=10)
 
-        # Botón "Elegir Color"
+        # Boton Elegir Color
         btn_elegir_color = ttk.Button(
-            menuHerramientas,
+            menu_herramientas,
             text=MenuVen.BOTON_COLORCHOSER,
-            command=self.seleccionarElegirColor,
+            command=self.seleccionar_elegir_color,
         )
         btn_elegir_color.grid(row=0, column=7, padx=5, pady=5)
 
-        # Separador después del botón "Elegir Color"
-        separador3 = ttk.Separator(menuHerramientas, orient="vertical")
-        separador3.grid(row=0, column=8, rowspan=2, sticky="ns", padx=10)
-
-    def cambiar_tema(self, nuevoTema):
-        # Crear un estilo
+    def _cambiar_tema(self, nuevo_tema) -> None:
+        """Cambia el tema de la aplicacion."""
         estilo = ttk.Style()
-        """Cambia el tema de la aplicación."""
-        estilo.theme_use(nuevoTema)
+        estilo.theme_use(nuevo_tema)
 
-    def nuevoArchivo(self):
-        """
-        Accion que se ejecuta al seleccionar la opcion 'Nuevo' en el menu.
+    def nuevo_archivo(self) -> None:
+        """Abre un nuevo archivo o limpia el lienzo."""
+        # TODO: Implementar funcionalidad para limpiar el lienzo o iniciar un nuevo archivo.
 
-        Esta funcion podria abrir un nuevo archivo o limpiar el lienzo para un nuevo proyecto.
-        """
-        print(Texto.NUEVOARCHIVO)
+        print(Texto.NUEVO_ARCHIVO)
 
-    def abrirArchivo(self):
-        """
-        Accion que se ejecuta al seleccionar la opcion 'Abrir' en el menu.
+    def abrir_archivo(self) -> None:
+        """Abre un archivo existente."""
+        # TODO: Implementar funcionalidad para abrir y cargar un archivo en el lienzo.
+        # Esta funcion debe abrir un cuadro de dialogo para seleccionar y cargar un archivo.
 
-        Esta funcion podria abrir un cuadro de dialogo para seleccionar y cargar un archivo.
-        """
-        print(Texto.ABRIRARCHIVO)
+        print(Texto.ABRIR_ARCHIVO)
 
-    def guardarArchivo(self):
-        """
-        Accion que se ejecuta al seleccionar la opcion 'Guardar' en el menu.
+    def guardar_archivo(self) -> None:
+        """Guarda el estado actual del proyecto."""
+        # TODO: Implementar funcionalidad para guardar el contenido del lienzo en un archivo.
 
-        Esta funcion podria guardar el estado actual del lienzo o proyecto en un archivo.
-        """
-        print(Texto.GUARDARARCHIVO)
+        print(Texto.GUARDAR_ARCHIVO)
 
-    def mostrarAcercaDe(self):
-        """
-        Muestra una ventana emergente con informacion sobre la aplicacion.
+    def mostrar_acerca_de(self) -> None:
+        """Muestra informacion sobre la aplicacion."""
+        # TODO: Implementar funcionalidad para mostrar un cuadro de dialogo con la informacion de la aplicacion.
 
-        Esta funcion puede mostrar una descripcion breve o los detalles del autor y la version de la aplicacion.
-        """
-        print(Texto.ACERCADE)
+        print(Texto.ACERCA_DE)
 
-    ######################################################################################
-
-    def seleccionarLapiz1(self):
-        """
-        Selecciona la herramienta 'Lapiz' para dibujar en el lienzo.
-
-        Cambia el estado de la herramienta seleccionada a 'Lapiz'.
-        """
-
-        self.herramientaSeleccionada = Herramienta.LAPIZ1
+    def seleccionar_lapiz_1(self) -> None:
+        """Selecciona la herramienta 'Lapiz 1'."""
+        self.herramientaSeleccionada = Herramienta.LAPIZ_1
         print(Texto.LAPIZ1)
 
-    def seleccionarLapiz2(self):
-        """
-        Selecciona la herramienta 'Lapiz' para dibujar en el lienzo.
-
-        Cambia el estado de la herramienta seleccionada a 'Lapiz'.
-        """
-
-        self.herramientaSeleccionada = Herramienta.LAPIZ2
+    def seleccionar_lapiz_2(self) -> None:
+        """Selecciona la herramienta 'Lapiz 2'."""
+        self.herramientaSeleccionada = Herramienta.LAPIZ_2
         print(Texto.LAPIZ2)
 
-    def seleccionarLapiz3(self):
-        """
-        Selecciona la herramienta 'Lapiz' para dibujar en el lienzo.
-
-        Cambia el estado de la herramienta seleccionada a 'Lapiz'.
-        """
-
-        self.herramientaSeleccionada = Herramienta.LAPIZ3
+    def seleccionar_lapiz_3(self) -> None:
+        """Selecciona la herramienta 'Lapiz 3'."""
+        self.herramientaSeleccionada = Herramienta.LAPIZ_3
         print(Texto.LAPIZ3)
 
-    def seleccionarBorrador(self):
-        """
-        Selecciona la herramienta 'Borrador' para borrar trazos en el lienzo.
+    def seleccionar_borrador(self) -> None:
+        """Selecciona la herramienta 'Borrador' para borrar trazos en el lienzo."""
+        # TODO: Implementar funcionalidad para el uso del borrador en el lienzo.
 
-        Cambia el estado de la herramienta seleccionada a 'Borrador'.
-        """
         print(Texto.BORRADOR)
 
-    def seleccionarBorrarTodo(self):
-        print(Texto.BORRARTODO)
+    def seleccionar_borrar_todo(self) -> None:
+        """
+        Selecciona la herramienta 'Borrar todo' para limpiar el lienzo.
+        """
+        # TODO: Implementar funcionalidad para borrar todo el contenido del lienzo.
+        # Se debe preguntar antes de limpiar todo el lienzo.
 
-    def seleccionarElegirColor(self):
+        print(Texto.BORRAR_TODO)
+
+    def seleccionar_elegir_color(self) -> None:
+        """Abre un menu para elegir el color del trazado."""
         print(Texto.COLORCHOSER)
-        color = colorchooser.askcolor(title="Selecciona un color")[1]
+        color = colorchooser.askcolor(title=Texto.COLORCHOSER_TITULO)[1]
         if color:
             self.colorSeleccionado = color
-            print(f"Color seleccionado: {color}")
+            print(Texto.COLORCHOSER_SELECCION, color)

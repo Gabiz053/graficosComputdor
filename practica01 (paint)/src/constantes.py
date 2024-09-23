@@ -14,6 +14,7 @@ class Error:
     HEIGHT = "El alto debe ser un entero positivo."
     TITLE = "El titulo debe ser una cadena de texto."
     VENTANA = "Error al iniciar la ventana: "
+    GENERAL = "Error inesperado en la ventana"
 
 
 class MenuVen:
@@ -26,32 +27,35 @@ class MenuVen:
     AYUDA = "Ayuda"
     AYUDA_ACERCA = "Acerca de"
 
-    BOTON_LAPIZ1 = "lapiz M1"
-    BOTON_LAPIZ2 = "lapiz M2"
-    BOTON_LAPIZ3 = "lapiz M3"
+    BOTON_LAPIZ_1 = "lapiz M1"
+    BOTON_LAPIZ_2 = "lapiz M2"
+    BOTON_LAPIZ_3 = "lapiz M3"
     BOTON_BORRADOR = "borrador"
-    BOTON_BORRARTODO = "borrar todo"
+    BOTON_BORRAR_TODO = "borrar todo"
     BOTON_COLORCHOSER = "elegir color"
 
 
 class Texto:
-    NUEVOARCHIVO = "Nuevo archivo"
-    ABRIRARCHIVO = "Abrir archivo"
-    GUARDARARCHIVO = "Guardar archivo"
-    ACERCADE = "Acerca de la aplicacion"
+    NUEVO_ARCHIVO = "Nuevo archivo"
+    ABRIR_ARCHIVO = "Abrir archivo"
+    GUARDAR_ARCHIVO = "Guardar archivo"
+    ACERCA_DE = "Acerca de la aplicacion"
 
     LAPIZ1 = "Herramienta seleccionada: Lapiz con metodo 1"
     LAPIZ2 = "Herramienta seleccionada: Lapiz con metodo 2"
     LAPIZ3 = "Herramienta seleccionada: Lapiz con metodo 3"
     BORRADOR = "Herramienta seleccionada: Borrador"
-    BORRARTODO = "Herramienta seleccionada: Borrar todo"
+    BORRAR_TODO = "Herramienta seleccionada: Borrar todo"
     COLORCHOSER = "Herramienta seleccionada: Colorchoser"
+    
+    COLORCHOSER_TITULO = "Selecciona un color"
+    COLORCHOSER_SELECCION = "Color seleccionado: "
 
 
 class Herramienta:
-    LAPIZ1 = "lapiz M1"
-    LAPIZ2 = "lapiz M2"
-    LAPIZ3 = "lapiz M3"
+    LAPIZ_1 = "lapiz M1"
+    LAPIZ_2 = "lapiz M2"
+    LAPIZ_3 = "lapiz M3"
 
 
 class Event:
@@ -68,12 +72,13 @@ class Color:
 # Default para la aplicacion (se pueden cambiar)#
 class Default:
     BG_MENU = Color.LIGHTGRAY
-    HERRAMIENTA = Herramienta.LAPIZ1
+    HERRAMIENTA = Herramienta.LAPIZ_1
     TAMANHO_BORRADOR = 10
 
     VENTANA_WIDTH = 1280
     VENTANA_HEIGHT = 720
     VENTANA_TITLE = "Ventana con Menú y Canvas Interactivo"
+    
     CANVAS_COLOR = Color.WHITE
     MENU_TEMA = "clam"
     COLOR = Color.BLACK
