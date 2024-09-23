@@ -1,5 +1,5 @@
 """
-Archivo: VentanaMenuCanvas.py
+Archivo: Ventana_menu_canvas.py
 
 Este archivo define la clase VentanaMenuCanvas, que extiende la funcionalidad
 de la clase VentanaMenu anhadiendo un canvas con funcionalidad para dibujar
@@ -11,7 +11,7 @@ Fecha: 21 de septiembre de 2024
 import tkinter as tk
 
 from ventana_menu import VentanaMenu
-from forma import Linea
+from forma import *
 from constantes import Default, Event, Herramienta, Color
 
 
@@ -59,8 +59,7 @@ class VentanaMenuCanvas(VentanaMenu):
         super().__init__(
             width, height, title, herramientaSeleccionada, colorSeleccionado
         )
-        self.lineas = []  # Lista para almacenar las líneas dibujadas
-        self.punto_inicial = None  # Almacenar el primer punto
+        self.punto_inicial = None
 
     def crear_lienzo(self) -> None:
         """
@@ -70,11 +69,11 @@ class VentanaMenuCanvas(VentanaMenu):
         Returns:
             tk.Label: El Label que actúa como lienzo.
         """
-        
-        self.imagen = tk.PhotoImage()
 
-        # Crear un Label para mostrar la imagen
-        self.label = tk.Label(self._ventana, image=self.imagen)
+        self.lienzo = tk.PhotoImage()
+
+        # Crear un Label para mostrar el lienzo
+        self.label = tk.Label(self._ventana, image=self.lienzo)
         self.label.pack(fill=tk.BOTH, expand=True)
 
         # Asignar eventos para dibujar con el botón izquierdo del ratón
@@ -82,11 +81,11 @@ class VentanaMenuCanvas(VentanaMenu):
 
         return self.label
 
-    def crear_contenido_ventana(self) -> None:
+    def _crear_contenido_ventana(self) -> None:
         """
         Sobrescribe el metodo de VentanaMenu para anadir el lienzo a la ventana.
         """
-        super().crear_contenido_ventana()
+        super()._crear_contenido_ventana()
         self.canvas = self.crear_lienzo()
 
     def iniciar_dibujo(self, event: tk.Event) -> None:
@@ -99,71 +98,22 @@ class VentanaMenuCanvas(VentanaMenu):
         y = height // 2 - event.y
 
         if self.punto_inicial is None:
-            self.punto_inicial = (x, y)  # Guardar el primer punto
+            self.punto_inicial = Punto(
+                x,
+                y,
+                self.color_seleccionado,
+                Default.TAMANHO_DIBUJAR,
+                self.herramienta_seleccionada,
+            )
         else:
+            punto_final = Punto(
+                x,
+                y,
+                self.color_seleccionado,
+                Default.TAMANHO_DIBUJAR,
+                self.herramienta_seleccionada,
+            )
             # Guardar el segundo punto y dibujar la línea
-            self.dibujar_linea(self.punto_inicial[0], self.punto_inicial[1], x, y)
+            linea = Linea(self.punto_inicial, punto_final)
+            print(linea)
             self.punto_inicial = None  # Resetear el primer punto
-
-    def dibujar_linea(self, x1, y1, x2, y2) -> None:
-        nueva_linea = Linea(x1, y1, x2, y2, self._color_seleccionado, 2)
-        self.lineas.append(nueva_linea)
-        self.redibujar()  # Redibujar todas las líneas
-        self.bresenham(
-            x1, y1, x2, y2
-        )  # Dibujar la línea usando el algoritmo de Bresenham
-
-    def bresenham(self, x1, y1, x2, y2) -> None:
-        """Dibuja una línea entre (x1, y1) y (x2, y2) usando el algoritmo de Bresenham."""
-        dx = x2 - x1
-        dy = y2 - y1
-        sx = 1 if dx > 0 else -1
-        sy = 1 if dy > 0 else -1
-        dx = abs(dx)
-        dy = abs(dy)
-
-        if dx > dy:
-            err = dx / 2.0
-            while x1 != x2:
-                # Ajustar la posición
-                self.imagen.put(
-                    "black",
-                    (
-                        x1 + self.label.winfo_width() // 2,
-                        self.label.winfo_height() // 2 - y1,
-                    ),
-                )
-                err -= dy
-                if err < 0:
-                    y1 += sy
-                    err += dx
-                x1 += sx
-        else:
-            err = dy / 2.0
-            while y1 != y2:
-                # Ajustar la posición
-                self.imagen.put(
-                    "black",
-                    (
-                        x1 + self.label.winfo_width() // 2,
-                        self.label.winfo_height() // 2 - y1,
-                    ),
-                )
-                err -= dx
-                if err < 0:
-                    x1 += sx
-                    err += dy
-                y1 += sy
-
-    def redibujar(self) -> None:
-        # Limpiar el lienzo simulado
-        self.imagen.put(
-            self._color_seleccionado, to=(0, 0, self.label.winfo_width(), self.label.winfo_height())
-        )
-
-        # Dibujar cada línea almacenada
-        for linea in self.lineas:
-            self.bresenham(linea.x1, linea.y1, linea.x2, linea.y2)
-
-        # Actualizar la imagen en el Label
-        self.label.config(image=self.imagen)

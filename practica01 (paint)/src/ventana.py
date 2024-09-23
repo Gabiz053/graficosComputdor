@@ -97,7 +97,7 @@ class Ventana(ABC):
         Metodo abstracto que debe ser implementado por las subclases para agregar
         contenido a la ventana.
         """
-        pass
+        raise NotImplementedError(Error.NO_IMPLEMENTADO)
 
     def _iniciar_bucle(self) -> None:
         """

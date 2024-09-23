@@ -15,6 +15,8 @@ class Error:
     TITLE = "El titulo debe ser una cadena de texto."
     VENTANA = "Error al iniciar la ventana: "
     GENERAL = "Error inesperado en la ventana"
+    
+    NO_IMPLEMENTADO = "Este método debe ser implementado en las subclases."
 
 
 class MenuVen:
@@ -74,6 +76,7 @@ class Default:
     BG_MENU = Color.LIGHTGRAY
     HERRAMIENTA = Herramienta.LAPIZ_1
     TAMANHO_BORRADOR = 10
+    TAMANHO_DIBUJAR = 1
 
     VENTANA_WIDTH = 1280
     VENTANA_HEIGHT = 720
