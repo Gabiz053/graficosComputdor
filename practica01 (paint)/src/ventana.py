@@ -3,8 +3,8 @@ Archivo: ventana.py
 
 Se define la clase abstracta Ventana y sus metodos. Esta clase base permite
 la creacion de distintas ventanas con dimensiones y titulo personalizado.
-Autor: Gabriel Gomez Garcia
 
+Autor: Gabriel Gomez Garcia
 Fecha: 20 de septiembre de 2024
 """
 
@@ -32,7 +32,7 @@ class Ventana(ABC):
         width: int = Default.VENTANA_WIDTH,
         height: int = Default.VENTANA_HEIGHT,
         title: str = Default.VENTANA_TITLE,
-    ):
+    ) -> None:
         """
         Inicializa una nueva ventana con dimensiones y titulo.
 
@@ -69,9 +69,7 @@ class Ventana(ABC):
         )
 
     def mostrar_ventana(self) -> None:
-        """
-        Prepara el contenido de la ventana y la muestra iniciando el bucle principal.
-        """
+        """Prepara el contenido de la ventana y la muestra iniciando el bucle principal."""
         self._crear_contenido_ventana()
         self._iniciar_bucle()
 
@@ -118,12 +116,12 @@ class Ventana(ABC):
 
     ########### getters y setters ##############
     @property
-    def width(self):
+    def width(self) -> int:
         """Obtiene el ancho de la ventana."""
         return self._width
 
     @width.setter
-    def width(self, valor):
+    def width(self, valor: int) -> None:
         """Establece el ancho de la ventana."""
         if not isinstance(valor, int) or valor <= 0:
             raise ValueError(Error.WIDTH)
@@ -131,12 +129,12 @@ class Ventana(ABC):
         self._ventana.geometry(f"{self._width}x{self._height}")
 
     @property
-    def height(self):
+    def height(self) -> int:
         """Obtiene la altura de la ventana."""
         return self._height
 
     @height.setter
-    def height(self, valor):
+    def height(self, valor: int) -> None:
         """Establece la altura de la ventana."""
         if not isinstance(valor, int) or valor <= 0:
             raise ValueError(Error.HEIGHT)
@@ -144,12 +142,12 @@ class Ventana(ABC):
         self._ventana.geometry(f"{self._width}x{self._height}")
 
     @property
-    def title(self):
+    def title(self) -> str:
         """Obtiene el título de la ventana."""
         return self._title
 
     @title.setter
-    def title(self, valor):
+    def title(self, valor: str) -> None:
         """Establece el título de la ventana."""
         if not isinstance(valor, str):
             raise TypeError(Error.TITLE)
@@ -157,6 +155,6 @@ class Ventana(ABC):
         self._ventana.title(self._title)
 
     @property
-    def ventana(self):
+    def ventana(self) -> tk.Tk:
         """Obtiene la instancia de la ventana tkinter."""
         return self._ventana

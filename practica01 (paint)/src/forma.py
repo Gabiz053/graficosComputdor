@@ -10,107 +10,27 @@ Fecha: 23 de septiembre de 2024
 
 from abc import ABC, abstractmethod
 from typing import List
-
+from tkinter import Canvas
+from algoritmos_dibujo import *
 from constantes import Error, Default
 
 
-class ObjetoDibujo(ABC):
-    """
-    Clase base abstracta para todos los objetos de dibujo.
-
-    Esta clase define la estructura general que deben seguir todos los
-    objetos de dibujo, obligando a las subclases a implementar el metodo
-    'dibujar' para aparecer en el dibujo.
-    """
-
-    def __init__(
-        self,
-        color: str = Default.COLOR,
-        tamanho: int = Default.TAMANHO_DIBUJAR,
-        herramienta: str = Default.HERRAMIENTA,
-    ):
-        """Inicializa un objeto de dibujo con color y tamanho de trazo.
-
-        Args:
-            color: Color del objeto de dibujo.
-            tamanho: Tamaño del objeto de dibujo.
-            herramienta: Herramienta utilizada para dibujar.
-        """
-        self._color = color
-        self._tamanho = tamanho
-        self._herramienta = herramienta
-
-    @property
-    def color(self) -> str:
-        """Getter para el color del objeto de dibujo."""
-        return self._color
-
-    @color.setter
-    def color(self, valor: str):
-        """Setter para el color del objeto de dibujo."""
-        self._color = valor
-
-    @property
-    def tamanho(self) -> int:
-        """Getter para el tamanho del objeto de dibujo."""
-        return self._tamanho
-
-    @tamanho.setter
-    def tamanho(self, valor: int):
-        """Setter para el tamanho del objeto de dibujo."""
-        self._tamanho = valor
-
-    @property
-    def herramienta(self) -> str:
-        """Getter para la herramienta utilizada en el dibujo."""
-        return self._herramienta
-
-    @herramienta.setter
-    def herramienta(self, valor: str):
-        """Setter para la herramienta utilizada en el dibujo."""
-        self._herramienta = valor
-
-    @abstractmethod
-    def dibujar(self):
-        """
-        Metodo abstracto que debe ser implementado por las subclases.
-
-        Este metodo contiene la logica necesaria para representar graficamente
-        el objeto de dibujo en el lienzo.
-        """
-        raise NotImplementedError(Error.NO_IMPLEMENTADO)
-
-
-class Punto(ObjetoDibujo):
+class Punto:
     """Clase que representa un punto en un espacio bidimensional."""
 
-    def __init__(
-        self,
-        x: int,
-        y: int,
-        color: str = Default.COLOR,
-        tamanho: int = Default.TAMANHO_DIBUJAR,
-        herramienta: str = Default.HERRAMIENTA,
-    ):
-        """Inicializa el punto con las coordenadas x e y, color y tamanho.
+    def __init__(self, x: int, y: int):
+        """Inicializa el punto con las coordenadas x e y.
 
         Args:
-            x: Coordenada horizontal del punto.
-            y: Coordenada vertical del punto.
-            color: Color del punto.
-            tamanho: Tamaño del punto.
+            x (int): Coordenada horizontal del punto.
+            y (int): Coordenada vertical del punto.
         """
-        super().__init__(color, tamanho, herramienta)
         self._x = x
         self._y = y
 
-    def __str__(self):
+    def __str__(self) -> str:
         """Devuelve una representacion en cadena del punto."""
-        return f"Punto({self.x}, {self.y}) de color {self.color} con {self.herramienta}"
-
-    def dibujar(self):
-        """Pinta el punto en el lienzo."""
-        # TODO: Implementar la logica para dibujar el punto en el lienzo
+        return f"Punto({self._x}, {self._y})"
 
     @property
     def x(self) -> int:
@@ -133,6 +53,76 @@ class Punto(ObjetoDibujo):
         self._y = valor
 
 
+class ObjetoDibujo(ABC):
+    """
+    Clase base abstracta para todos los objetos de dibujo.
+
+    Esta clase define la estructura general que deben seguir todos los
+    objetos de dibujo, obligando a las subclases a implementar el metodo
+    'dibujar' para aparecer en el dibujo.
+    """
+
+    def __init__(
+        self,
+        lienzo: Canvas,
+        color: str = Default.COLOR,
+        herramienta: AlgoritmoDibujo = Default.HERRAMIENTA,
+        tamanho: int = Default.TAMANHO_DIBUJAR,
+    ):
+        """Inicializa un objeto de dibujo con color y tamanho de trazo.
+
+        Args:
+            lienzo (Canvas): La instancia de lienzo principal de tkinter.
+            color (str): Color del objeto de dibujo.
+            herramienta (AlgoritmoDibujo): Herramienta utilizada para dibujar.
+            tamanho (int): Tamaño del objeto de dibujo.
+        """
+        self.lienzo = lienzo
+        self._color = color
+        self._herramienta = herramienta
+        self._tamanho = tamanho
+
+    @property
+    def color(self) -> str:
+        """Getter para el color del objeto de dibujo."""
+        return self._color
+
+    @color.setter
+    def color(self, valor: str):
+        """Setter para el color del objeto de dibujo."""
+        self._color = valor
+
+    @property
+    def herramienta(self) -> AlgoritmoDibujo:
+        """Getter para la herramienta utilizada en el dibujo."""
+        return self._herramienta
+
+    @herramienta.setter
+    def herramienta(self, valor: AlgoritmoDibujo):
+        """Setter para la herramienta utilizada en el dibujo."""
+        self._herramienta = valor
+
+    @property
+    def tamanho(self) -> int:
+        """Getter para el tamanho del objeto de dibujo."""
+        return self._tamanho
+
+    @tamanho.setter
+    def tamanho(self, valor: int):
+        """Setter para el tamanho del objeto de dibujo."""
+        self._tamanho = valor
+
+    @abstractmethod
+    def dibujar(self):
+        """
+        Metodo abstracto que debe ser implementado por las subclases.
+
+        Este metodo contiene la logica necesaria para representar graficamente
+        el objeto de dibujo en el lienzo.
+        """
+        raise NotImplementedError(Error.NO_IMPLEMENTADO)
+
+
 class Linea(ObjetoDibujo):
     """Clase que representa una linea definida por dos puntos."""
 
@@ -140,26 +130,29 @@ class Linea(ObjetoDibujo):
         self,
         punto_inicial: Punto,
         punto_final: Punto,
+        lienzo: Canvas,
         color: str = Default.COLOR,
+        herramienta: AlgoritmoDibujo = Default.HERRAMIENTA,
         tamanho: int = Default.TAMANHO_DIBUJAR,
-        herramienta: str = Default.HERRAMIENTA,
     ):
-        """Inicializa la linea con un punto inicial, un punto final, color, tamanho y herramienta.
+        """Inicializa la linea con dos puntos, color, tamanho y herramienta.
 
         Args:
-            punto_inicial: El primer punto que define el inicio de la linea.
-            punto_final: El segundo punto que define el final de la linea.
-            color: Color de la linea.
-            tamanho: Tamaño de la linea.
-            herramienta: Herramienta utilizada para dibujar la linea.
+            punto_inicial (Punto): El primer punto que define el inicio de la linea.
+            punto_final (Punto): El segundo punto que define el final de la linea.
+            lienzo (Canvas): La instancia de lienzo principal de tkinter.
+            color (str): Color de la linea.
+            herramienta (AlgoritmoDibujo): Herramienta utilizada para dibujar la linea.
+            tamanho (int): Tamaño de la linea.
         """
-        super().__init__(color, tamanho, herramienta)
+        super().__init__(lienzo, color, herramienta, tamanho)
         self._punto_inicial = punto_inicial
         self._punto_final = punto_final
 
-    def __str__(self):
+    def __str__(self) -> str:
         """Devuelve una representacion en cadena de la linea."""
-        return f"Línea desde {self.punto_inicial} hasta {self.punto_final} de color {self.color}"
+        return f"Línea de color {self.color} desde {self._punto_inicial} hasta {self._punto_final}"
+
     @property
     def punto_inicial(self) -> Punto:
         """Getter para el punto inicial de la linea."""
@@ -182,7 +175,14 @@ class Linea(ObjetoDibujo):
 
     def dibujar(self):
         """Dibuja una linea en el lienzo."""
-        # TODO: Implementar la logica para dibujar la linea en el lienzo
+        self.herramienta.dibujar_linea(
+            self.lienzo,
+            self.color,
+            self._punto_inicial.x,
+            self._punto_inicial.y,
+            self._punto_final.x,
+            self._punto_final.y,
+        )
 
 
 class Figura(ObjetoDibujo):
@@ -192,12 +192,12 @@ class Figura(ObjetoDibujo):
         """Inicializa una coleccion vacia para almacenar objetos de dibujo."""
         self._elementos: List[ObjetoDibujo] = []
 
-    def anhadir(self, elemento):
+    def anhadir(self, elemento: ObjetoDibujo):
         """
         Agrega un objeto de dibujo a la coleccion.
 
         Args:
-            elemento: Un objeto que es instancia de ObjetoDibujo.
+            elemento (ObjetoDibujo): Un objeto que es instancia de ObjetoDibujo.
             Este objeto sera añadido a la coleccion de elementos.
         """
         self._elementos.append(elemento)

@@ -13,6 +13,7 @@ import tkinter as tk
 from tkinter import Menu, ttk, colorchooser
 
 from ventana import Ventana
+from algoritmos_dibujo import *
 from constantes import MenuVen, Texto, Herramienta, Default
 
 
@@ -20,7 +21,7 @@ class VentanaMenu(Ventana):
     """
     Clase que representa una ventana con un menu desplegable interactivo.
 
-    Hereda de la clase abstracta Ventana, añadiendo un menu superior y
+    Hereda de la clase abstracta Ventana, anadiendo un menu superior y
     una seccion de herramientas para interactuar con el lienzo.
 
     Atributos heredados:
@@ -30,8 +31,9 @@ class VentanaMenu(Ventana):
         _ventana (tk.Tk): La instancia de la ventana principal de tkinter.
 
     Atributos de instancia:
-        _herramienta_seleccionada (str): herramienta seleccionada para dibujar.
         _color_seleccionado (str): color seleccionado para dibujar.
+        _herramienta_seleccionada (str): herramienta seleccionada para dibujar.
+        _tamanho_pincel (int): grosor de las figuras dibujadas.
     """
 
     def __init__(
@@ -39,9 +41,10 @@ class VentanaMenu(Ventana):
         width: int = Default.VENTANA_WIDTH,
         height: int = Default.VENTANA_HEIGHT,
         title: str = Default.VENTANA_TITLE,
-        herramienta_seleccionada: str = Default.HERRAMIENTA,
         color_seleccionado: str = Default.COLOR,
-    ):
+        herramienta_seleccionada: AlgoritmoDibujo = Default.HERRAMIENTA,
+        tamanho_pincel: int = Default.TAMANHO_DIBUJAR,
+    ) -> None:
         """
         Inicializa la ventana con las dimensiones y el titulo proporcionados.
 
@@ -49,16 +52,18 @@ class VentanaMenu(Ventana):
             width (int): Ancho de la ventana en pixeles.
             height (int): Alto de la ventana en pixeles.
             title (str): Titulo de la ventana.
-            herramientaSeleccionada (str): Herramienta seleccionada para dibujar.
-            colorSeleccionado (str): Color seleccionado para dibujar.
+            color_seleccionado (str): Color seleccionado para dibujar.
+            herramienta_seleccionada (AlgoritmoDibujo): Herramienta seleccionada para dibujar.
+            tamanho_pincel (int): grosor de las figuras dibujadas.
         """
         super().__init__(width, height, title)
-        self._herramienta_seleccionada = herramienta_seleccionada
         self._color_seleccionado = color_seleccionado
+        self._herramienta_seleccionada = herramienta_seleccionada
+        self._tamanho_pincel = tamanho_pincel
 
     def _crear_contenido_ventana(self) -> None:
         """
-        Configura el contenido de la ventana añadiendo un menu de opciones.
+        Configura el contenido de la ventana anadiendo un menu de opciones.
 
         Este metodo sobrescribe la funcion abstracta heredada para implementar
         un menu superior y una barra de herramientas
@@ -156,7 +161,7 @@ class VentanaMenu(Ventana):
         )
         btn_elegir_color.grid(row=0, column=7, padx=5, pady=5)
 
-    def _cambiar_tema(self, nuevo_tema) -> None:
+    def _cambiar_tema(self, nuevo_tema: str) -> None:
         """Cambia el tema de la aplicacion."""
         estilo = ttk.Style()
         estilo.theme_use(nuevo_tema)
@@ -202,45 +207,49 @@ class VentanaMenu(Ventana):
         print(Texto.LAPIZ3)
 
     def seleccionar_borrador(self) -> None:
-        """Selecciona la herramienta 'Borrador' para borrar trazos en el lienzo."""
-        # TODO: Implementar funcionalidad para el uso del borrador en el lienzo.
-
+        """Selecciona la herramienta 'Borrador' para borrar en el lienzo."""
+        self._herramienta_seleccionada = Herramienta.BORRADOR
         print(Texto.BORRADOR)
 
     def seleccionar_borrar_todo(self) -> None:
-        """
-        Selecciona la herramienta 'Borrar todo' para limpiar el lienzo.
-        """
+        """Borra todo el contenido del lienzo."""
         # TODO: Implementar funcionalidad para borrar todo el contenido del lienzo.
-        # Se debe preguntar antes de limpiar todo el lienzo.
-
         print(Texto.BORRAR_TODO)
 
     def seleccionar_elegir_color(self) -> None:
-        """Abre un menu para elegir el color del trazado."""
-        print(Texto.COLORCHOSER)
-        color = colorchooser.askcolor(title=Texto.COLORCHOSER_TITULO)[1]
-        if color:
-            self._color_seleccionado = color
-            print(Texto.COLORCHOSER_SELECCION, color)
+        """Permite seleccionar un color para dibujar."""
+        color = colorchooser.askcolor(title="Elegir color")
+        if color[1]:
+            self._color_seleccionado = color[1]
+            print(f"Color seleccionado: {self._color_seleccionado}")
 
     ########### getters y setters ##############
     @property
-    def herramienta_seleccionada(self):
-        """Obtiene la herramienta seleccionadaW."""
+    def herramienta_seleccionada(self) -> Herramienta:
+        """Obtiene la herramienta seleccionada."""
         return self._herramienta_seleccionada
 
     @herramienta_seleccionada.setter
-    def herramienta_seleccionada(self, valor):
+    def herramienta_seleccionada(self, valor: Herramienta) -> None:
         """Establece la herramienta seleccionada."""
         self._herramienta_seleccionada = valor
 
     @property
-    def color_seleccionado(self):
+    def color_seleccionado(self) -> str:
         """Obtiene el color seleccionado."""
         return self._color_seleccionado
 
     @color_seleccionado.setter
-    def color_seleccionado(self, valor):
+    def color_seleccionado(self, valor: str) -> None:
         """Establece el color seleccionado."""
         self._color_seleccionado = valor
+
+    @property
+    def tamanho_pincel(self) -> int:
+        """Obtiene el tamanho del pincel."""
+        return self._tamanho_pincel
+
+    @tamanho_pincel.setter
+    def tamanho_pincel(self, valor: int) -> None:
+        """Establece el tamanho del pincel."""
+        self._tamanho_pincel = valor
