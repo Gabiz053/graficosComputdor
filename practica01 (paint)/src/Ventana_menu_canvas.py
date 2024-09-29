@@ -74,7 +74,13 @@ class VentanaMenuCanvas(VentanaMenu):
         self._punto_inicial = None
         self._punto_final = None
         self._figuras = Figura()
-
+        self.nivel_zoom = Default.ZOOM
+        
+        # Almacenar líneas
+        self.selected_line = None  # Línea seleccionada
+        self.offset_x = 0  # Desplazamiento en x
+        self.offset_y = 0  # Desplazamiento en y
+        
     def crear_lienzo(self) -> tk.Canvas:
         """
         Crea el lienzo de dibujo (Canvas) y configura los eventos del raton para
@@ -86,12 +92,70 @@ class VentanaMenuCanvas(VentanaMenu):
 
         lienzo = tk.Canvas(self._ventana, bg="white")
         lienzo.pack(fill=tk.BOTH, expand=True)
+        lienzo.config(scrollregion=lienzo.bbox("all"))  # Asegúrate de que el área de desplazamiento incluya todos los elementos
 
         lienzo.bind(Event.ON_LEFT_CLICK, self.iniciar_dibujo)
         lienzo.bind(Event.ON_LEFT_MOVEMENT, self.dibujar_en_movimiento)
         lienzo.bind(Event.ON_LEFT_RELEASE, self.terminar_dibujo)
+        lienzo.bind(Event.ON_MOUSE_WHEEL, self.zoom)
+        
+        lienzo.bind("<Button-3>", self.seleccionar_linea)  # Click derecho para seleccionar
+        lienzo.bind("<B3-Motion>", self.mover_linea)  # Mover línea mientras arrastra el clic derecho
+        lienzo.bind("<ButtonRelease-3>", self.finalizar_mover_linea)  # Finalizar movimiento   
+        
         return lienzo
+    
+    
+    def seleccionar_linea(self, event):
+        """Selecciona una línea si el cursor está cerca de ella."""
+        self.selected_line = None
+        for linea in self.figuras:
+            print(linea)
+            coords = self.lienzo.coords(linea)
+            # Verifica si el cursor está cerca de la línea (en un rango de 10 píxeles)
+            if self.es_cercano_a_linea(event.x, event.y, coords):
+                self.selected_line = linea
+                # Calcular el desplazamiento inicial
+                self.offset_x = event.x - coords[0]  # Desplazamiento desde el primer punto de la línea
+                self.offset_y = event.y - coords[1]  # Desplazamiento desde el segundo punto de la línea
+                break
 
+    def es_cercano_a_linea(self, x, y, coords):
+        """Verifica si el punto (x, y) está cerca de la línea definida por coords."""
+        x1, y1, x2, y2 = coords
+        # Distancia mínima al segmento
+        distancia_minima = 100  
+        return (min(abs((y2 - y1) * x - (x2 - x1) * y + x2 * y1 - y2 * x1) /
+                       ((y2 - y1) ** 2 + (x2 - x1) ** 2) ** 0.5, 
+                       abs(y - y1) + abs(y - y2) + abs(x - x1) + abs(x - x2)) < distancia_minima)
+
+    def mover_linea(self, event):
+        """Mueve la línea seleccionada con el ratón."""
+        if self.selected_line:
+            # Obtener coordenadas actuales de la línea
+            coords = self.lienzo.coords(self.selected_line)
+
+            # Calcular el nuevo punto de inicio y final usando el desplazamiento
+            new_x1 = event.x - self.offset_x
+            new_y1 = event.y - self.offset_y
+            new_x2 = new_x1 + (coords[2] - coords[0])
+            new_y2 = new_y1 + (coords[3] - coords[1])
+
+            # Mover la línea a las nuevas coordenadas
+            self.lienzo.coords(self.selected_line, new_x1, new_y1, new_x2, new_y2)
+
+    def finalizar_mover_linea(self, event):
+        """Finaliza el movimiento de la línea."""
+        self.selected_line = None
+            
+    def zoom(self, evento: tk.Event) -> None:
+        # Ajustar el nivel de zoom
+        scale_factor = Default.AMPLIAR if evento.delta > 0 else Default.REDUCIR  # Cambia la escala según el movimiento
+        self.nivel_zoom *= scale_factor
+        
+        # Cambia el tamaño del canvas basado en el nivel de zoom
+        self.lienzo.scale("all", evento.x, evento.y, scale_factor, scale_factor)
+        
     def _crear_contenido_ventana(self) -> None:
         """
         Sobrescribe el metodo de VentanaMenu para anhadir el lienzo a la ventana.
@@ -153,12 +217,19 @@ class VentanaMenuCanvas(VentanaMenu):
             self.lienzo,
             self.color_seleccionado,
             self.herramienta_seleccionada,
+            self.tamanho_pincel,
         )
         self._figuras.anhadir(linea)  # Anhadir la linea al almacen de figuras
         linea.dibujar()  # Dibujar la linea en el lienzo
         self._punto_inicial = None  # Resetear puntos
         self._punto_final = None  # Resetear puntos
 
+    def seleccionar_borrar_todo(self) -> None:
+        """Borra todo el contenido del lienzo."""
+        super().seleccionar_borrar_todo()
+        self.lienzo.delete("all")
+        self._figuras.eliminar_todo()
+        
     # Getters y Setters
     @property
     def punto_inicial(self) -> Punto:
@@ -189,3 +260,13 @@ class VentanaMenuCanvas(VentanaMenu):
     def figuras(self, valor: Figura) -> None:
         """Establece el almacen de figuras dibujadas."""
         self._figuras = valor
+
+
+
+
+    # def dibujar_rejilla(self):
+    #     """Dibuja una rejilla en el lienzo."""
+    #     for i in range(0, 5000, 50):
+    #         self.lienzo.create_line(i, 0, i, 720, fill='gray')  # Líneas verticales
+    #     for i in range(0, 5000, 50):
+    #         self.lienzo.create_line(0, i, 1280, i, fill='gray')  # Líneas horizontales

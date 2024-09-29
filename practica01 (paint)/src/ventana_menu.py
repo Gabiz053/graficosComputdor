@@ -134,32 +134,59 @@ class VentanaMenu(Ventana):
         separador_1 = ttk.Separator(menu_herramientas, orient="vertical")
         separador_1.grid(row=0, column=3, rowspan=2, sticky="ns", padx=10)
 
-        # Botones de otras herramientas
-        btn_borrador = ttk.Button(
-            menu_herramientas,
-            text=MenuVen.BOTON_BORRADOR,
-            command=self.seleccionar_borrador,
-        )
-        btn_borrador.grid(row=0, column=4, padx=5, pady=5)
-
-        btn_borrar_todo = ttk.Button(
-            menu_herramientas,
-            text=MenuVen.BOTON_BORRAR_TODO,
-            command=self.seleccionar_borrar_todo,
-        )
-        btn_borrar_todo.grid(row=0, column=5, padx=5, pady=5)
-
-        # Separador antes del boton Elegir Color
-        separador_2 = ttk.Separator(menu_herramientas, orient="vertical")
-        separador_2.grid(row=0, column=6, rowspan=2, sticky="ns", padx=10)
-
         # Boton Elegir Color
         btn_elegir_color = ttk.Button(
             menu_herramientas,
             text=MenuVen.BOTON_COLORCHOSER,
             command=self.seleccionar_elegir_color,
         )
-        btn_elegir_color.grid(row=0, column=7, padx=5, pady=5)
+        btn_elegir_color.grid(row=0, column=4, padx=5, pady=5)
+
+        # Separador antes de elegir tamanho
+        separador_2 = ttk.Separator(menu_herramientas, orient="vertical")
+        separador_2.grid(row=0, column=5, rowspan=2, sticky="ns", padx=10)
+
+        # Control de tamaño de pincel
+        self._label_tamanho_actual = tk.Label(
+            menu_herramientas,
+            text=f"Tamaño actual: {self._tamanho_pincel}",
+            bg=Default.BG_MENU,
+        )
+        self._label_tamanho_actual.grid(row=0, column=7, padx=5, pady=5)
+
+        scale_tamanho_pincel = ttk.Scale(
+            menu_herramientas,
+            from_=1,
+            to=50,
+            orient="horizontal",
+            command=self._actualizar_tamanho_pincel,
+        )
+        scale_tamanho_pincel.set(self._tamanho_pincel)
+        scale_tamanho_pincel.grid(row=0, column=8, padx=5, pady=5)
+
+        # Separador antes del boton Borrar
+        separador_3 = ttk.Separator(menu_herramientas, orient="vertical")
+        separador_3.grid(row=0, column=10, rowspan=2, sticky="ns", padx=10)
+
+        # Botones de otras herramientas
+        btn_borrador = ttk.Button(
+            menu_herramientas,
+            text=MenuVen.BOTON_BORRADOR,
+            command=self.seleccionar_borrador,
+        )
+        btn_borrador.grid(row=0, column=11, padx=5, pady=5)
+
+        btn_borrar_todo = ttk.Button(
+            menu_herramientas,
+            text=MenuVen.BOTON_BORRAR_TODO,
+            command=self.seleccionar_borrar_todo,
+        )
+        btn_borrar_todo.grid(row=0, column=12, padx=5, pady=5)
+
+    def _actualizar_tamanho_pincel(self, valor: float) -> None:
+        """Actualiza el tamaño del pincel y refleja el valor en la interfaz."""
+        self._tamanho_pincel = int(float(valor))
+        self._label_tamanho_actual.config(text=f"Tamaño actual: {self._tamanho_pincel}")
 
     def _cambiar_tema(self, nuevo_tema: str) -> None:
         """Cambia el tema de la aplicacion."""
@@ -208,12 +235,10 @@ class VentanaMenu(Ventana):
 
     def seleccionar_borrador(self) -> None:
         """Selecciona la herramienta 'Borrador' para borrar en el lienzo."""
-        self._herramienta_seleccionada = Herramienta.BORRADOR
         print(Texto.BORRADOR)
 
     def seleccionar_borrar_todo(self) -> None:
         """Borra todo el contenido del lienzo."""
-        # TODO: Implementar funcionalidad para borrar todo el contenido del lienzo.
         print(Texto.BORRAR_TODO)
 
     def seleccionar_elegir_color(self) -> None:

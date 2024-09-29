@@ -45,6 +45,8 @@ class MenuVen:
     BOTON_BORRADOR = "borrador"
     BOTON_BORRAR_TODO = "borrar todo"
     BOTON_COLORCHOSER = "elegir color"
+    
+    BOTON_TAMANHO = "Tamanho pincel"
 
 
 class Texto:
@@ -57,9 +59,9 @@ class Texto:
     GUARDAR_ARCHIVO = "Guardar archivo"
     ACERCA_DE = "Acerca de la aplicacion"
 
-    LAPIZ1 = "Herramienta seleccionada: Lapiz con metodo 1"
-    LAPIZ2 = "Herramienta seleccionada: Lapiz con metodo 2"
-    LAPIZ3 = "Herramienta seleccionada: Lapiz con metodo 3"
+    LAPIZ1 = "Herramienta seleccionada: Lapiz con SlopeLineStrategy"
+    LAPIZ2 = "Herramienta seleccionada: Lapiz con DDALineStrategy"
+    LAPIZ3 = "Herramienta seleccionada: Lapiz con BresenhamLineStrategy"
     BORRADOR = "Herramienta seleccionada: Borrador"
     BORRAR_TODO = "Herramienta seleccionada: Borrar todo"
     COLORCHOSER = "Herramienta seleccionada: Colorchoser"
@@ -84,11 +86,11 @@ class Event:
     """
 
     ON_LEFT_CLICK = "<Button-1>"  # Evento de clic izquierdo
-    ON_LEFT_MOVEMENT = (
-        "<B1-Motion>"  # Evento de movimiento con clic izquierdo presionado
-    )
+    ON_LEFT_MOVEMENT = "<B1-Motion>"  # Evento de movimiento con clic izquierdo)
     ON_LEFT_RELEASE = "<ButtonRelease-1>"  # Evento de liberacion del clic izquierdo
-
+    
+    ON_MOUSE_WHEEL = "<MouseWheel>" # Evento al mover la rueda del raton
+    ON_MOUSE_WHEEL_MOVEMENT = "<B2-Motion>" # Evento al mover la rueda del raton
 
 class Color:
     """
@@ -118,3 +120,7 @@ class Default:
     CANVAS_COLOR = Color.WHITE  # Color de fondo del canvas
     MENU_TEMA = "clam"  # Tema del menu
     COLOR = Color.BLACK  # Color de dibujo por defecto
+    
+    ZOOM = 1
+    REDUCIR = 0.9 # mas pequenho mas rapido
+    AMPLIAR = 1.1 # mas grande mas rapido

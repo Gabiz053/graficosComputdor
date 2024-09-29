@@ -20,6 +20,7 @@ class AlgoritmoDibujo(ABC):
         self,
         lienzo: Canvas,
         color: str,
+        tamanho_pincel: int,
         x_inicial: int,
         y_inicial: int,
         x_final: int,
@@ -40,7 +41,9 @@ class AlgoritmoDibujo(ABC):
         """
         raise NotImplementedError("Error.NO_IMPLEMENTADO")
 
-    def _dibujar_pack(self, lienzo: Canvas, color: str, x: int, y: int) -> None:
+    def _dibujar_pack(
+        self, lienzo: Canvas, color: str, tamanho_pincel: int, x: int, y: int
+    ) -> None:
         """
         Dibuja un rectángulo de 5x5 en lugar de un píxel individual.
 
@@ -50,88 +53,98 @@ class AlgoritmoDibujo(ABC):
             x: Coordenada x del pack.
             y: Coordenada y del pack.
         """
-        lienzo.create_rectangle(x, y, x + 5, y + 5, outline=color, fill=color)
+        lienzo.create_rectangle(
+            x, y, x + tamanho_pincel, y + tamanho_pincel, outline=color, fill=color
+        )
 
 
 class SlopeLineStrategy(AlgoritmoDibujo):
-    """Estrategia 1: Dibujo de línea con la fórmula de la pendiente (solo primer cuadrante)."""
 
     def dibujar_linea(
         self,
         lienzo: Canvas,
         color: str,
+        tamanho_pincel: int,
         x_inicial: int,
         y_inicial: int,
         x_final: int,
         y_final: int,
     ) -> None:
-        """
-        Dibuja una línea usando la fórmula de la pendiente.
+        dx = x_final - x_inicial
+        dy = y_final - y_inicial
 
-        Args:
-            lienzo: El lienzo donde se dibuja la línea.
-            color: Color de la línea.
-            x_inicial: Coordenada x inicial.
-            y_inicial: Coordenada y inicial.
-            x_final: Coordenada x final.
-            y_final: Coordenada y final.
-        """
-        print(
-            f"Dibujando línea con pendiente desde ({x_inicial}, {y_inicial}) a ({x_final}, {y_final})"
-        )
+        if dx == 0:
+            # Caso vertical: solo incrementamos en y
+            for y in range(y_inicial, y_final + 1):
+                # Dibujar un pack de 5x5 en lugar de un solo píxel
+                self._dibujar_pack(lienzo, color, x_inicial, y)
+        else:
+            pendiente = dy / dx
+            y = y_inicial
+
+            # Dibujar un pack de 5x5 píxeles en el primer punto
+            self._dibujar_pack(lienzo, color,tamanho_pincel, x_inicial, round(y))
+
+            # Dibujar punto por punto desde x_inicial a x_final
+            for x in range(x_inicial + 1, x_final + 1):
+                y += pendiente
+                # Redondear las coordenadas a la cuadrícula del pack
+                x_pack = round(x / tamanho_pincel) * tamanho_pincel
+                y_pack = round(y / tamanho_pincel) * tamanho_pincel
+                # Dibujar un pack de 5x5 en lugar de un solo píxel
+                self._dibujar_pack(lienzo, color, tamanho_pincel, x_pack, y_pack)
 
 
 class DDALineStrategy(AlgoritmoDibujo):
-    """Estrategia 2: Dibujo de línea con el algoritmo DDA."""
 
     def dibujar_linea(
-        self, lienzo: Canvas, color: str, x1: int, y1: int, x2: int, y2: int
+        self,
+        lienzo: Canvas,
+        color: str,
+        tamanho_pincel: int,
+        x1: int,
+        y1: int,
+        x2: int,
+        y2: int,
     ) -> None:
-        """
-        Dibuja una línea usando el algoritmo DDA.
-
-        Args:
-            lienzo: El lienzo donde se dibuja la línea.
-            color: Color de la línea.
-            x1: Coordenada x inicial.
-            y1: Coordenada y inicial.
-            x2: Coordenada x final.
-            y2: Coordenada y final.
-        """
         dx = x2 - x1
         dy = y2 - y1
         steps = max(abs(dx), abs(dy))
+
+        # Calcular los incrementos de x e y
         x_increment = dx / steps
         y_increment = dy / steps
-        x, y = x1, y1
+        x = x1
+        y = y1
 
-        # Dibuja el primer "pack" de 5x5 píxeles
-        self._dibujar_pack(lienzo, color, x, y)
+        # Dibujar el primer pack de 5x5 píxeles
+        self._dibujar_pack(lienzo, color, tamanho_pincel, round(x), round(y))
 
         for _ in range(steps):
             x += x_increment
             y += y_increment
-            # Dibuja un pack de 5x5 en lugar de un solo píxel
-            self._dibujar_pack(lienzo, color, round(x), round(y))
+
+            # Redondear las coordenadas a la cuadrícula del pack
+            x_pack = round(x / tamanho_pincel) * tamanho_pincel
+            y_pack = round(y / tamanho_pincel) * tamanho_pincel
+            
+            # Dibujar un pack de 5x5 en lugar de un solo píxel
+            self._dibujar_pack(lienzo, color, tamanho_pincel, x_pack, y_pack)
 
 
 class BresenhamLineStrategy(AlgoritmoDibujo):
-    """Estrategia 3: Dibujo de línea con el algoritmo de Bresenham."""
+    PACK_SIZE = 5
 
     def dibujar_linea(
-        self, lienzo: Canvas, color: str, x1: int, y1: int, x2: int, y2: int
+        self,
+        lienzo: Canvas,
+        color: str,
+        tamanho_pincel: int,
+        x1: int,
+        y1: int,
+        x2: int,
+        y2: int,
     ) -> None:
-        """
-        Dibuja una línea usando el algoritmo de Bresenham.
-
-        Args:
-            lienzo: El lienzo donde se dibuja la línea.
-            color: Color de la línea.
-            x1: Coordenada x inicial.
-            y1: Coordenada y inicial.
-            x2: Coordenada x final.
-            y2: Coordenada y final.
-        """
         dx = abs(x2 - x1)
         dy = abs(y2 - y1)
         sx = 1 if x1 < x2 else -1
@@ -139,8 +152,11 @@ class BresenhamLineStrategy(AlgoritmoDibujo):
         err = dx - dy
 
         while True:
-            # Dibuja un bloque de 5x5 en lugar de un solo píxel
-            self._dibujar_pack(lienzo, color, x1, y1)
+            # Redondear las coordenadas a la cuadrícula del tamanho
+            x_pack = round(x1 / tamanho_pincel) * tamanho_pincel
+            y_pack = round(y1 / tamanho_pincel) * tamanho_pincel
+
+            self._dibujar_pack(lienzo, color, tamanho_pincel, x_pack, y_pack)
 
             if x1 == x2 and y1 == y2:
                 break
@@ -151,7 +167,3 @@ class BresenhamLineStrategy(AlgoritmoDibujo):
             if e2 < dx:
                 err += dx
                 y1 += sy
-
-            # Saltamos cada 5 píxeles para dibujar bloques de 5x5
-            if abs(x1 - x2) % 5 == 0 and abs(y1 - y2) % 5 == 0:
-                self._dibujar_pack(lienzo, color, x1, y1)

@@ -22,7 +22,7 @@ def main():
     Funcion principal que crea una instancia de VentanaMenuCanvas y ejecuta la aplicacion.
     """
     # Crear una instancia de VentanaMenuCanvas
-    ventana = VentanaMenuCanvas(width, height, title, color)
+    ventana = VentanaMenuCanvas(width, height, title, color, Default.HERRAMIENTA, 10)
 
     # Iniciar el bucle principal de la ventana
     ventana.mostrar_ventana()

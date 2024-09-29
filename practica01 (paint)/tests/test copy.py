@@ -1,132 +1,73 @@
-import tkinter as tk
-from tkinter import colorchooser
+from tkinter import Tk, Canvas, Button, Frame, BOTH
 
-# Clase para representar un vector (línea)
-class Vector:
-    def __init__(self, x1, y1, x2, y2):
-        self.x1 = x1
-        self.y1 = y1
-        self.x2 = x2
-        self.y2 = y2
-
-# Algoritmo base para dibujar líneas
-class AlgoritmoDibujo:
-    def dibujar_linea(self, lienzo, color, x1, y1, x2, y2):
-        raise NotImplementedError("Este método debe ser implementado por una subclase")
-
-# Implementación del algoritmo DDA con bloques de 5x5 píxeles
-class DDALineStrategy(AlgoritmoDibujo):
-    def dibujar_linea(self, lienzo, color, x1, y1, x2, y2):
-        dx = x2 - x1
-        dy = y2 - y1
-        steps = max(abs(dx), abs(dy))
-        x_increment = dx / steps
-        y_increment = dy / steps
-        x, y = x1, y1
-
-        for _ in range(steps + 1):
-            # Saltar cada 5 píxeles para dibujar bloques de 5x5
-            if int(abs(x - x1)) % 5 == 0 and int(abs(y - y1)) % 5 == 0:
-                self.dibujar_pack(lienzo, color, round(x), round(y))
-
-            x += x_increment
-            y += y_increment
-
-    def dibujar_pack(self, lienzo, color, x, y):
-        # Dibuja un bloque de 5x5 en la posición (x, y)
-        lienzo.create_rectangle(x, y, x + 5, y + 5, outline=color, fill=color)
-
-# Implementación del algoritmo de Bresenham con bloques de 5x5 píxeles
-class BresenhamLineStrategy(AlgoritmoDibujo):
-    def dibujar_linea(self, lienzo, color, x1, y1, x2, y2):
-        dx = abs(x2 - x1)
-        dy = abs(y2 - y1)
-        sx = 1 if x1 < x2 else -1
-        sy = 1 if y1 < y2 else -1
-        err = dx - dy
-
-        while True:
-            # Dibuja un bloque de 5x5 en la posición actual
-            if abs(x1 - x2) % 5 == 0 and abs(y1 - y2) % 5 == 0:
-                self.dibujar_pack(lienzo, color, x1, y1)
-
-            if x1 == x2 and y1 == y2:
-                break
-
-            e2 = err * 2
-            if e2 > -dy:
-                err -= dy
-                x1 += sx
-            if e2 < dx:
-                err += dx
-                y1 += sy
-
-    def dibujar_pack(self, lienzo, color, x, y):
-        # Dibuja un bloque de 5x5 en lugar de un píxel individual
-        lienzo.create_rectangle(x, y, x + 5, y + 5, outline=color, fill=color)
-
-# Clase para la aplicación Paint
-class PaintApp:
+class MiAplicacion:
     def __init__(self, root):
         self.root = root
-        self.root.title("Paint - Algoritmos de Dibujo")
-        self.color = "black"
-        self.lienzo = tk.Canvas(root, bg="white", width=800, height=600)
-        self.lienzo.pack(fill=tk.BOTH, expand=True)
+        self.canvas = Canvas(root, bg="white", width=1280, height=720)
+        self.canvas.pack(fill=BOTH, expand=True)
 
-        self.x_inicial = None
-        self.y_inicial = None
+        # Almacenar líneas
+        self.lineas = []
+        self.selected_line = None  # Línea seleccionada
+        self.offset_x = 0  # Desplazamiento en x
+        self.offset_y = 0  # Desplazamiento en y
 
-        self.lineas = []  # Guardar las líneas dibujadas como vectores
+        # Añadir contenido para demostrar líneas
+        self.dibujar_lineas()
 
-        # Estrategia de dibujo
-        self.estrategia = DDALineStrategy()  # Cambia a BresenhamLineStrategy si lo prefieres
+        # Vínculos de eventos
+        self.canvas.bind("<Button-3>", self.seleccionar_linea)  # Click derecho para seleccionar
+        self.canvas.bind("<B3-Motion>", self.mover_linea)  # Mover línea mientras arrastra el clic derecho
+        self.canvas.bind("<ButtonRelease-3>", self.finalizar_mover_linea)  # Finalizar movimiento
 
-        # Eventos de mouse para dibujar
-        self.lienzo.bind("<Button-1>", self.iniciar_dibujo)
-        self.lienzo.bind("<B1-Motion>", self.dibujar_en_movimiento)
-        self.lienzo.bind("<ButtonRelease-1>", self.terminar_dibujo)
+    def dibujar_lineas(self):
+        """Dibuja algunas líneas en el lienzo y las almacena."""
+        for i in range(100, 1200, 100):
+            linea = self.canvas.create_line(i, 100, i, 600, fill="blue", width=3)
+            self.lineas.append(linea)  # Almacena la línea
 
-        # Evento para hacer zoom con la rueda del ratón
-        self.lienzo.bind("<MouseWheel>", self.hacer_zoom)
+    def seleccionar_linea(self, event):
+        """Selecciona una línea si el cursor está cerca de ella."""
+        self.selected_line = None
+        for linea in self.lineas:
+            coords = self.canvas.coords(linea)
+            # Verifica si el cursor está cerca de la línea (en un rango de 10 píxeles)
+            if self.es_cercano_a_linea(event.x, event.y, coords):
+                self.selected_line = linea
+                # Calcular el desplazamiento inicial
+                self.offset_x = event.x - coords[0]  # Desplazamiento desde el primer punto de la línea
+                self.offset_y = event.y - coords[1]  # Desplazamiento desde el segundo punto de la línea
+                break
 
-        # Botón para elegir color
-        self.boton_color = tk.Button(root, text="Elegir Color", command=self.elegir_color)
-        self.boton_color.pack()
+    def es_cercano_a_linea(self, x, y, coords):
+        """Verifica si el punto (x, y) está cerca de la línea definida por coords."""
+        x1, y1, x2, y2 = coords
+        # Distancia mínima al segmento
+        distancia_minima = 10  
+        return (min(abs((y2 - y1) * x - (x2 - x1) * y + x2 * y1 - y2 * x1) /
+                       ((y2 - y1) ** 2 + (x2 - x1) ** 2) ** 0.5, 
+                       abs(y - y1) + abs(y - y2) + abs(x - x1) + abs(x - x2)) < distancia_minima)
 
-        self.factor_zoom = 1.0  # Factor de zoom inicial
+    def mover_linea(self, event):
+        """Mueve la línea seleccionada con el ratón."""
+        if self.selected_line:
+            # Obtener coordenadas actuales de la línea
+            coords = self.canvas.coords(self.selected_line)
 
-    def iniciar_dibujo(self, event):
-        self.x_inicial = event.x
-        self.y_inicial = event.y
+            # Calcular el nuevo punto de inicio y final usando el desplazamiento
+            new_x1 = event.x - self.offset_x
+            new_y1 = event.y - self.offset_y
+            new_x2 = new_x1 + (coords[2] - coords[0])
+            new_y2 = new_y1 + (coords[3] - coords[1])
 
-    def dibujar_en_movimiento(self, event):
-        # Se redibuja en tiempo real mientras se mueve el ratón
-        self.lienzo.delete("linea_temp")
-        self.estrategia.dibujar_linea(self.lienzo, self.color, self.x_inicial, self.y_inicial, event.x, event.y)
+            # Mover la línea a las nuevas coordenadas
+            self.canvas.coords(self.selected_line, new_x1, new_y1, new_x2, new_y2)
 
-    def terminar_dibujo(self, event):
-        # Se guarda la línea final al soltar el clic
-        self.lineas.append(Vector(self.x_inicial, self.y_inicial, event.x, event.y))
-        self.estrategia.dibujar_linea(self.lienzo, self.color, self.x_inicial, self.y_inicial, event.x, event.y)
-        self.x_inicial, self.y_inicial = None, None
+    def finalizar_mover_linea(self, event):
+        """Finaliza el movimiento de la línea."""
+        self.selected_line = None
 
-    def elegir_color(self):
-        # Cambiar el color de dibujo
-        self.color = colorchooser.askcolor()[1]
-
-    def hacer_zoom(self, event):
-        # Ajustar el factor de zoom
-        if event.delta > 0:  # Zoom in
-            self.factor_zoom *= 1.1
-        else:  # Zoom out
-            self.factor_zoom /= 1.1
-
-        # Aplicar el zoom al lienzo
-        self.lienzo.scale("all", 0, 0, self.factor_zoom, self.factor_zoom)
-
-# Configuración de la ventana principal
 if __name__ == "__main__":
-    root = tk.Tk()
-    app = PaintApp(root)
+    root = Tk()
+    app = MiAplicacion(root)
     root.mainloop()

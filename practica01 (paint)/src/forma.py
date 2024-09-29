@@ -178,6 +178,7 @@ class Linea(ObjetoDibujo):
         self.herramienta.dibujar_linea(
             self.lienzo,
             self.color,
+            self.tamanho,
             self._punto_inicial.x,
             self._punto_inicial.y,
             self._punto_final.x,
@@ -192,16 +193,20 @@ class Figura(ObjetoDibujo):
         """Inicializa una coleccion vacia para almacenar objetos de dibujo."""
         self._elementos: List[ObjetoDibujo] = []
 
-    def anhadir(self, elemento: ObjetoDibujo):
-        """
-        Agrega un objeto de dibujo a la coleccion.
+    def __iter__(self):
+        """Devuelve un iterador para las figuras."""
+        self._indice = 0  # Inicializa el índice
+        return self
 
-        Args:
-            elemento (ObjetoDibujo): Un objeto que es instancia de ObjetoDibujo.
-            Este objeto sera añadido a la coleccion de elementos.
-        """
-        self._elementos.append(elemento)
-
+    def __next__(self):
+        """Devuelve la siguiente figura o levanta StopIteration."""
+        if self._indice < len(self._elementos):
+            figura = self._elementos[self._indice]
+            self._indice += 1
+            return figura
+        else:
+            raise StopIteration  # Fin de la iteración
+        
     def dibujar(self):
         """
         Dibuja todos los objetos en la coleccion.
@@ -211,3 +216,36 @@ class Figura(ObjetoDibujo):
         """
         for elemento in self._elementos:
             elemento.dibujar()
+            
+    def anhadir(self, elemento: ObjetoDibujo):
+        """
+        Agrega un objeto de dibujo a la coleccion.
+
+        Args:
+            elemento (ObjetoDibujo): Un objeto que es instancia de ObjetoDibujo.
+            Este objeto sera anhadido a la coleccion de elementos.
+        """
+        self._elementos.append(elemento)
+    
+    def eliminar(self, elemento: ObjetoDibujo) -> bool:
+        """
+        Elimina un objeto de dibujo especifico de la coleccion.
+
+        Args:
+            elemento (ObjetoDibujo): El objeto que se desea eliminar.
+
+        Returns:
+            bool: True si el objeto fue eliminado, False si no se encontro.
+        """
+        if elemento in self._elementos:
+            self._elementos.remove(elemento)
+            return True
+        return False
+    
+    def eliminar_todo(self) -> None:
+        """
+        Elimina todos los objetos de la coleccion.
+
+        Este metodo vacia la coleccion de elementos.
+        """
+        self._elementos.clear()
