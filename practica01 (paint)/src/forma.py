@@ -122,6 +122,17 @@ class ObjetoDibujo(ABC):
         """
         raise NotImplementedError(Error.NO_IMPLEMENTADO)
 
+    @abstractmethod
+    def mover(self, dx: int, dy: int):
+        """
+        Metodo abstracto para mover el objeto de dibujo.
+
+        Args:
+            dx (int): El desplazamiento en el eje x.
+            dy (int): El desplazamiento en el eje y.
+        """
+        raise NotImplementedError(Error.NO_IMPLEMENTADO)
+
 
 class Linea(ObjetoDibujo):
     """Clase que representa una linea definida por dos puntos."""
@@ -185,6 +196,23 @@ class Linea(ObjetoDibujo):
             self._punto_final.y,
         )
 
+    def mover(self, dx: int, dy: int):
+        """
+        Mueve la línea desplazando ambos puntos por dx y dy.
+
+        Args:
+            dx (int): El desplazamiento en el eje x.
+            dy (int): El desplazamiento en el eje y.
+        """
+        self._punto_inicial.x += dx
+        self._punto_inicial.y += dy
+        self._punto_final.x += dx
+        self._punto_final.y += dy
+        
+        # Actualiza las coordenadas en el lienzo de Tkinter
+        self.lienzo.move()
+        self.lienzo.coords(self, self._punto_inicial.x, self._punto_inicial.y, self._punto_final.x, self._punto_final.y)
+        self.dibujar()
 
 class Figura(ObjetoDibujo):
     """Clase que representa una coleccion de objetos de dibujo."""
@@ -206,7 +234,7 @@ class Figura(ObjetoDibujo):
             return figura
         else:
             raise StopIteration  # Fin de la iteración
-        
+
     def dibujar(self):
         """
         Dibuja todos los objetos en la coleccion.
@@ -216,7 +244,18 @@ class Figura(ObjetoDibujo):
         """
         for elemento in self._elementos:
             elemento.dibujar()
-            
+
+    def mover(self, dx: int, dy: int):
+        """
+        Mueve la línea desplazando ambos puntos por dx y dy.
+
+        Args:
+            dx (int): El desplazamiento en el eje x.
+            dy (int): El desplazamiento en el eje y.
+        """
+        for elemento in self._elementos:
+            elemento.mover(dx, dy)
+
     def anhadir(self, elemento: ObjetoDibujo):
         """
         Agrega un objeto de dibujo a la coleccion.
@@ -226,7 +265,7 @@ class Figura(ObjetoDibujo):
             Este objeto sera anhadido a la coleccion de elementos.
         """
         self._elementos.append(elemento)
-    
+
     def eliminar(self, elemento: ObjetoDibujo) -> bool:
         """
         Elimina un objeto de dibujo especifico de la coleccion.
@@ -241,7 +280,7 @@ class Figura(ObjetoDibujo):
             self._elementos.remove(elemento)
             return True
         return False
-    
+
     def eliminar_todo(self) -> None:
         """
         Elimina todos los objetos de la coleccion.

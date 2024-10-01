@@ -11,6 +11,8 @@ Fecha: 23 de septiembre de 2024
 from abc import ABC, abstractmethod
 from tkinter import Canvas
 
+import math
+
 
 class AlgoritmoDibujo(ABC):
     """Clase base para cada figura que tendrá su algoritmo de dibujo."""
@@ -78,15 +80,16 @@ class SlopeLineStrategy(AlgoritmoDibujo):
             for y in range(y_inicial, y_final + 1):
                 # Dibujar un pack de 5x5 en lugar de un solo píxel
                 self._dibujar_pack(lienzo, color, x_inicial, y)
+                
+        # el caso horizontal no hace falta se pinta bien
+        
+        # TODO: cambiar punto inicial por final para que pinte de arriba a abajo
         else:
             pendiente = dy / dx
             y = y_inicial
 
-            # Dibujar un pack de 5x5 píxeles en el primer punto
-            self._dibujar_pack(lienzo, color,tamanho_pincel, x_inicial, round(y))
-
             # Dibujar punto por punto desde x_inicial a x_final
-            for x in range(x_inicial + 1, x_final + 1):
+            for x in range(x_inicial, x_final):
                 y += pendiente
                 # Redondear las coordenadas a la cuadrícula del pack
                 x_pack = round(x / tamanho_pincel) * tamanho_pincel
@@ -109,31 +112,27 @@ class DDALineStrategy(AlgoritmoDibujo):
     ) -> None:
         dx = x2 - x1
         dy = y2 - y1
-        steps = max(abs(dx), abs(dy))
+        pasos = max(abs(dx), abs(dy))
 
         # Calcular los incrementos de x e y
-        x_increment = dx / steps
-        y_increment = dy / steps
-        x = x1
-        y = y1
+        x_incremento = dx / pasos
+        y_incremento = dy / pasos
+        x = x1 + 0.5
+        y = y1 + 0.5
 
-        # Dibujar el primer pack de 5x5 píxeles
-        self._dibujar_pack(lienzo, color, tamanho_pincel, round(x), round(y))
-
-        for _ in range(steps):
-            x += x_increment
-            y += y_increment
+        for _ in range(pasos):
+            x += x_incremento
+            y += y_incremento
 
             # Redondear las coordenadas a la cuadrícula del pack
-            x_pack = round(x / tamanho_pincel) * tamanho_pincel
-            y_pack = round(y / tamanho_pincel) * tamanho_pincel
-            
+            x_pack = math.floor(x / tamanho_pincel) * tamanho_pincel
+            y_pack = math.floor(y / tamanho_pincel) * tamanho_pincel
+
             # Dibujar un pack de 5x5 en lugar de un solo píxel
             self._dibujar_pack(lienzo, color, tamanho_pincel, x_pack, y_pack)
 
 
 class BresenhamLineStrategy(AlgoritmoDibujo):
-    PACK_SIZE = 5
 
     def dibujar_linea(
         self,
@@ -145,6 +144,7 @@ class BresenhamLineStrategy(AlgoritmoDibujo):
         x2: int,
         y2: int,
     ) -> None:
+        
         dx = abs(x2 - x1)
         dy = abs(y2 - y1)
         sx = 1 if x1 < x2 else -1
@@ -153,8 +153,8 @@ class BresenhamLineStrategy(AlgoritmoDibujo):
 
         while True:
             # Redondear las coordenadas a la cuadrícula del tamanho
-            x_pack = round(x1 / tamanho_pincel) * tamanho_pincel
-            y_pack = round(y1 / tamanho_pincel) * tamanho_pincel
+            x_pack = math.floor(x1 / tamanho_pincel) * tamanho_pincel
+            y_pack = math.floor(y1 / tamanho_pincel) * tamanho_pincel
 
             self._dibujar_pack(lienzo, color, tamanho_pincel, x_pack, y_pack)
 
@@ -167,3 +167,5 @@ class BresenhamLineStrategy(AlgoritmoDibujo):
             if e2 < dx:
                 err += dx
                 y1 += sy
+
+#TODO : bresenham con entero y con reales

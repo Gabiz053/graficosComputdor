@@ -89,6 +89,10 @@ class Event:
     ON_LEFT_MOVEMENT = "<B1-Motion>"  # Evento de movimiento con clic izquierdo)
     ON_LEFT_RELEASE = "<ButtonRelease-1>"  # Evento de liberacion del clic izquierdo
     
+    ON_RIGHT_CLICK = "<Button-3>"  # Evento de clic derecho
+    ON_RIGHT_MOVEMENT = "<B3-Motion>"  # Evento de movimiento con clic derecho)
+    ON_RIGHT_RELEASE = "<ButtonRelease-3>"  # Evento de liberacion del clic derecho
+    
     ON_MOUSE_WHEEL = "<MouseWheel>" # Evento al mover la rueda del raton
     ON_MOUSE_WHEEL_MOVEMENT = "<B2-Motion>" # Evento al mover la rueda del raton
 

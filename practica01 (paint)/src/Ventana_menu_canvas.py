@@ -13,6 +13,7 @@ import tkinter as tk
 from ventana_menu import VentanaMenu
 from forma import *
 from constantes import Default, Event, Herramienta, Color
+from forma import *
 
 
 class VentanaMenuCanvas(VentanaMenu):
@@ -77,7 +78,7 @@ class VentanaMenuCanvas(VentanaMenu):
         self.nivel_zoom = Default.ZOOM
         
         # Almacenar líneas
-        self.selected_line = None  # Línea seleccionada
+        self.linea_seleccionada = None  # Línea seleccionada
         self.offset_x = 0  # Desplazamiento en x
         self.offset_y = 0  # Desplazamiento en y
         
@@ -97,56 +98,57 @@ class VentanaMenuCanvas(VentanaMenu):
         lienzo.bind(Event.ON_LEFT_CLICK, self.iniciar_dibujo)
         lienzo.bind(Event.ON_LEFT_MOVEMENT, self.dibujar_en_movimiento)
         lienzo.bind(Event.ON_LEFT_RELEASE, self.terminar_dibujo)
-        lienzo.bind(Event.ON_MOUSE_WHEEL, self.zoom)
         
-        lienzo.bind("<Button-3>", self.seleccionar_linea)  # Click derecho para seleccionar
-        lienzo.bind("<B3-Motion>", self.mover_linea)  # Mover línea mientras arrastra el clic derecho
-        lienzo.bind("<ButtonRelease-3>", self.finalizar_mover_linea)  # Finalizar movimiento   
+        lienzo.bind(Event.ON_RIGHT_CLICK, self.seleccionar_linea)  # Click derecho para seleccionar
+        # lienzo.bind(Event.ON_RIGHT_MOVEMENT, self.mover_linea)  # Mover línea mientras arrastra el clic derecho
+        # lienzo.bind(Event.ON_RIGHT_RELEASE, self.finalizar_mover_linea)  # Finalizar movimiento   
+        
+        lienzo.bind(Event.ON_MOUSE_WHEEL, self.zoom)
         
         return lienzo
     
     
     def seleccionar_linea(self, event):
         """Selecciona una línea si el cursor está cerca de ella."""
-        self.selected_line = None
+        self.linea_seleccionada = None
         for linea in self.figuras:
-            print(linea)
-            coords = self.lienzo.coords(linea)
-            # Verifica si el cursor está cerca de la línea (en un rango de 10 píxeles)
-            if self.es_cercano_a_linea(event.x, event.y, coords):
-                self.selected_line = linea
-                # Calcular el desplazamiento inicial
-                self.offset_x = event.x - coords[0]  # Desplazamiento desde el primer punto de la línea
-                self.offset_y = event.y - coords[1]  # Desplazamiento desde el segundo punto de la línea
-                break
-
-    def es_cercano_a_linea(self, x, y, coords):
+            if isinstance(linea, Linea):
+                # Verifica si el cursor está cerca de la línea (en un rango de 10 píxeles)
+                if self.es_cercano_a_linea(event.x, event.y, linea):
+                    self.linea_seleccionada = linea
+                    print(self.lienzo.coords(linea))
+                    # print(f"ME HAN SELECCIONADO {linea._punto_final}")
+                    # # Calcular el desplazamiento inicial
+                    # self.offset_x = event.x - linea.punto_inicial.x  # Desplazamiento desde el primer punto de la línea
+                    # self.offset_y = event.y - linea.punto_inicial.y  # Desplazamiento desde el segundo punto de la línea
+                    break
+                
+    def es_cercano_a_linea(self, x, y, linea: Linea):
         """Verifica si el punto (x, y) está cerca de la línea definida por coords."""
-        x1, y1, x2, y2 = coords
+        x1 = linea.punto_inicial.x
+        y1 = linea.punto_inicial.y
+        x2 = linea.punto_final.x
+        y2 = linea.punto_final.y
         # Distancia mínima al segmento
-        distancia_minima = 100  
+        distancia_minima = 10  
         return (min(abs((y2 - y1) * x - (x2 - x1) * y + x2 * y1 - y2 * x1) /
                        ((y2 - y1) ** 2 + (x2 - x1) ** 2) ** 0.5, 
                        abs(y - y1) + abs(y - y2) + abs(x - x1) + abs(x - x2)) < distancia_minima)
 
     def mover_linea(self, event):
         """Mueve la línea seleccionada con el ratón."""
-        if self.selected_line:
-            # Obtener coordenadas actuales de la línea
-            coords = self.lienzo.coords(self.selected_line)
+        if self.linea_seleccionada:
 
             # Calcular el nuevo punto de inicio y final usando el desplazamiento
             new_x1 = event.x - self.offset_x
             new_y1 = event.y - self.offset_y
-            new_x2 = new_x1 + (coords[2] - coords[0])
-            new_y2 = new_y1 + (coords[3] - coords[1])
 
             # Mover la línea a las nuevas coordenadas
-            self.lienzo.coords(self.selected_line, new_x1, new_y1, new_x2, new_y2)
-
+            self.linea_seleccionada.mover(new_x1,new_y1)
+            
     def finalizar_mover_linea(self, event):
         """Finaliza el movimiento de la línea."""
-        self.selected_line = None
+        self.linea_seleccionada = None
             
     def zoom(self, evento: tk.Event) -> None:
         # Ajustar el nivel de zoom
