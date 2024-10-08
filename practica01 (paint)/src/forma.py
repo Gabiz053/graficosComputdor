@@ -9,48 +9,11 @@ Fecha: 23 de septiembre de 2024
 """
 
 from abc import ABC, abstractmethod
-from typing import List
+import numpy as np
 from tkinter import Canvas
-from algoritmos_dibujo import *
+from algoritmos_dibujo import AlgoritmoDibujo
 from constantes import Error, Default
-
-
-class Punto:
-    """Clase que representa un punto en un espacio bidimensional."""
-
-    def __init__(self, x: int, y: int):
-        """Inicializa el punto con las coordenadas x e y.
-
-        Args:
-            x (int): Coordenada horizontal del punto.
-            y (int): Coordenada vertical del punto.
-        """
-        self._x = x
-        self._y = y
-
-    def __str__(self) -> str:
-        """Devuelve una representacion en cadena del punto."""
-        return f"Punto({self._x}, {self._y})"
-
-    @property
-    def x(self) -> int:
-        """Getter para la coordenada x."""
-        return self._x
-
-    @x.setter
-    def x(self, valor: int):
-        """Setter para la coordenada x."""
-        self._x = valor
-
-    @property
-    def y(self) -> int:
-        """Getter para la coordenada y."""
-        return self._y
-
-    @y.setter
-    def y(self, valor: int):
-        """Setter para la coordenada y."""
-        self._y = valor
+from punto import Punto
 
 
 class ObjetoDibujo(ABC):
@@ -77,10 +40,15 @@ class ObjetoDibujo(ABC):
             herramienta (AlgoritmoDibujo): Herramienta utilizada para dibujar.
             tamanho (int): Tamaño del objeto de dibujo.
         """
-        self.lienzo = lienzo
+        self._lienzo = lienzo
         self._color = color
         self._herramienta = herramienta
         self._tamanho = tamanho
+
+    @property
+    def lienzo(self) -> Canvas:
+        """Getter para el lienzo del objeto de dibujo."""
+        return self._lienzo
 
     @property
     def color(self) -> str:
@@ -146,7 +114,7 @@ class Linea(ObjetoDibujo):
         herramienta: AlgoritmoDibujo = Default.HERRAMIENTA,
         tamanho: int = Default.TAMANHO_DIBUJAR,
     ):
-        """Inicializa la linea con dos puntos, color, tamanho y herramienta.
+        """Inicializa la linea con dos puntos, color, tamaño y herramienta.
 
         Args:
             punto_inicial (Punto): El primer punto que define el inicio de la linea.
@@ -157,85 +125,74 @@ class Linea(ObjetoDibujo):
             tamanho (int): Tamaño de la linea.
         """
         super().__init__(lienzo, color, herramienta, tamanho)
-        self._punto_inicial = punto_inicial
-        self._punto_final = punto_final
+        self._puntos: np.ndarray = np.array(
+            [[punto_inicial.x, punto_inicial.y], [punto_final.x, punto_final.y]]
+        )
 
     def __str__(self) -> str:
         """Devuelve una representacion en cadena de la linea."""
-        return f"Línea de color {self.color} desde {self._punto_inicial} hasta {self._punto_final}"
+        return f"Linea de color {self.color} desde {self.punto_inicial} hasta {self.punto_final}"
 
     @property
     def punto_inicial(self) -> Punto:
         """Getter para el punto inicial de la linea."""
-        return self._punto_inicial
-
-    @punto_inicial.setter
-    def punto_inicial(self, valor: Punto):
-        """Setter para el punto inicial de la linea."""
-        self._punto_inicial = valor
+        return Punto(self._puntos[0][0], self._puntos[0][1])
 
     @property
     def punto_final(self) -> Punto:
         """Getter para el punto final de la linea."""
-        return self._punto_final
+        return Punto(self._puntos[1][0], self._puntos[1][1])
 
-    @punto_final.setter
-    def punto_final(self, valor: Punto):
-        """Setter para el punto final de la linea."""
-        self._punto_final = valor
-
-    def dibujar(self):
+    def dibujar(self) -> None:
         """Dibuja una linea en el lienzo."""
         self.herramienta.dibujar_linea(
             self.lienzo,
             self.color,
             self.tamanho,
-            self._punto_inicial.x,
-            self._punto_inicial.y,
-            self._punto_final.x,
-            self._punto_final.y,
+            *self._puntos.flatten(),  # Descompone el array en argumentos
         )
 
-    def mover(self, dx: int, dy: int):
+    def mover(self, dx: int, dy: int) -> None:
         """
-        Mueve la línea desplazando ambos puntos por dx y dy.
+        Mueve la linea desplazando ambos puntos por dx y dy.
 
         Args:
             dx (int): El desplazamiento en el eje x.
             dy (int): El desplazamiento en el eje y.
         """
-        self._punto_inicial.x += dx
-        self._punto_inicial.y += dy
-        self._punto_final.x += dx
-        self._punto_final.y += dy
-        
-        # Actualiza las coordenadas en el lienzo de Tkinter
-        self.lienzo.move()
-        self.lienzo.coords(self, self._punto_inicial.x, self._punto_inicial.y, self._punto_final.x, self._punto_final.y)
+        self._puntos += np.array(
+            [[dx, dy]]
+        )  # Aplica el desplazamiento a todos los puntos
+        self.actualizar_lienzo()
+
+    def actualizar_lienzo(self) -> None:
+        """Actualiza las coordenadas en el lienzo de Tkinter y dibuja la linea."""
+        self.lienzo.coords(self, *self._puntos.flatten())
         self.dibujar()
+
 
 class Figura(ObjetoDibujo):
     """Clase que representa una coleccion de objetos de dibujo."""
 
     def __init__(self):
         """Inicializa una coleccion vacia para almacenar objetos de dibujo."""
-        self._elementos: List[ObjetoDibujo] = []
+        self._elementos: list[ObjetoDibujo] = []
 
     def __iter__(self):
         """Devuelve un iterador para las figuras."""
-        self._indice = 0  # Inicializa el índice
+        self._indice = 0  # Inicializa el indice
         return self
 
-    def __next__(self):
+    def __next__(self) -> ObjetoDibujo:
         """Devuelve la siguiente figura o levanta StopIteration."""
         if self._indice < len(self._elementos):
             figura = self._elementos[self._indice]
             self._indice += 1
             return figura
         else:
-            raise StopIteration  # Fin de la iteración
+            raise StopIteration  # Fin de la iteracion
 
-    def dibujar(self):
+    def dibujar(self) -> None:
         """
         Dibuja todos los objetos en la coleccion.
 
@@ -245,9 +202,9 @@ class Figura(ObjetoDibujo):
         for elemento in self._elementos:
             elemento.dibujar()
 
-    def mover(self, dx: int, dy: int):
+    def mover(self, dx: int, dy: int) -> None:
         """
-        Mueve la línea desplazando ambos puntos por dx y dy.
+        Mueve todos los elementos de la coleccion.
 
         Args:
             dx (int): El desplazamiento en el eje x.
@@ -256,19 +213,19 @@ class Figura(ObjetoDibujo):
         for elemento in self._elementos:
             elemento.mover(dx, dy)
 
-    def anhadir(self, elemento: ObjetoDibujo):
+    def anhadir(self, elemento: ObjetoDibujo) -> None:
         """
         Agrega un objeto de dibujo a la coleccion.
 
         Args:
             elemento (ObjetoDibujo): Un objeto que es instancia de ObjetoDibujo.
-            Este objeto sera anhadido a la coleccion de elementos.
+            Este objeto sera añadido a la coleccion de elementos.
         """
         self._elementos.append(elemento)
 
     def eliminar(self, elemento: ObjetoDibujo) -> bool:
         """
-        Elimina un objeto de dibujo especifico de la coleccion.
+        Elimina un objeto de dibujo específico de la coleccion.
 
         Args:
             elemento (ObjetoDibujo): El objeto que se desea eliminar.

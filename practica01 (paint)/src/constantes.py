@@ -42,6 +42,8 @@ class MenuVen:
     BOTON_LAPIZ_1 = "lapiz M1"
     BOTON_LAPIZ_2 = "lapiz M2"
     BOTON_LAPIZ_3 = "lapiz M3"
+    BOTON_LAPIZ_4 = "lapiz M4"
+    
     BOTON_BORRADOR = "borrador"
     BOTON_BORRAR_TODO = "borrar todo"
     BOTON_COLORCHOSER = "elegir color"
@@ -62,6 +64,8 @@ class Texto:
     LAPIZ1 = "Herramienta seleccionada: Lapiz con SlopeLineStrategy"
     LAPIZ2 = "Herramienta seleccionada: Lapiz con DDALineStrategy"
     LAPIZ3 = "Herramienta seleccionada: Lapiz con BresenhamLineStrategy"
+    LAPIZ4 = "Herramienta seleccionada: Lapiz con BresenhamLineStrategy Integer"
+    
     BORRADOR = "Herramienta seleccionada: Borrador"
     BORRAR_TODO = "Herramienta seleccionada: Borrar todo"
     COLORCHOSER = "Herramienta seleccionada: Colorchoser"
@@ -78,6 +82,7 @@ class Herramienta:
     LAPIZ_1 = SlopeLineStrategy()  # Estrategia de linea por pendiente
     LAPIZ_2 = DDALineStrategy()  # Estrategia DDA para lineas
     LAPIZ_3 = BresenhamLineStrategy()  # Estrategia de Bresenham para lineas
+    LAPIZ_4 = BresenhamLineStrategyInt()  # Estrategia de Bresenham para lineas
 
 
 class Event:

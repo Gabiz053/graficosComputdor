@@ -129,10 +129,17 @@ class VentanaMenu(Ventana):
             command=self.seleccionar_lapiz_3,
         )
         btn_lapiz_3.grid(row=0, column=2, padx=5, pady=5)
+        
+        btn_lapiz_4 = ttk.Button(
+            menu_herramientas,
+            text=MenuVen.BOTON_LAPIZ_4,
+            command=self.seleccionar_lapiz_4,
+        )
+        btn_lapiz_4.grid(row=0, column=3, padx=5, pady=5)
 
         # Separador entre herramientas
         separador_1 = ttk.Separator(menu_herramientas, orient="vertical")
-        separador_1.grid(row=0, column=3, rowspan=2, sticky="ns", padx=10)
+        separador_1.grid(row=0, column=4, rowspan=2, sticky="ns", padx=10)
 
         # Boton Elegir Color
         btn_elegir_color = ttk.Button(
@@ -140,11 +147,11 @@ class VentanaMenu(Ventana):
             text=MenuVen.BOTON_COLORCHOSER,
             command=self.seleccionar_elegir_color,
         )
-        btn_elegir_color.grid(row=0, column=4, padx=5, pady=5)
+        btn_elegir_color.grid(row=0, column=5, padx=5, pady=5)
 
         # Separador antes de elegir tamanho
         separador_2 = ttk.Separator(menu_herramientas, orient="vertical")
-        separador_2.grid(row=0, column=5, rowspan=2, sticky="ns", padx=10)
+        separador_2.grid(row=0, column=6, rowspan=2, sticky="ns", padx=10)
 
         # Control de tamaño de pincel
         self._label_tamanho_actual = tk.Label(
@@ -232,6 +239,11 @@ class VentanaMenu(Ventana):
         """Selecciona la herramienta 'Lapiz 3'."""
         self._herramienta_seleccionada = Herramienta.LAPIZ_3
         print(Texto.LAPIZ3)
+        
+    def seleccionar_lapiz_4(self) -> None:
+        """Selecciona la herramienta 'Lapiz 4'."""
+        self._herramienta_seleccionada = Herramienta.LAPIZ_4
+        print(Texto.LAPIZ4)
 
     def seleccionar_borrador(self) -> None:
         """Selecciona la herramienta 'Borrador' para borrar en el lienzo."""
