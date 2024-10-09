@@ -1,56 +1,34 @@
 import customtkinter as ctk
+import tkinter as tk
 
-class DrawingApp:
-    def __init__(self, master):
-        self.master = master
-        self.master.title("Drawing App with CustomTkinter")
-        
-        # Configurar el tamaño de la ventana
-        self.master.geometry("800x600")
+class VentanaColor(ctk.CTk):
+    def __init__(self):
+        super().__init__()
 
-        # Crear un lienzo para dibujar
-        self.canvas = ctk.CTkCanvas(master, bg="white")
-        self.canvas.pack(fill=ctk.BOTH, expand=True)
+        # Configuraciones de la ventana
+        self.title("Seleccionar Color")
+        self.geometry("300x200")
 
-        # Configurar la variable de estado de dibujo
-        self.drawing = False
+        # Variable para el OptionMenu
+        self.color_seleccionado = tk.StringVar(value="Rojo")  # Valor inicial
 
-        # Enlazar eventos del mouse
-        self.canvas.bind("<Button-1>", self.start_draw)
-        self.canvas.bind("<B1-Motion>", self.draw)
-        self.canvas.bind("<ButtonRelease-1>", self.stop_draw)
+        # Crear el OptionMenu
+        self.option_menu = ctk.CTkOptionMenu(
+            self,
+            variable=self.color_seleccionado,
+            values=["Rojo", "Verde", "Azul", "Amarillo", "Negro", "Blanco"],
+            command=self.actualizar_color  # Llama a la función cuando se selecciona un nuevo color
+        )
+        self.option_menu.pack(pady=20)  # Añadir el OptionMenu al centro de la ventana
 
-        # Crear un marco para los botones
-        self.button_frame = ctk.CTkFrame(master)
-        self.button_frame.pack(fill=ctk.X, padx=10, pady=10)
+        # Label para mostrar el color seleccionado
+        self.label_color = ctk.CTkLabel(self, text=f"Color seleccionado: {self.color_seleccionado.get()}")
+        self.label_color.pack(pady=10)
 
-        # Botón para limpiar el lienzo
-        self.clear_button = ctk.CTkButton(self.button_frame, text="Clear Canvas", command=self.clear_canvas)
-        self.clear_button.pack(side=ctk.LEFT, padx=5)
-
-    def start_draw(self, event):
-        # Comienza a dibujar
-        self.drawing = True
-        self.last_x, self.last_y = event.x, event.y
-
-    def draw(self, event):
-        if self.drawing:
-            # Dibuja una línea entre el último punto y el nuevo punto
-            self.canvas.create_line((self.last_x, self.last_y, event.x, event.y), fill="black", width=2)
-            self.last_x, self.last_y = event.x, event.y
-
-    def stop_draw(self, event):
-        # Detiene el dibujo
-        self.drawing = False
-
-    def clear_canvas(self):
-        # Limpia el lienzo
-        self.canvas.delete("all")
+    def actualizar_color(self, color):
+        # Actualiza el texto del label cuando se selecciona un nuevo color
+        self.label_color.configure(text=f"Color seleccionado: {color}")
 
 if __name__ == "__main__":
-    ctk.set_appearance_mode("dark")  # O "dark" para modo oscuro
-    ctk.set_default_color_theme("green")  # Puedes cambiar el tema a "blue", "green", "dark-blue", etc.
-
-    root = ctk.CTk()  # Crear la ventana principal
-    app = DrawingApp(root)
-    root.mainloop()
+    app = VentanaColor()
+    app.mainloop()

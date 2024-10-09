@@ -9,10 +9,11 @@ Fecha: 21 de septiembre de 2024
 """
 
 import tkinter as tk
+import customtkinter as ctk
 
 from ventana_menu import VentanaMenu
 from forma import *
-from constantes import Default, Event, Herramienta, Color
+from constantes import Default, Event
 from forma import *
 
 
@@ -27,7 +28,7 @@ class VentanaMenuCanvas(VentanaMenu):
         width (int): El ancho de la ventana en pixeles.
         height (int): La altura de la ventana en pixeles.
         title (str): El titulo de la ventana.
-        ventana (tk.Tk): La instancia de la ventana principal de tkinter.
+        ventana (ctk.CTk): La instancia de la ventana principal de tkinter.
         color_seleccionado (str): Color seleccionado para dibujar.
         herramienta_seleccionada (AlgoritmoDibujo): Herramienta seleccionada para dibujar.
         tamanho_pincel (int): Grosor de las figuras dibujadas.
@@ -90,9 +91,7 @@ class VentanaMenuCanvas(VentanaMenu):
         Returns:
             tk.Canvas: El Canvas que actua como lienzo.
         """
-
-        lienzo = tk.Canvas(self._ventana, bg="white")
-        lienzo.pack(fill=tk.BOTH, expand=True)
+        lienzo = self.lienzo
         lienzo.config(scrollregion=lienzo.bbox("all"))  # Asegúrate de que el área de desplazamiento incluya todos los elementos
 
         lienzo.bind(Event.ON_LEFT_CLICK, self.iniciar_dibujo)
@@ -228,7 +227,7 @@ class VentanaMenuCanvas(VentanaMenu):
 
     def seleccionar_borrar_todo(self) -> None:
         """Borra todo el contenido del lienzo."""
-        super().seleccionar_borrar_todo()
+        super().borrar_todo()
         self.lienzo.delete("all")
         self._figuras.eliminar_todo()
         

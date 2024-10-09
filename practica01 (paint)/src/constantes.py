@@ -10,7 +10,6 @@ Fecha: 17 de septiembre de 2024
 
 from algoritmos_dibujo import *
 
-
 class Error:
     """
     Clase que contiene mensajes de error utilizados en la aplicacion.
@@ -61,11 +60,6 @@ class Texto:
     GUARDAR_ARCHIVO = "Guardar archivo"
     ACERCA_DE = "Acerca de la aplicacion"
 
-    LAPIZ1 = "Herramienta seleccionada: Lapiz con SlopeLineStrategy"
-    LAPIZ2 = "Herramienta seleccionada: Lapiz con DDALineStrategy"
-    LAPIZ3 = "Herramienta seleccionada: Lapiz con BresenhamLineStrategy"
-    LAPIZ4 = "Herramienta seleccionada: Lapiz con BresenhamLineStrategy Integer"
-    
     BORRADOR = "Herramienta seleccionada: Borrador"
     BORRAR_TODO = "Herramienta seleccionada: Borrar todo"
     COLORCHOSER = "Herramienta seleccionada: Colorchoser"
@@ -74,16 +68,19 @@ class Texto:
     COLORCHOSER_SELECCION = "Color seleccionado: "
 
 
-class Herramienta:
+    FRAME_IZQUIERDO = "Area de trabajo"
+    FRAME_DERECHO = "Herramientas"
+
+class Pinceles:
     """
     Clase que define las estrategias de dibujo disponibles como constantes.
     """
-
-    LAPIZ_1 = SlopeLineStrategy()  # Estrategia de linea por pendiente
-    LAPIZ_2 = DDALineStrategy()  # Estrategia DDA para lineas
-    LAPIZ_3 = BresenhamLineStrategy()  # Estrategia de Bresenham para lineas
-    LAPIZ_4 = BresenhamLineStrategyInt()  # Estrategia de Bresenham para lineas
-
+    PINCELES = {
+    "SlopeLine": SlopeLineStrategy(),
+    "DDALine": DDALineStrategy(),
+    "BresenhamLine Float": BresenhamLineStrategy(),
+    "BresenhamLine Integer": BresenhamLineStrategyInt()
+}
 
 class Event:
     """
@@ -109,6 +106,9 @@ class Color:
     WHITE = "white"  # Color blanco
     BLACK = "black"  # Color negro
     LIGHTGRAY = "lightgray"  # Color gris claro
+    GRIS_CLARO = "#333333"
+    GRIS_OSCURO = "#242424"
+    GRIS = "#2B2B2B"
 
 
 # Default para la aplicacion (se pueden cambiar)#
@@ -119,17 +119,21 @@ class Default:
 
     BG_MENU = Color.LIGHTGRAY  # Color de fondo del menu
     HERRAMIENTA = BresenhamLineStrategy()  # Herramienta por defecto
+    PINCEL = list(Pinceles.PINCELES.keys())[2]
     TAMANHO_BORRADOR = 10  # Tamaño del borrador
     TAMANHO_DIBUJAR = 1  # Tamaño del pincel para dibujar
 
-    VENTANA_WIDTH = 1280  # Ancho de la ventana por defecto
-    VENTANA_HEIGHT = 720  # Alto de la ventana por defecto
+    VENTANA_WIDTH = 1600  # Ancho de la ventana por defecto
+    VENTANA_HEIGHT = 800  # Alto de la ventana por defecto
     VENTANA_TITLE = "Ventana con Menu y Canvas Interactivo"  # Titulo de la ventana
 
     CANVAS_COLOR = Color.WHITE  # Color de fondo del canvas
-    MENU_TEMA = "clam"  # Tema del menu
+    VENTANA_TEMA = "green"  # Tema de la ventana
     COLOR = Color.BLACK  # Color de dibujo por defecto
     
     ZOOM = 1
     REDUCIR = 0.9 # mas pequenho mas rapido
     AMPLIAR = 1.1 # mas grande mas rapido
+    
+    FUENTE = 'Segoe UI'
+    FUENTE_TAMANHO = 12

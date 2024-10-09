@@ -135,8 +135,8 @@ class DDALineStrategy(AlgoritmoDibujo):
         for _ in range(pixeles + 1):
 
             # Redondear las coordenadas a la cuadrícula del pack
-            x_pack = math.floor(x / tamanho_pincel) * tamanho_pincel
-            y_pack = math.floor(y / tamanho_pincel) * tamanho_pincel
+            x_pack = math.floor(x * tamanho_pincel)
+            y_pack = math.floor(y * tamanho_pincel)
 
             # Dibujar un pack de 5x5 en lugar de un solo píxel
             self._dibujar_pack(lienzo, color, tamanho_pincel, x_pack, y_pack)

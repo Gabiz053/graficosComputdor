@@ -9,6 +9,8 @@ Fecha: 20 de septiembre de 2024
 """
 
 import tkinter as tk
+import customtkinter as ctk
+
 from abc import ABC, abstractmethod
 
 from constantes import Error, Default
@@ -16,7 +18,7 @@ from constantes import Error, Default
 
 class Ventana(ABC):
     """
-    Clase base abstracta que representa una ventana generica usando tkinter.
+    Clase base abstracta que representa una ventana generica usando customtkinter.
     Esta clase no puede ser instanciada directamente. Debe ser heredada
     por otras clases que implementen el metodo _crear_contenido_ventana.
 
@@ -24,7 +26,7 @@ class Ventana(ABC):
         _width (int): El ancho de la ventana en pixeles.
         _height (int): La altura de la ventana en pixeles.
         _title (str): El titulo de la ventana.
-        _ventana (tk.Tk): La instancia de la ventana principal de tkinter.
+        _ventana (ctk.CTk): La instancia de la ventana principal de customtkinter.
     """
 
     def __init__(
@@ -56,6 +58,7 @@ class Ventana(ABC):
         self._height = height
         self._title = title
         self._ventana = self._crear_ventana()
+        self._fuente = self._crear_estilo()
 
     def __str__(self) -> str:
         """
@@ -77,18 +80,24 @@ class Ventana(ABC):
         """Cierra la ventana de forma segura."""
         self._ventana.destroy()
 
-    def _crear_ventana(self) -> tk.Tk:
+    def _crear_ventana(self) -> ctk.CTk:
         """
         Crea la ventana principal de tkinter con las dimensiones y el titulo indicados.
 
         Returns:
-            tkinter.Tk: Una instancia de la ventana de tkinter.
+            ctk.CTk: Una instancia de la ventana de customtkinter.
         """
-        ventana = tk.Tk()
+        ventana = ctk.CTk()
         ventana.title(self._title)
         ventana.geometry(f"{self._width}x{self._height}")
         return ventana
-
+    
+    def _crear_estilo(self):
+        # el estilo de toda la ventana
+        ctk.set_default_color_theme(Default.VENTANA_TEMA)
+        fuente = ctk.CTkFont(family=Default.FUENTE, size=Default.FUENTE_TAMANHO)
+        return fuente
+    
     @abstractmethod
     def _crear_contenido_ventana(self) -> None:
         """
@@ -155,6 +164,16 @@ class Ventana(ABC):
         self._ventana.title(self._title)
 
     @property
-    def ventana(self) -> tk.Tk:
-        """Obtiene la instancia de la ventana tkinter."""
+    def ventana(self) -> ctk.CTk:
+        """Obtiene la instancia de la ventana customtkinter."""
         return self._ventana
+
+    @property
+    def fuente(self):
+        """Obtiene la fuente actual."""
+        return self._fuente
+
+    @fuente.setter
+    def fuente(self, valor):
+        """Establece una nueva fuente."""
+        self._fuente = valor

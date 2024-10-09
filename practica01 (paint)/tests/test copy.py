@@ -1,73 +1,63 @@
-from tkinter import Tk, Canvas, Button, Frame, BOTH
+import customtkinter as ctk
+import tkinter as tk
 
-class MiAplicacion:
-    def __init__(self, root):
-        self.root = root
-        self.canvas = Canvas(root, bg="white", width=1280, height=720)
-        self.canvas.pack(fill=BOTH, expand=True)
+class MiAplicacion(ctk.CTk):
+    def __init__(self):
+        super().__init__()
 
-        # Almacenar líneas
-        self.lineas = []
-        self.selected_line = None  # Línea seleccionada
-        self.offset_x = 0  # Desplazamiento en x
-        self.offset_y = 0  # Desplazamiento en y
+        # Configurar la ventana principal
+        self.title("Opciones de Pincel")
+        self.geometry("400x500")
 
-        # Añadir contenido para demostrar líneas
-        self.dibujar_lineas()
+        # Inicializar el color seleccionado
+        self.color_seleccionado = "#000000"  # Color por defecto (negro)
 
-        # Vínculos de eventos
-        self.canvas.bind("<Button-3>", self.seleccionar_linea)  # Click derecho para seleccionar
-        self.canvas.bind("<B3-Motion>", self.mover_linea)  # Mover línea mientras arrastra el clic derecho
-        self.canvas.bind("<ButtonRelease-3>", self.finalizar_mover_linea)  # Finalizar movimiento
+        # Crear un frame para opciones
+        self.frame_opciones_1 = ctk.CTkFrame(self)
+        self.frame_opciones_1.pack(pady=10, padx=10, fill="both", expand=True)
 
-    def dibujar_lineas(self):
-        """Dibuja algunas líneas en el lienzo y las almacena."""
-        for i in range(100, 1200, 100):
-            linea = self.canvas.create_line(i, 100, i, 600, fill="blue", width=3)
-            self.lineas.append(linea)  # Almacena la línea
+        # Configurar el peso de las columnas
+        for i in range(3):
+            self.frame_opciones_1.grid_columnconfigure(i, weight=1)
 
-    def seleccionar_linea(self, event):
-        """Selecciona una línea si el cursor está cerca de ella."""
-        self.selected_line = None
-        for linea in self.lineas:
-            coords = self.canvas.coords(linea)
-            # Verifica si el cursor está cerca de la línea (en un rango de 10 píxeles)
-            if self.es_cercano_a_linea(event.x, event.y, coords):
-                self.selected_line = linea
-                # Calcular el desplazamiento inicial
-                self.offset_x = event.x - coords[0]  # Desplazamiento desde el primer punto de la línea
-                self.offset_y = event.y - coords[1]  # Desplazamiento desde el segundo punto de la línea
-                break
+        # Título de la sección de opciones
+        self.fuente = ("Arial", 14)
+        titulo_opciones = ctk.CTkLabel(
+            self.frame_opciones_1,
+            text="Opciones de Pincel",
+            font=self.fuente,
+        )
+        titulo_opciones.grid(row=0, column=0, pady=(10, 0), sticky="nsew", columnspan=3)
 
-    def es_cercano_a_linea(self, x, y, coords):
-        """Verifica si el punto (x, y) está cerca de la línea definida por coords."""
-        x1, y1, x2, y2 = coords
-        # Distancia mínima al segmento
-        distancia_minima = 10  
-        return (min(abs((y2 - y1) * x - (x2 - x1) * y + x2 * y1 - y2 * x1) /
-                       ((y2 - y1) ** 2 + (x2 - x1) ** 2) ** 0.5, 
-                       abs(y - y1) + abs(y - y2) + abs(x - x1) + abs(x - x2)) < distancia_minima)
+        # Frame para la paleta de colores
+        self.frame_colores = ctk.CTkFrame(self.frame_opciones_1)
+        self.frame_colores.grid(row=1, column=0, columnspan=3, pady=(10, 0), sticky="nsew")
 
-    def mover_linea(self, event):
-        """Mueve la línea seleccionada con el ratón."""
-        if self.selected_line:
-            # Obtener coordenadas actuales de la línea
-            coords = self.canvas.coords(self.selected_line)
+        # Crear botones para colores
+        colores = ["#FF5733", "#33FF57", "#3357FF", "#FFFF33", "#FF33FF", "#33FFFF", "#FFFFFF", "#000000"]
+        for i, color in enumerate(colores):
+            btn_color = ctk.CTkButton(
+                self.frame_colores,
+                bg_color=color,
+                command=lambda c=color: self.cambiar_color(c),
+                text="",  # Dejar vacío para que el botón solo muestre el color
+                width=20,  # Ajustar el ancho del botón
+                height=20  # Ajustar la altura del botón
+            )
+            btn_color.grid(row=0, column=i, padx=5, pady=5)
 
-            # Calcular el nuevo punto de inicio y final usando el desplazamiento
-            new_x1 = event.x - self.offset_x
-            new_y1 = event.y - self.offset_y
-            new_x2 = new_x1 + (coords[2] - coords[0])
-            new_y2 = new_y1 + (coords[3] - coords[1])
+        # Label para mostrar el color seleccionado
+        self.label_color = ctk.CTkLabel(
+            self.frame_opciones_1,
+            text=f"Color Seleccionado: {self.color_seleccionado}",
+            font=self.fuente
+        )
+        self.label_color.grid(row=2, column=0, columnspan=3, pady=10, sticky="nsew")
 
-            # Mover la línea a las nuevas coordenadas
-            self.canvas.coords(self.selected_line, new_x1, new_y1, new_x2, new_y2)
-
-    def finalizar_mover_linea(self, event):
-        """Finaliza el movimiento de la línea."""
-        self.selected_line = None
+    def cambiar_color(self, color):
+        self.color_seleccionado = color
+        self.label_color.configure(text=f"Color Seleccionado: {self.color_seleccionado}")
 
 if __name__ == "__main__":
-    root = Tk()
-    app = MiAplicacion(root)
-    root.mainloop()
+    app = MiAplicacion()
+    app.mainloop()
