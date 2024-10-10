@@ -8,14 +8,20 @@ Autor: Gabriel Gomez Garcia
 Fecha: 23 de septiembre de 2024
 """
 
+# Imports externos
 from abc import ABC, abstractmethod
+import math
+
+# Imports de terceros
 from tkinter import Canvas
 
-import math
+# No hay imports locales en este archivo
 
 
 class AlgoritmoDibujo(ABC):
-    """Clase base para cada figura que tendrá su algoritmo de dibujo."""
+    """
+    Clase base para cada figura que tendrá su algoritmo de dibujo.
+    """
 
     @abstractmethod
     def dibujar_linea(
@@ -29,17 +35,9 @@ class AlgoritmoDibujo(ABC):
         y_final: int,
     ) -> None:
         """
-        Dibuja una linea en el lienzo.
+        Dibuja una línea en el lienzo.
 
-        Debe ser implementado por cada algoritmo de dibujado.
-
-        Args:
-            lienzo: El lienzo donde se dibuja la línea.
-            color: Color de la línea.
-            x_inicial: Coordenada x inicial.
-            y_inicial: Coordenada y inicial.
-            x_final: Coordenada x final.
-            y_final: Coordenada y final.
+        Este método debe ser implementado por cada clase que extienda AlgoritmoDibujo.
         """
         raise NotImplementedError("Error.NO_IMPLEMENTADO")
 
@@ -47,13 +45,9 @@ class AlgoritmoDibujo(ABC):
         self, lienzo: Canvas, color: str, tamanho_pincel: int, x: int, y: int
     ) -> None:
         """
-        Dibuja un rectángulo de 5x5 en lugar de un píxel individual.
+        Dibuja un rectángulo de tamanho_pincel x tamanho_pincel en lugar de un píxel individual.
 
-        Args:
-            lienzo: El lienzo donde se dibuja el pack.
-            color: Color del pack.
-            x: Coordenada x del pack.
-            y: Coordenada y del pack.
+        Esto permite que las líneas se vean más gruesas según el tamaño de la brocha.
         """
         lienzo.create_rectangle(
             x, y, x + tamanho_pincel, y + tamanho_pincel, outline=color, fill=color
@@ -61,6 +55,9 @@ class AlgoritmoDibujo(ABC):
 
 
 class SlopeLineStrategy(AlgoritmoDibujo):
+    """
+    Estrategia de dibujo de líneas utilizando el cálculo de la pendiente.
+    """
 
     def dibujar_linea(
         self,
@@ -72,15 +69,15 @@ class SlopeLineStrategy(AlgoritmoDibujo):
         x_final: int,
         y_final: int,
     ) -> None:
-        
-        L = []  # Lista de píxeles de la línea
-        
-        # para las pendientes
+        """
+        Dibuja una línea en el lienzo usando el algoritmo de pendiente.
+        """
+
+        L = []
         dx = x_final - x_inicial
         dy = y_final - y_inicial
 
-        # si es una linea vertical (no  cambia x)
-        if dx == 0:  # Modificación 2: división por cero
+        if dx == 0:
             for y in range(y_inicial, y_final + 1):
                 L.append((x_inicial, y))
             return L
@@ -88,7 +85,7 @@ class SlopeLineStrategy(AlgoritmoDibujo):
         m = dy / dx
         b = y_inicial - m * x_inicial
 
-        if m > 1:  # Modificación 3: pendiente mayor que 1
+        if m > 1:
             x_inicial, y_inicial = y_inicial, x_inicial
             x_final, y_final = y_final, x_final
             dx, dy = dy, dx
@@ -101,14 +98,17 @@ class SlopeLineStrategy(AlgoritmoDibujo):
             L.append((x, round(m * x + b)))
             x += 1
 
-        if m > 1:  # Volver a intercambiar las variables x e y
+        if m > 1:
             L = [(y, x) for x, y in L]
 
-        return L
-
+        for x, y in L:
+            self._dibujar_pack(lienzo, color, tamanho_pincel, x, y)
 
 
 class DDALineStrategy(AlgoritmoDibujo):
+    """
+    Estrategia de dibujo de líneas usando el algoritmo DDA.
+    """
 
     def dibujar_linea(
         self,
@@ -120,31 +120,32 @@ class DDALineStrategy(AlgoritmoDibujo):
         x_final: int,
         y_final: int,
     ) -> None:
-        
+        """
+        Dibuja una línea en el lienzo usando el algoritmo DDA (Digital Differential Analyzer).
+        """
+
         dx = x_final - x_inicial
         dy = y_final - y_inicial
         pixeles = max(abs(dx), abs(dy))
 
-        # Calcular los incrementos de x e y
         x_incremento = dx / pixeles
         y_incremento = dy / pixeles
-        
+
         x = x_inicial + 0.5
         y = y_inicial + 0.5
-        
-        for _ in range(pixeles + 1):
 
-            # Redondear las coordenadas a la cuadrícula del pack
+        for _ in range(pixeles + 1):
             x_pack = math.floor(x * tamanho_pincel)
             y_pack = math.floor(y * tamanho_pincel)
-
-            # Dibujar un pack de 5x5 en lugar de un solo píxel
             self._dibujar_pack(lienzo, color, tamanho_pincel, x_pack, y_pack)
-            
             x += x_incremento
             y += y_incremento
 
+
 class BresenhamLineStrategy(AlgoritmoDibujo):
+    """
+    Estrategia de dibujo de líneas usando el algoritmo Bresenham.
+    """
 
     def dibujar_linea(
         self,
@@ -156,7 +157,10 @@ class BresenhamLineStrategy(AlgoritmoDibujo):
         x2: int,
         y2: int,
     ) -> None:
-        
+        """
+        Dibuja una línea en el lienzo usando el algoritmo de Bresenham.
+        """
+
         dx = abs(x2 - x1)
         dy = abs(y2 - y1)
         sx = 1 if x1 < x2 else -1
@@ -164,10 +168,8 @@ class BresenhamLineStrategy(AlgoritmoDibujo):
         err = dx - dy
 
         while True:
-            # Redondear las coordenadas a la cuadrícula del tamanho
             x_pack = math.floor(x1 / tamanho_pincel) * tamanho_pincel
             y_pack = math.floor(y1 / tamanho_pincel) * tamanho_pincel
-
             self._dibujar_pack(lienzo, color, tamanho_pincel, x_pack, y_pack)
 
             if x1 == x2 and y1 == y2:
@@ -179,8 +181,12 @@ class BresenhamLineStrategy(AlgoritmoDibujo):
             if e2 < dx:
                 err += dx
                 y1 += sy
-                
+
+
 class BresenhamLineStrategyInt(AlgoritmoDibujo):
+    """
+    Estrategia de dibujo de líneas usando el algoritmo Bresenham con enteros.
+    """
 
     def dibujar_linea(
         self,
@@ -192,7 +198,10 @@ class BresenhamLineStrategyInt(AlgoritmoDibujo):
         x2: int,
         y2: int,
     ) -> None:
-        
+        """
+        Dibuja una línea en el lienzo usando el algoritmo de Bresenham utilizando operaciones con enteros.
+        """
+
         dx = abs(x2 - x1)
         dy = abs(y2 - y1)
         sx = 1 if x1 < x2 else -1
@@ -200,10 +209,8 @@ class BresenhamLineStrategyInt(AlgoritmoDibujo):
         err = dx - dy
 
         while True:
-            # Redondear las coordenadas a la cuadrícula del tamanho
             x_pack = math.floor(x1 / tamanho_pincel) * tamanho_pincel
             y_pack = math.floor(y1 / tamanho_pincel) * tamanho_pincel
-
             self._dibujar_pack(lienzo, color, tamanho_pincel, x_pack, y_pack)
 
             if x1 == x2 and y1 == y2:
@@ -215,5 +222,3 @@ class BresenhamLineStrategyInt(AlgoritmoDibujo):
             if e2 < dx:
                 err += dx
                 y1 += sy
-
-#TODO : bresenham con entero y con reales

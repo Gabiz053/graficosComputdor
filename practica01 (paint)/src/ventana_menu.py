@@ -1,473 +1,495 @@
 """
 Archivo: ventana_menu.py
 
-Este archivo define la clase VentanaMenu que extiende la funcionalidad
-de la clase abstracta Ventana. Crea una ventana con un menu para la
-aplicacion grafica.
+Este archivo define la clase VentanaMenu, que extiende la funcionalidad
+de la clase abstracta Ventana. Crea una ventana con un menú para la
+aplicación gráfica.
 
 Autor: Gabriel Gomez Garcia
 Fecha: 21 de septiembre de 2024
 """
 
+# Imports estándar
 import tkinter as tk
+
+# Imports de terceros
 import customtkinter as ctk
+from CTkColorPicker import AskColor
 
-from CTkColorPicker import *
-
+# Imports locales
 from ventana import Ventana
-from algoritmos_dibujo import *
-from constantes import MenuVen, Texto, Default, Pinceles, Color
+from algoritmos_dibujo import AlgoritmoDibujo
+from constantes import Default, DrawingStrategies, MenuLabels, Texts, Color
 
 
 class VentanaMenu(Ventana):
     """
-    Clase que representa una ventana con un menu desplegable interactivo.
+    Clase que representa una ventana con un menú desplegable interactivo.
 
-    Hereda de la clase abstracta Ventana, anadiendo un menu superior y
-    una seccion de herramientas para interactuar con el lienzo.
+    Hereda de la clase abstracta Ventana, añadiendo un menú superior y
+    una sección de herramientas para interactuar con el lienzo.
 
     Atributos heredados:
-        _width (int): El ancho de la ventana en pixeles.
-        _height (int): La altura de la ventana en pixeles.
-        _title (str): El titulo de la ventana.
+        _width (int): El ancho de la ventana en píxeles.
+        _height (int): La altura de la ventana en píxeles.
+        _title (str): El título de la ventana.
         _ventana (ctk.CTk): La instancia de la ventana principal de customtkinter.
 
     Atributos de instancia:
-        _color_seleccionado (str): color seleccionado para dibujar.
-        _herramienta_seleccionada (str): herramienta seleccionada para dibujar.
-        _tamanho_pincel (int): grosor de las figuras dibujadas.
+        _color_seleccionado (str): Color seleccionado para dibujar.
+        _herramienta_seleccionada (str): Herramienta seleccionada para dibujar.
+        _tamanho_pincel (int): Grosor de las figuras dibujadas.
+        _lienzo (ctk.CTkCanvas): Lienzo donde se dibujan las figuras.
     """
 
     def __init__(
         self,
-        width: int = Default.VENTANA_WIDTH,
-        height: int = Default.VENTANA_HEIGHT,
-        title: str = Default.VENTANA_TITLE,
-        color_seleccionado: str = Default.COLOR,
-        herramienta_seleccionada: AlgoritmoDibujo = Default.HERRAMIENTA,
-        tamanho_pincel: int = Default.TAMANHO_DIBUJAR,
+        width: int = Default.WINDOW_WIDTH,
+        height: int = Default.WINDOW_HEIGHT,
+        title: str = Default.WINDOW_TITLE,
+        color_seleccionado: str = Default.DRAWING_COLOR,
+        herramienta_seleccionada: AlgoritmoDibujo = Default.DRAWING_TOOL,
+        tamanho_pincel: int = Default.DRAWING_SIZE,
     ) -> None:
         """
-        Inicializa la ventana con las dimensiones y el titulo proporcionados.
+        Inicializa la ventana con las dimensiones y el título proporcionados.
 
         Args:
-            width (int): Ancho de la ventana en pixeles.
-            height (int): Alto de la ventana en pixeles.
-            title (str): Titulo de la ventana.
-            color_seleccionado (str): Color seleccionado para dibujar.
-            herramienta_seleccionada (AlgoritmoDibujo): Herramienta seleccionada para dibujar.
-            tamanho_pincel (int): grosor de las figuras dibujadas.
+            width (int): Ancho de la ventana en píxeles (por defecto, VENTANA_WIDTH).
+            height (int): Alto de la ventana en píxeles (por defecto, VENTANA_HEIGHT).
+            title (str): Título de la ventana (por defecto, VENTANA_TITLE).
+            color_seleccionado (str): Color seleccionado para dibujar (por defecto, COLOR).
+            herramienta_seleccionada (AlgoritmoDibujo): Herramienta seleccionada para dibujar
+                (por defecto, HERRAMIENTA).
+            tamanho_pincel (int): Grosor de las figuras dibujadas (por defecto, TAMANHO_DIBUJAR).
         """
         super().__init__(width, height, title)
         self._color_seleccionado = color_seleccionado
         self._herramienta_seleccionada = herramienta_seleccionada
         self._tamanho_pincel = tamanho_pincel
+        self._lienzo = None
 
     def _crear_contenido_ventana(self) -> None:
         """
-        Configura el contenido de la ventana anadiendo un menu de opciones.
+        Configura el contenido de la ventana añadiendo un menú de opciones.
 
-        Este metodo sobrescribe la funcion abstracta heredada para implementar
-        un menu superior y una barra de herramientas
+        Este método sobrescribe la función abstracta heredada para implementar
+        un menú superior y una barra de herramientas para interactividad.
         """
         self._crear_menu_superior()
         self._crear_menu_herramientas()
 
+    ########### Métodos de selección y actualización ###########
+    def _seleccionar_color(self) -> None:
+        """Abre un selector de color y actualiza el color seleccionado."""
+        pick_color = AskColor()  # Abre el selector de color
+        self.color_seleccionado = pick_color.get()  # Obtiene la cadena de color
+        print(f"{Texts.SELECT_COLOR} {self.color_seleccionado}")
+
+    def _seleccionar_pincel(self, seleccion: int) -> None:
+        """Selecciona un pincel según el índice proporcionado.
+
+        Args:
+            seleccion (int): El índice del pincel seleccionado.
+        """
+        self.herramienta_seleccionada = DrawingStrategies.STRATEGIES[seleccion]
+        print(f"{Texts.SELECT_TOOL} {self.herramienta_seleccionada}")
+        
+    def _actualizar_tamanho(self, valor: float) -> None:
+        """Actualiza el tamaño del pincel según el valor del slider.
+
+        Args:
+            valor (float): El nuevo tamaño del pincel en forma de número flotante.
+        """
+        self.tamanho_pincel = int(valor)  # Actualiza el tamaño del pincel
+        self.label_tamanho.configure(
+            text=f"{Texts.SELECT_SIZE} {self.tamanho_pincel}"
+        )  # Actualiza la etiqueta
+
+    ########### Métodos de manipulación de figuras ###########
+
+    def _borrar_figura(self) -> None:
+        """Borra la figura seleccionada al hacer clic sobre ella."""
+        print(Texts.SHAPE_CLEAR)
+
+    def _borrar_todo(self) -> None:
+        """Borra todas las figuras del lienzo."""
+        print(Texts.SHAPE_CLEAR_ALL)
+
+    def _deshacer_accion(self) -> None:
+        """Deshace la última acción realizada en el lienzo."""
+        print(Texts.SHAPE_UNDO)
+
+    def _agrupar_figuras(self) -> None:
+        """Agrupa las figuras seleccionadas en un solo objeto."""
+        print(Texts.SHAPE_GROUP)
+
+    def _desagrupar_figuras(self) -> None:
+        """Desagrupa las figuras agrupadas, si hay alguna."""
+        print(Texts.SHAPE_UNGROUP)
+
     def _crear_menu_superior(self) -> None:
-        print("a")
+        pass
 
     def _crear_menu_herramientas(self) -> None:
         """
-        Crea la estructura de la ventana con un área de trabajo a la izquierda
-        y una columna de botones a la derecha usando un diseño de cuadrícula.
+        Crea la estructura del menú de herramientas en la ventana principal.
+
+        Este método configura la interfaz de usuario dividiendo la ventana en dos secciones:
+        - Un área de trabajo (canvas) a la izquierda donde se realizarán los dibujos.
+        - Una columna de opciones (botones y controles) a la derecha, donde el usuario podrá
+        seleccionar diferentes herramientas, colores y realizar acciones sobre el lienzo.
+
+        Se organizan las siguientes secciones en el menú de herramientas:
+        - Opciones de Pincel
+        - Borradores
+        - Selección de Colores
+        - Agrupamiento de Figuras
+        - Área de Salida de Texto
         """
-        ######### Crear el frame izquierdo para el área de contenido (donde va el canvas)
-        self.frame_izquierdo = ctk.CTkFrame(self._ventana, corner_radius=10)
+        # Crear el frame izquierdo para el área de contenido
+        frame_area_dibujo = self._crear_frame_izquierdo(self._ventana)
 
-        # se pone para que ocupe todo el espacio disponible
-        self.frame_izquierdo.grid(row=0, column=0, padx=10, pady=10, sticky="nsew")
-
-        # Título para el frame izquierdo
-        titulo_izquierdo = ctk.CTkLabel(
-            self.frame_izquierdo, text=Texto.FRAME_IZQUIERDO, font=self.fuente
-        )
-        titulo_izquierdo.pack(pady=10)
-
-        ########## Crear el frame derecho para los botones (se desliza)
-        self.frame_derecho = ctk.CTkScrollableFrame(self._ventana, corner_radius=10)
-        self.frame_derecho.grid(row=0, column=1, padx=10, pady=10, sticky="nsew")
-
-        # Título para el frame derecho
-        titulo_derecho = ctk.CTkLabel(
-            self.frame_derecho, text=Texto.FRAME_DERECHO, font=self.fuente
-        )
-        titulo_derecho.pack(pady=10)
+        # Crear el frame derecho para los botones
+        frame_panel_opciones = self._crear_frame_derecho(self._ventana)
 
         # Configurar la proporción de la cuadrícula
-        # se expanden hasta el final de y
-        # tienen el mismo peso x por lo que se expanden a la mitad los dos
-        self._ventana.grid_rowconfigure(0, weight=1)  # La fila 0 se expande hasta abajo
-        self._ventana.grid_columnconfigure(0, weight=1)  # El frame izquierdo
-        self._ventana.grid_columnconfigure(1, weight=1)  # El frame derecho
+        self._configurar_grid(self._ventana)
 
-        ####### Ahora lo de dentro de cada frame
+        # Crear el canvas en el frame izquierdo
+        self._lienzo = self._crear_canvas(frame_area_dibujo)
 
-        #### izquierdo
-        # Aqui va el canvas
-        self._lienzo = ctk.CTkCanvas(
-            self.frame_izquierdo, highlightthickness=0, bg=Default.CANVAS_COLOR
+        # Crear frames para las diferentes secciones de opciones en el frame derecho
+        self._crear_seccion_opciones(Texts.SECTION_OPTIONS, frame_panel_opciones)
+        self._crear_seccion_borradores(Texts.SECTION_CLEAR, frame_panel_opciones)
+        self._crear_seccion_colores(Texts.SECTION_COLOR, frame_panel_opciones)
+        self._crear_seccion_agrupar(Texts.SECTION_GROUP, frame_panel_opciones)
+        self._crear_seccion_salida_texto(Texts.SECTION_TEXT, frame_panel_opciones)
+
+    def _crear_frame_izquierdo(self, ventana) -> ctk.CTkFrame:
+        """
+        Crea y retorna el frame izquierdo para el área de contenido.
+
+        Args:
+            ventana (tk.Tk):
+                La ventana principal de la aplicación.
+
+        Returns:
+            ctk.CTkFrame:
+                El frame izquierdo configurado.
+        """
+        frame_area_dibujo = ctk.CTkFrame(ventana, corner_radius=10)
+        frame_area_dibujo.grid(row=0, column=0, padx=10, pady=10, sticky="nsew")
+
+        # Título para el frame izquierdo
+        titulo_area_dibujo = ctk.CTkLabel(
+            frame_area_dibujo, text=Texts.LEFT_FRAME_LABEL, font=self.fuente
         )
-        self._lienzo.pack(
-            fill=tk.BOTH, expand=True, padx=10, pady=5
-        )  # El canvas ocupa todo el espacio del frame
+        titulo_area_dibujo.pack(pady=10)
 
-        #### derecho
+        return frame_area_dibujo
 
-        # Creamos un frame para cada region de opciones
-        self.frame_opciones_1 = ctk.CTkFrame(
-            self.frame_derecho, corner_radius=10, fg_color=Color.GRIS_CLARO
+    def _crear_frame_derecho(self, ventana: ctk.CTkFrame) -> ctk.CTkScrollableFrame:
+        """
+        Crea y retorna el frame derecho para los botones.
+
+        Args:
+            ventana (tk.Tk):
+                La ventana principal de la aplicación.
+
+        Returns:
+            ctk.CTkScrollableFrame:
+                El frame derecho configurado.
+        """
+        frame_panel_opciones = ctk.CTkScrollableFrame(ventana, corner_radius=10)
+        frame_panel_opciones.grid(row=0, column=1, padx=10, pady=10, sticky="nsew")
+
+        # Título para el frame derecho
+        titulo_panel_opciones = ctk.CTkLabel(
+            frame_panel_opciones, text=Texts.RIGHT_FRAME_LABEL, font=self.fuente
         )
-        self.frame_opciones_1.pack(
-            pady=10, padx=10, fill="x"
-        )  # Cambiar fill a "x" para ocupar solo ancho
+        titulo_panel_opciones.pack(pady=10)
 
-        self.frame_opciones_2 = ctk.CTkFrame(
-            self.frame_derecho, corner_radius=10, fg_color=Color.GRIS_CLARO
-        )
-        self.frame_opciones_2.pack(
-            pady=10, padx=10, fill="x"
-        )  # Cambiar fill a "x" para ocupar solo ancho
+        return frame_panel_opciones
 
-        self.frame_opciones_3 = ctk.CTkFrame(
-            self.frame_derecho, corner_radius=10, fg_color=Color.GRIS_CLARO
-        )
-        self.frame_opciones_3.pack(
-            pady=10, padx=10, fill="x"
-        )  # Cambiar fill a "x" para ocupar solo ancho
+    def _configurar_grid(self, ventana: ctk.CTkFrame) -> None:
+        """
+        Configura la proporción de la cuadrícula en la ventana principal.
 
-        self.frame_opciones_4 = ctk.CTkFrame(
-            self.frame_derecho, corner_radius=10, fg_color=Color.GRIS_CLARO
-        )
-        self.frame_opciones_4.pack(
-            pady=10, padx=10, fill="x"
-        )  # Cambiar fill a "x" para ocupar solo ancho
+        Args:
+            ventana (tk.Tk):
+                La ventana principal de la aplicación.
+        """
+        ventana.grid_rowconfigure(0, weight=1)
+        ventana.grid_columnconfigure(0, weight=1)
+        ventana.grid_columnconfigure(1, weight=1)
 
-        self.frame_opciones_5 = ctk.CTkFrame(
-            self.frame_derecho, corner_radius=10, fg_color=Color.GRIS_CLARO
-        )
-        self.frame_opciones_5.pack(
-            pady=10, padx=10, fill="x"
-        )  # Cambiar fill a "x" para ocupar solo ancho
+    def _crear_canvas(self, parent_frame) -> ctk.CTkCanvas:
+        """
+        Crea y retorna el canvas en el frame dado.
 
-        self.frame_opciones_6 = ctk.CTkFrame(
-            self.frame_derecho, corner_radius=10, fg_color=Color.GRIS_CLARO
-        )
-        self.frame_opciones_6.pack(
-            pady=10, padx=10, fill="x"
-        )  # Cambiar fill a "x" para ocupar solo ancho
+        Args:
+            parent_frame (tk.Frame):
+                Frame en el que se añadirá el canvas.
 
-        # Crear una etiqueta de título para el frame de opciones
-        titulo_opciones = ctk.CTkLabel(
-            self.frame_opciones_1,
-            text="Opciones de Pincel",
-            font=self.fuente,
+        Returns:
+            ctk.CTkCanvas:
+                El canvas configurado.
+        """
+        canvas_dibujo = ctk.CTkCanvas(
+            parent_frame, highlightthickness=0, bg=Default.CANVAS_BACKGROUND_COLOR
         )
-        titulo_opciones.grid(row=0, column=0, pady=(10, 0), sticky="nsew", columnspan=3)
+        canvas_dibujo.pack(fill=tk.BOTH, expand=True, padx=10, pady=5)
 
-        # Crear una línea separadora
-        self.separator = ctk.CTkFrame(
-            self.frame_opciones_1, height=2, corner_radius=10, fg_color=Color.GRIS
-        )
-        self.separator.grid(
-            row=1, column=0, columnspan=3, pady=(10, 0), padx=20, sticky="ew"
-        )
+        return canvas_dibujo
 
-        # Crear el OptionMenu
-        seleccion_pincel = tk.StringVar(value=Default.PINCEL)  # Valor inicial
+    def _crear_seccion_opciones(self, titulo: str, parent_frame) -> None:
+        """
+        Crea la sección de opciones de pincel en el menú de herramientas.
+
+        Args:
+            titulo (str):
+                Título de la sección, que describe el contenido de la misma.
+            parent_frame (tk.Frame):
+                Frame en el que se añadirá la sección de opciones.
+            instance (object):
+                Instancia de la clase que contiene métodos a usar.
+
+        Esta sección incluye:
+        - Un menú desplegable para seleccionar diferentes tipos de pincel.
+        - Un control deslizante para ajustar el tamaño del pincel.
+        - Una etiqueta que muestra el tamaño actual del pincel.
+        """
+        frame_opciones_pincel = self._crear_frame_seccion(parent_frame, titulo)
+
+        # Opción de menú para seleccionar pincel
+        seleccion_pincel = tk.StringVar(value=Default.DRAWING_TOOL_NAME)
         option_menu = ctk.CTkOptionMenu(
-            self.frame_opciones_1,
+            frame_opciones_pincel,
             variable=seleccion_pincel,
-            values=list(Pinceles.PINCELES.keys()),
-            width=200,  # Argumentos de diseño
+            values=list(DrawingStrategies.STRATEGIES.keys()),
+            width=200,
             height=30,
             anchor="center",
             command=self._seleccionar_pincel,
         )
-        option_menu.grid(
-            row=2, column=0, padx=20, pady=10, sticky="nsew"
-        )  # Coloca el OptionMenu en la columna 0
+        option_menu.grid(row=2, column=0, padx=20, pady=10, sticky="nsew")
 
-        # Crear el Slider para seleccionar el tamaño de la línea
-        self.slider_tamano = ctk.CTkSlider(
-            self.frame_opciones_1,
-            from_=1,  # Tamaño mínimo
-            to=100,  # Tamaño máximo
-            number_of_steps=50,  # Para tener pasos discretos
-            width=200,  # Argumentos de diseño
+        # Slider para seleccionar tamaño de línea
+        slider_tamanho = ctk.CTkSlider(
+            frame_opciones_pincel,
+            from_=1,
+            to=100,
+            number_of_steps=50,
+            width=200,
             height=20,
-            command=self._actualizar_tamano,
+            command=self._actualizar_tamanho,
         )
-        self.slider_tamano.set(
-            Default.TAMANHO_DIBUJAR
-        )  # Establecer el valor inicial en 1
-        self.slider_tamano.grid(
-            row=2, column=1, padx=(30, 0), pady=10, sticky="ew"
-        )  # Coloca el Slider en la columna 1
+        slider_tamanho.set(Default.DRAWING_SIZE)
+        slider_tamanho.grid(row=2, column=1, padx=(30, 0), pady=10, sticky="ew")
 
-        # Crear una etiqueta para mostrar el tamaño seleccionado
-        self.label_tamano = ctk.CTkLabel(
-            self.frame_opciones_1,
-            text=f"Tamaño de línea: {self.slider_tamano.get()}",
+        # Etiqueta para mostrar tamaño de línea
+        self.label_tamanho = ctk.CTkLabel(
+            frame_opciones_pincel,
+            text=f"{Texts.SECTION_OPTIONS_LINE} {slider_tamanho.get()}",
             font=self.fuente,
-            width=150,  # Argumentos de diseño
+            width=150,
             height=20,
         )
-        self.label_tamano.grid(
-            row=2, column=2, pady=5, padx=(0, 10), sticky="nsew"
-        )  # Coloca la etiqueta en la columna 2
+        self.label_tamanho.grid(row=2, column=2, pady=5, padx=(0, 10), sticky="nsew")
 
-        # Configurar el peso de las columnas
+        # Configurar peso de las columnas
         for i in range(3):
-            self.frame_opciones_1.grid_columnconfigure(
-                i, weight=1
-            )  # Distribuir el peso igualmente
+            frame_opciones_pincel.grid_columnconfigure(i, weight=1)
 
-        ### opciones 2
-        # Configurar la cuadrícula dentro de frame_opciones_2
-        # Título de Borradores
-        titulo_borradores = ctk.CTkLabel(
-            self.frame_opciones_2, text="Borradores", font=self.fuente
-        )
-        titulo_borradores.grid(
-            row=0, column=0, pady=(10, 0), sticky="nsew", columnspan=3
-        )
+    def _crear_seccion_borradores(self, titulo: str, parent_frame) -> None:
+        """
+        Crea la sección de borradores en el menú de herramientas.
 
-        # Crear una línea separadora
-        self.separator2 = ctk.CTkFrame(
-            self.frame_opciones_2, height=2, corner_radius=10, fg_color=Color.GRIS
-        )
-        self.separator2.grid(
-            row=1, column=0, columnspan=3, pady=(10, 0), padx=20, sticky="ew"
-        )
+        Args:
+            parent_frame (tk.Frame):
+                Frame en el que se añadirá la sección de borradores.
 
-        # Botones en la tercera fila
-        btn_borrar = ctk.CTkButton(
-            self.frame_opciones_2,
-            text="Borrar",
-            width=200,  # Argumentos de diseño
-            height=30,
-            command=self.borrar,
-        )
-        btn_borrar.grid(row=2, column=0, padx=10, pady=10, sticky="ew")
+        Esta sección incluye botones para realizar las siguientes acciones:
+        - Borrar la última figura dibujada.
+        - Borrar todas las figuras en el lienzo.
+        - Deshacer la última acción realizada.
+        """
+        frame_borradores = self._crear_frame_seccion(parent_frame, titulo)
 
-        btn_borrar_todo = ctk.CTkButton(
-            self.frame_opciones_2,
-            text="Borrar Todo",
-            width=200,  # Argumentos de diseño
-            height=30,
-            command=self.borrar_todo,
+        # Botones para las acciones de borrado
+        btn_borrar_ultima_figura = ctk.CTkButton(
+            frame_borradores, text=Texts.SECTION_CLEAR_LAST, command=self._borrar_figura
         )
-        btn_borrar_todo.grid(row=2, column=1, padx=10, pady=10, sticky="ew")
+        btn_borrar_ultima_figura.grid(row=2, column=0, padx=10, pady=10, sticky="ew")
 
-        btn_deshacer = ctk.CTkButton(
-            self.frame_opciones_2,
-            text="Deshacer",
-            width=200,  # Argumentos de diseño
-            height=30,
-            command=self.deshacer,
+        btn_borrar_todas_figuras = ctk.CTkButton(
+            frame_borradores, text=Texts.SECTION_CLEAR_ALL, command=self._borrar_todo
         )
-        btn_deshacer.grid(row=2, column=2, pady=5, padx=10, sticky="ew")
+        btn_borrar_todas_figuras.grid(row=2, column=1, padx=10, pady=10, sticky="ew")
 
-        # Configurar el peso de las columnas
+        btn_deshacer_accion = ctk.CTkButton(
+            frame_borradores, text=Texts.SECTION_CLEAR_UNDO, command=self._deshacer_accion
+        )
+        btn_deshacer_accion.grid(row=2, column=2, padx=10, pady=10, sticky="ew")
+
+        # Configurar peso de las columnas
         for i in range(3):
-            self.frame_opciones_2.grid_columnconfigure(
-                i, weight=1
-            )  # Distribuir el peso igualmente
+            frame_borradores.grid_columnconfigure(i, weight=1)
 
-        #### opcones 3
-        titulo_colores = ctk.CTkLabel(
-            self.frame_opciones_3, text="Colores", font=self.fuente
-        )
-        titulo_colores.grid(row=0, column=0, pady=(10, 0), sticky="nsew", columnspan=3)
+    def _crear_seccion_colores(self, titulo: str, parent_frame) -> None:
+        """
+        Crea la sección de selección de colores en el menú de herramientas.
 
-        # Crear una línea separadora
-        self.separator3 = ctk.CTkFrame(
-            self.frame_opciones_3, height=2, corner_radius=10, fg_color=Color.GRIS
-        )
-        self.separator3.grid(
-            row=1, column=0, columnspan=3, pady=(10, 0), padx=20, sticky="ew"
-        )
+        Args:
+            parent_frame (tk.Frame):
+                Frame en el que se añadirá la sección de colores.
+            instance (object):
+                Instancia de la clase que contiene métodos a usar.
 
-        # Botones en la tercera fila
-        self.btn_color = ctk.CTkButton(
-            self.frame_opciones_3,
-            text="Seleccion Colores",
-            width=200,  # Argumentos de diseño
-            height=30,
-            command=self.seleccionar_color,
-        )
-        self.btn_color.grid(row=2, column=0, padx=10, pady=10, sticky="ew")
+        Esta sección incluye un botón que permite al usuario seleccionar un color
+        para el pincel que utilizará en el lienzo.
+        """
+        frame_colores = self._crear_frame_seccion(parent_frame, titulo)
 
-        # Configurar el peso de las columnas
-        for i in range(3):
-            self.frame_opciones_3.grid_columnconfigure(
-                i, weight=1
-            )  # Distribuir el peso igualmente
+        # Botón para seleccionar color
+        btn_seleccionar_color = ctk.CTkButton(
+            frame_colores, text=Texts.SECTION_COLOR_SELECT, command=self._seleccionar_color
+        )
+        btn_seleccionar_color.grid(row=2, column=0, padx=10, pady=10, sticky="ew")
 
-            # Título de Agrupamiento
-        titulo_agrupamiento = ctk.CTkLabel(
-            self.frame_opciones_4, text="Agrupar y Desagrupar", font=self.fuente
-        )
-        titulo_agrupamiento.grid(
-            row=0, column=0, pady=(10, 0), sticky="nsew", columnspan=3
-        )
+        # Configurar peso de la columna
+        frame_colores.grid_columnconfigure(0, weight=1)
 
-        # Crear una línea separadora
-        self.separator4 = ctk.CTkFrame(
-            self.frame_opciones_4, height=2, corner_radius=10, fg_color=Color.GRIS
-        )
-        self.separator4.grid(
-            row=1, column=0, columnspan=3, pady=(10, 0), padx=20, sticky="ew"
-        )
+    def _crear_seccion_agrupar(self, titulo: str, parent_frame) -> None:
+        """
+        Crea la sección para agrupar y desagrupar figuras en el menú de herramientas.
 
-        # Botón para Agrupar
+        Args:
+            parent_frame (tk.Frame):
+                Frame en el que se añadirá la sección de agrupamiento.
+            instance (object):
+                Instancia de la clase que contiene métodos a usar.
+
+        Esta sección incluye botones para agrupar y desagrupar figuras seleccionadas
+        en el lienzo.
+        """
+        frame_agrupar = self._crear_frame_seccion(parent_frame, titulo)
+
+        # Botones para agrupar y desagrupar
         btn_agrupar = ctk.CTkButton(
-            self.frame_opciones_4,
-            text="Agrupar",
-            command=self.agrupar_figuras,  # Implementa esta función según tus necesidades
+            frame_agrupar, text=Texts.SECTION_GROUP_GROUP, command=self._agrupar_figuras
         )
         btn_agrupar.grid(row=2, column=0, padx=10, pady=10, sticky="ew")
 
-        # Botón para Desagrupar
         btn_desagrupar = ctk.CTkButton(
-            self.frame_opciones_4,
-            text="Desagrupar",
-            command=self.desagrupar_figuras,  # Implementa esta función según tus necesidades
+            frame_agrupar, text=Texts.SECTION_GROUP_UNGROUP, command=self._desagrupar_figuras
         )
         btn_desagrupar.grid(row=2, column=1, padx=10, pady=10, sticky="ew")
 
-        # Configurar el peso de las columnas
-        for i in range(3):
-            self.frame_opciones_4.grid_columnconfigure(
-                i, weight=1
-            )  # Distribuir el peso igualmente
+        # Configurar peso de las columnas
+        for i in range(2):
+            frame_agrupar.grid_columnconfigure(i, weight=1)
 
-        # Título de Salida de Texto
-        titulo_salida_texto = ctk.CTkLabel(
-            self.frame_opciones_5, text="Salida de Puntos de la Línea", font=self.fuente
-        )
-        titulo_salida_texto.grid(
-            row=0, column=0, pady=(10, 0), sticky="nsew", columnspan=3
-        )
+    def _crear_seccion_salida_texto(self, titulo: str, parent_frame) -> None:
+        """
+        Crea la sección de salida de texto en el menú de herramientas.
 
-        # Crear una línea separadora
-        self.separator5 = ctk.CTkFrame(
-            self.frame_opciones_5, height=2, corner_radius=10, fg_color=Color.GRIS
+        Args:
+            parent_frame (tk.Frame):
+                Frame en el que se añadirá la sección de salida de texto.
+            instance (object):
+                Instancia de la clase que contiene métodos a usar.
+
+        Esta sección incluye un área de texto donde se mostrará la salida de
+        información o mensajes relacionados con las acciones realizadas en el lienzo,
+        así como un botón para limpiar el área de texto.
+        """
+        frame_salida_texto = self._crear_frame_seccion(parent_frame, titulo)
+
+        # Área de texto para mostrar salida
+        self.area_texto = ctk.CTkTextbox(frame_salida_texto, width=200, height=100)
+        self.area_texto.grid(row=2, column=0, padx=10, pady=10, sticky="nsew")
+
+        # Botón para limpiar el área de texto
+        btn_limpiar = ctk.CTkButton(frame_salida_texto, text=Texts.SECTION_TEXT_CLEAR, command=None)
+        btn_limpiar.grid(row=2, column=1, padx=10, pady=10, sticky="ew")
+
+        # Configurar peso de las columnas
+        for i in range(2):
+            frame_salida_texto.grid_columnconfigure(i, weight=1)
+
+    def _crear_frame_seccion(self, parent_frame, titulo: str) -> ctk.CTkFrame:
+        """
+        Crea y retorna un frame para una sección del menú.
+
+        Args:
+            parent_frame (tk.Frame):
+                Frame en el que se añadirá el nuevo frame.
+            titulo (str):
+                Título de la sección.
+
+        Returns:
+            ctk.CTkFrame:
+                El frame de sección configurado.
+        """
+        frame_seccion = ctk.CTkFrame(
+            parent_frame, corner_radius=10, fg_color=Color.LIGHT_GRAY
         )
-        self.separator5.grid(
+        frame_seccion.pack(pady=10, padx=10, fill="x")
+
+        # Título de la sección
+        titulo_seccion = ctk.CTkLabel(frame_seccion, text=titulo, font=self.fuente)
+        titulo_seccion.grid(row=0, column=0, pady=(10, 0), sticky="nsew", columnspan=3)
+
+        # Línea separadora
+        separator = ctk.CTkFrame(
+            frame_seccion, height=2, corner_radius=10, fg_color=Color.GRAY
+        )
+        separator.grid(
             row=1, column=0, columnspan=3, pady=(10, 0), padx=20, sticky="ew"
         )
 
-        # Crear un CTkTextbox (solo lectura)
-        self.textbox_salida = ctk.CTkTextbox(
-            self.frame_opciones_5,
-            width=380,
-            height=200,
-            state="disabled",  # Deshabilitado para que no se pueda escribir
-        )
-        self.textbox_salida.grid(
-            row=2, column=0, columnspan=2, padx=10, pady=10, sticky="ew"
-        )
+        return frame_seccion
 
-        # Configurar el peso de las columnas
-        for i in range(3):
-            self.frame_opciones_5.grid_columnconfigure(
-                i, weight=1
-            )  # Distribuir el peso igualmente
-
-    def agrupar_figuras(self):
-        # Verifica si hay figuras para agrupar
-        print("Figuras agrupadas:")
-
-    def desagrupar_figuras(self):
-        # Verifica si hay un grupo para desagrupar
-        print("desagrupando")
-
-    def seleccionar_color(self):
-        pick_color = AskColor()  # open the color picker
-        self.color_seleccionado = pick_color.get()  # get the color string
-        print(f"color seleccionado {self.color_seleccionado}")
-
-    def _seleccionar_pincel(self, pincel):
-        print(f"Pincel seleccionado: {pincel}")
-
-    def _actualizar_tamano(self, tamano):
-        self.label_tamano.configure(text=f"Tamaño de línea: {tamano}")
-
-    def borrar(self):
-        print("Borrar al click sobre figura")
-
-    def borrar_todo(self):
-        print("Borrar todo")
-
-    def deshacer(self):
-        print("Deshacer última acción")
-
-    def _actualizar_tamano(self, valor):
-        """Actualiza el tamaño del pincel según el valor del slider."""
-        self.tamanho_pincel = int(float(valor))  # Actualiza el tamaño del pincel
-        self.label_tamano.configure(
-            text=f"Tamaño de línea: {self.tamanho_pincel}"
-        )  # Actualiza la etiqueta
-
-    def _seleccionar_pincel(self, seleccion):
-        """Actualiza la descripción según el pincel seleccionado."""
-        self.herramienta_seleccionada = Pinceles.PINCELES[seleccion]
-        print(f"herramienta {self.herramienta_seleccionada}")
-
-    ########### getters y setters ##############
-    @property
-    def herramienta_seleccionada(self) -> AlgoritmoDibujo:
-        """Obtiene la herramienta seleccionada."""
-        return self._herramienta_seleccionada
-
-    @herramienta_seleccionada.setter
-    def herramienta_seleccionada(self, valor: AlgoritmoDibujo) -> None:
-        """Establece la herramienta seleccionada."""
-        self._herramienta_seleccionada = valor
+    ########### Getters y setters ###########
 
     @property
     def color_seleccionado(self) -> str:
-        """Obtiene el color seleccionado."""
+        """Devuelve el color seleccionado para dibujar."""
         return self._color_seleccionado
 
     @color_seleccionado.setter
-    def color_seleccionado(self, valor: str) -> None:
-        """Establece el color seleccionado."""
-        self._color_seleccionado = valor
+    def color_seleccionado(self, color: str) -> None:
+        """Establece el color seleccionado para dibujar."""
+        self._color_seleccionado = color
+
+    @property
+    def herramienta_seleccionada(self) -> str:
+        """Devuelve la herramienta seleccionada para dibujar."""
+        return self._herramienta_seleccionada
+
+    @herramienta_seleccionada.setter
+    def herramienta_seleccionada(self, herramienta: AlgoritmoDibujo) -> None:
+        """Establece la herramienta seleccionada para dibujar."""
+        self._herramienta_seleccionada = herramienta
 
     @property
     def tamanho_pincel(self) -> int:
-        """Obtiene el tamanho del pincel."""
+        """Devuelve el grosor del pincel utilizado para dibujar."""
         return self._tamanho_pincel
 
     @tamanho_pincel.setter
-    def tamanho_pincel(self, valor: int) -> None:
-        """Establece el tamanho del pincel."""
-        self._tamanho_pincel = valor
+    def tamanho_pincel(self, tamanho: int) -> None:
+        """Establece el grosor del pincel utilizado para dibujar."""
+        self._tamanho_pincel = tamanho
 
     @property
-    def lienzo(self):
-        """Obtiene el lienzo."""
+    def lienzo(self) -> ctk.CTkCanvas:
+        """Devuelve el lienzo donde se dibujan las figuras."""
         return self._lienzo
 
-    # Setter para _lienzo
     @lienzo.setter
-    def lienzo(self, valor):
-        """Establece el lienzo."""
-        if isinstance(
-            valor, ctk.CTkCanvas
-        ):  # Verificamos que el valor sea un CTkCanvas
-            self._lienzo = valor
-        else:
-            raise ValueError("El valor debe ser un CTkCanvas.")
+    def lienzo(self, lienzo: ctk.CTkCanvas) -> None:
+        """Establece el lienzo donde se dibujan las figuras."""
+        self._lienzo = lienzo

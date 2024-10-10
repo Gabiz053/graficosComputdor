@@ -8,21 +8,31 @@ Autor: Gabriel Gomez Garcia
 Fecha: 17 de septiembre de 2024
 """
 
-from ventana_menu_canvas import VentanaMenuCanvas
+# Imports locales
 from constantes import Default
+from algoritmos_dibujo import AlgoritmoDibujo
+from ventana_menu_canvas import VentanaMenuCanvas
 
-width = Default.VENTANA_WIDTH
-height = Default.VENTANA_HEIGHT
-title = Default.VENTANA_TITLE
-color = Default.COLOR
+# Definición de las dimensiones y el título de la ventana
+width: int = Default.WINDOW_WIDTH
+height: int = Default.WINDOW_HEIGHT
+title: str = Default.WINDOW_TITLE
+color: str = Default.DRAWING_COLOR
+tool: AlgoritmoDibujo = Default.DRAWING_TOOL
+drawing_size: int = Default.DRAWING_SIZE
 
 
-def main():
+def main() -> None:
     """
-    Funcion principal que crea una instancia de VentanaMenuCanvas y ejecuta la aplicacion.
+    Función principal que crea una instancia de VentanaMenuCanvas y ejecuta la aplicación.
+
+    Esta función inicializa la ventana principal de la aplicación, configurando su tamaño,
+    título y color de fondo. También establece la herramienta y tamaño de dibujo por defecto.
     """
     # Crear una instancia de VentanaMenuCanvas
-    ventana = VentanaMenuCanvas(width, height, title, color, Default.HERRAMIENTA, 10)
+    ventana = VentanaMenuCanvas(
+        width, height, title, color, tool, drawing_size
+    )
 
     # Iniciar el bucle principal de la ventana
     ventana.mostrar_ventana()
