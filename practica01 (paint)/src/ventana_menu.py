@@ -148,7 +148,7 @@ class VentanaMenu(Ventana):
         - Área de Salida de Texto
         """
         # Crear el frame izquierdo para el área de contenido
-        frame_area_dibujo = self._crear_frame_izquierdo(self._ventana)
+        self.frame_area_dibujo = self._crear_frame_izquierdo(self._ventana)
 
         # Crear el frame derecho para los botones
         frame_panel_opciones = self._crear_frame_derecho(self._ventana)
@@ -157,14 +157,31 @@ class VentanaMenu(Ventana):
         self._configurar_grid(self._ventana)
 
         # Crear el canvas en el frame izquierdo
-        self._lienzo = self._crear_canvas(frame_area_dibujo)
+        self._lienzo = self._crear_canvas(self.frame_area_dibujo)
+    
+        # Crear las barras de desplazamiento
+        scrollbar_x = ctk.CTkScrollbar(self.frame_area_dibujo, orientation=ctk.HORIZONTAL, command=self._lienzo.xview)
+        scrollbar_x.grid(row=2, column=0, padx=0, pady=0, sticky="ew")  # Barra en la parte inferior (horizontal)
 
+        scrollbar_y = ctk.CTkScrollbar(self.frame_area_dibujo, orientation=ctk.VERTICAL, command=self._lienzo.yview)
+        scrollbar_y.grid(row=1, column=1, padx=0, pady=0, sticky="ns")  # Barra en el lado derecho (vertical)
+
+        # Configurar el canvas para usar las barras de desplazamiento
+        self.lienzo.configure(xscrollcommand=scrollbar_x.set, yscrollcommand=scrollbar_y.set)
+        
+        # Configurar expansión del grid
+        self.frame_area_dibujo.grid_rowconfigure(1, weight=1)  # Hacer que la fila del canvas se expanda
+        self.frame_area_dibujo.grid_columnconfigure(0, weight=1)  # Hacer que la columna del canvas se expanda
+
+
+        
         # Crear frames para las diferentes secciones de opciones en el frame derecho
         self._crear_seccion_opciones(Texts.SECTION_OPTIONS, frame_panel_opciones)
         self._crear_seccion_borradores(Texts.SECTION_CLEAR, frame_panel_opciones)
         self._crear_seccion_colores(Texts.SECTION_COLOR, frame_panel_opciones)
         self._crear_seccion_agrupar(Texts.SECTION_GROUP, frame_panel_opciones)
         self._crear_seccion_salida_texto(Texts.SECTION_TEXT, frame_panel_opciones)
+        self._crear_seccion_ajustes(Texts.SECTION_SETTINGS, frame_panel_opciones)
 
     def _crear_frame_izquierdo(self, ventana) -> ctk.CTkFrame:
         """
@@ -179,13 +196,13 @@ class VentanaMenu(Ventana):
                 El frame izquierdo configurado.
         """
         frame_area_dibujo = ctk.CTkFrame(ventana, corner_radius=10)
-        frame_area_dibujo.grid(row=0, column=0, padx=10, pady=10, sticky="nsew")
+        frame_area_dibujo.grid(row=0, column=0, padx=10, pady=10, sticky=tk.NSEW)
 
         # Título para el frame izquierdo
         titulo_area_dibujo = ctk.CTkLabel(
             frame_area_dibujo, text=Texts.LEFT_FRAME_LABEL, font=self.fuente
         )
-        titulo_area_dibujo.pack(pady=10)
+        titulo_area_dibujo.grid(row=0, column=0, columnspan=2, padx=10, pady=10, sticky="nsew")  # Ocupar el espacio horizontal
 
         return frame_area_dibujo
 
@@ -239,7 +256,7 @@ class VentanaMenu(Ventana):
         canvas_dibujo = ctk.CTkCanvas(
             parent_frame, highlightthickness=0, bg=Default.CANVAS_BACKGROUND_COLOR
         )
-        canvas_dibujo.pack(fill=tk.BOTH, expand=True, padx=10, pady=5)
+        canvas_dibujo.grid(row=1, column=0, padx=10, pady=10, sticky="nsew")  # Ocupa el espacio restante
 
         return canvas_dibujo
 
@@ -412,12 +429,55 @@ class VentanaMenu(Ventana):
         self.area_texto.grid(row=2, column=0, padx=10, pady=10, sticky="nsew")
 
         # Botón para limpiar el área de texto
-        btn_limpiar = ctk.CTkButton(frame_salida_texto, text=Texts.SECTION_TEXT_CLEAR, command=None)
+        btn_limpiar = ctk.CTkButton(frame_salida_texto, text=Texts.SECTION_TEXT_CLEAR, command=self._limpiar_texto)
         btn_limpiar.grid(row=2, column=1, padx=10, pady=10, sticky="ew")
 
         # Configurar peso de las columnas
         for i in range(2):
             frame_salida_texto.grid_columnconfigure(i, weight=1)
+
+    def _limpiar_texto(self):
+        """Limpia el texto del textbox."""
+        self.area_texto.delete("1.0", ctk.END)  # Elimina todo el texto
+        
+    def _anadir_texto(self, texto):
+        """Añade texto al textbox."""
+        texto_a_anadir = f"{texto}\n"
+        self.area_texto.insert(ctk.END, texto_a_anadir)  # Añade texto al final
+        
+    def _crear_seccion_ajustes(self, titulo: str, parent_frame) -> None:
+        """
+        Crea la sección de ajustes en el menú de herramientas.
+
+        Args:
+            titulo (str): El título de la sección.
+            parent_frame (tk.Frame): El frame en el que se añadirá la sección de ajustes.
+        """
+        frame_ajustes = self._crear_frame_seccion(parent_frame, titulo)
+
+        # Botón para resetear el zoom
+        btn_reset_zoom = ctk.CTkButton(
+            frame_ajustes, text=Texts.SECTION_SETTINGS_ZOOM, command=self._resetear_zoom
+        )
+        btn_reset_zoom.grid(row=2, column=0, padx=10, pady=10, sticky="ew")
+
+        # Botón para cerrar la aplicación
+        btn_cerrar_app = ctk.CTkButton(
+            frame_ajustes, text=Texts.SECTION_SETTINGS_EXIT, command=self._cerrar_aplicacion
+        )
+        btn_cerrar_app.grid(row=2, column=1, padx=10, pady=10, sticky="ew")
+
+        # Configurar peso de las columnas
+        frame_ajustes.grid_columnconfigure(0, weight=1)
+        frame_ajustes.grid_columnconfigure(1, weight=1)
+
+    def _resetear_zoom(self) -> None:
+        """Restablece el zoom a su valor predeterminado."""
+        print("Resetear zoom")
+
+    def _cerrar_aplicacion(self) -> None:
+        """Cierra la aplicación."""
+        self._ventana.quit()  # Método para cerrar la ventana
 
     def _crear_frame_seccion(self, parent_frame, titulo: str) -> ctk.CTkFrame:
         """

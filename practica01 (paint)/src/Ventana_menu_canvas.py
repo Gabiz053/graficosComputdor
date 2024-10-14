@@ -17,102 +17,7 @@ import tkinter as tk
 from ventana_menu import VentanaMenu
 from punto import Punto
 from forma import AlgoritmoDibujo, Linea, Figura
-from constantes import Default, UserEvents
-
-
-class _CommandManager:
-    """
-    Clase interna para gestionar el historial de comandos de dibujo,
-    permitiendo operaciones de deshacer (undo) y rehacer (redo).
-
-    Atributos:
-        _history (list): Lista que almacena los comandos ejecutados.
-        _redo_stack (list): Pila que almacena los comandos deshechos para rehacer.
-    """
-
-    def __init__(self) -> None:
-        """
-        Inicializa un nuevo `CommandManager` con una lista vacía para el historial
-        de comandos ejecutados y una pila para los comandos deshechos.
-        """
-        self._history: list = []  # Historial de comandos ejecutados
-        self._redo_stack: list = []  # Pila de comandos deshechos para rehacer
-
-    def execute(self, command: object) -> None:
-        """
-        Ejecuta un comando, lo almacena en el historial y borra la pila de comandos deshechos.
-
-        Args:
-            command (object): El comando que se va a ejecutar. Debe implementar los métodos `execute` y `undo`.
-        """
-        command.execute()
-        self._history.append(command)
-        self._redo_stack.clear()  # Se borra la pila de redo al ejecutar un nuevo comando
-
-    def undo(self) -> None:
-        """
-        Deshace el último comando ejecutado y lo mueve a la pila de comandos deshechos.
-        Si no hay comandos en el historial, no hace nada.
-        """
-        if self._history:
-            command = self._history.pop()  # Recupera el último comando ejecutado
-            command.undo()  # Deshace el comando
-            self._redo_stack.append(
-                command
-            )  # Añade el comando deshecho a la pila de redo
-
-    def redo(self) -> None:
-        """
-        Rehace el último comando deshecho, ejecutándolo de nuevo y añadiéndolo
-        de vuelta al historial de comandos ejecutados.
-        Si no hay comandos para rehacer, no hace nada.
-        """
-        if self._redo_stack:
-            command = self._redo_stack.pop()  # Recupera el último comando deshecho
-            command.execute()  # Rehace el comando
-            self._history.append(
-                command
-            )  # Lo añade nuevamente al historial de comandos ejecutados
-
-
-class _DibujarLineaCommand:
-    """
-    Comando que encapsula la acción de dibujar una línea en el lienzo, implementando
-    la lógica de deshacer y rehacer para gestionar el dibujo de la línea.
-
-    Atributos:
-        _lienzo (tk.Canvas): El lienzo (Canvas de Tkinter) donde se dibuja la línea.
-        _linea (Linea): La instancia de la clase `Linea` que contiene los puntos y la información de la línea.
-    """
-
-    def __init__(self, lienzo: tk.Canvas, linea: "Linea") -> None:
-        """
-        Inicializa el comando de dibujo con el lienzo donde se va a dibujar la línea
-        y la instancia de la línea.
-
-        Args:
-            lienzo (tk.Canvas): El lienzo (Canvas) de Tkinter donde se va a dibujar la línea.
-            linea (Linea): Instancia de la clase `Linea` que contiene los puntos inicial y final,
-                           el color, el tamaño del pincel y otros parámetros.
-        """
-        self._lienzo: tk.Canvas = lienzo  # Lienzo donde se dibuja la línea
-        self._linea: Linea = (
-            linea  # Objeto `Linea` que contiene la información del dibujo
-        )
-
-    def execute(self) -> None:
-        """
-        Ejecuta la acción de dibujar la línea en el lienzo.
-        Llama al método `dibujar` de la clase `Linea`.
-        """
-        self._linea.dibujar()
-
-    def undo(self) -> None:
-        """
-        Deshace la acción de dibujar la línea, eliminándola del lienzo.
-        Llama al método `borrar` de la clase `Linea`.
-        """
-        self._linea.borrar()
+from constantes import Default, UserEvents, Color
 
 
 class VentanaMenuCanvas(VentanaMenu):
@@ -160,7 +65,7 @@ class VentanaMenuCanvas(VentanaMenu):
         self._linea_seleccionada: Linea | None = None  # Línea seleccionada
         self._offset_x: int = 0  # Offset horizontal para el movimiento de líneas
         self._offset_y: int = 0  # Offset vertical para el movimiento de líneas
-        self._command_manager = _CommandManager()  # Gestor de deshacer/rehacer
+        self._scroll_total = 2000 # maximo scroll que se puede hacer
 
     def _crear_contenido_ventana(self) -> None:
         """
@@ -176,7 +81,9 @@ class VentanaMenuCanvas(VentanaMenu):
         interacción y devuelve la referencia al lienzo.
         """
         lienzo = self.lienzo
-        lienzo.config(scrollregion=lienzo.bbox("all"))
+        
+        self._centrar_canvas()
+        self._crear_ejes()
 
         # Asignar eventos del ratón para interactuar con el lienzo
         lienzo.bind(UserEvents.LEFT_CLICK, self._iniciar_dibujo)
@@ -187,8 +94,29 @@ class VentanaMenuCanvas(VentanaMenu):
         lienzo.bind(UserEvents.RIGHT_RELEASE, self._finalizar_mover_linea)
         lienzo.bind(UserEvents.MOUSE_WHEEL, self._zoom)
 
-    ########### Manejo de eventos ###########
+        # tiene que ser a la ventana para que lea las flechas y lambda porque usa argumentos
+        self.ventana.bind(UserEvents.ARROW_UP, lambda e: self._mover_canvas(0, -Default.CANVAS_MOVE_Y))  # Mover arriba
+        self.ventana.bind(UserEvents.ARROW_DOWN, lambda e: self._mover_canvas(0, Default.CANVAS_MOVE_Y))  # Mover abajo
+        self.ventana.bind(UserEvents.ARROW_LEFT, lambda e: self._mover_canvas(-Default.CANVAS_MOVE_X, 0))  # Mover izquierda
+        self.ventana.bind(UserEvents.ARROW_RIGHT, lambda e: self._mover_canvas(Default.CANVAS_MOVE_X, 0))  # Mover derecha
 
+    ########### Manejo de eventos ###########
+    def _crear_ejes(self) -> None:
+        self.lienzo.create_line(-2000, 0, 2000, 0, fill=Color.GRAY, width=1)  # Eje X
+        self.lienzo.create_line(0, 2000, 0, -2000, fill=Color.GRAY, width=1)  # Eje Y
+        
+    def _centrar_canvas(self) -> None:
+        # Configurar el área desplazable (scrollregion) más amplia para que el origen esté en el centro
+        self.lienzo.configure(scrollregion=(-self._scroll_total, -self._scroll_total, self._scroll_total, self._scroll_total))
+        self.lienzo.xview_scroll(-33, tk.UNITS)
+        self.lienzo.yview_scroll(-38, tk.UNITS)
+
+        
+    def _crear_punto(self, x: int, y: int) -> Punto:
+        x_canvas = self.lienzo.canvasx(x)  # Obtener la coordenada X relativa al canvas
+        y_canvas = self.lienzo.canvasy(y)  # Obtener la coordenada Y relativa al canvas
+        return Punto(x_canvas, y_canvas)
+        
     def _iniciar_dibujo(self, evento: tk.Event) -> None:
         """
         Inicia el proceso de dibujo cuando el usuario hace clic izquierdo en el lienzo.
@@ -196,7 +124,7 @@ class VentanaMenuCanvas(VentanaMenu):
         Args:
             evento (tk.Event): Evento de clic del ratón que contiene las coordenadas.
         """
-        self._punto_inicial = Punto(evento.x, evento.y)
+        self._punto_inicial = self._crear_punto(evento.x,evento.y)
 
     def _dibujar_en_movimiento(self, evento: tk.Event) -> None:
         """
@@ -207,7 +135,8 @@ class VentanaMenuCanvas(VentanaMenu):
             evento (tk.Event): Evento de movimiento del ratón.
         """
         if self._punto_inicial:
-            self._actualizar_linea_temporal(evento.x, evento.y)
+            punto_provisional = self._crear_punto(evento.x, evento.y)
+            self._actualizar_linea_temporal(punto_provisional.x, punto_provisional.y)
 
     def _actualizar_linea_temporal(self, x: int, y: int) -> None:
         """
@@ -239,7 +168,7 @@ class VentanaMenuCanvas(VentanaMenu):
         if not self._punto_inicial:
             return  # No hay nada que dibujar si el punto inicial no está definido
 
-        self._punto_final = Punto(evento.x, evento.y)
+        self._punto_final = self._crear_punto(evento.x, evento.y)
         self._lienzo.delete("linea_temporal")  # Elimina la línea temporal
 
         # Crea y almacena una nueva línea
@@ -252,10 +181,14 @@ class VentanaMenuCanvas(VentanaMenu):
             self.tamanho_pincel,
         )
         self._figuras.anhadir(nueva_linea)
+        print(nueva_linea)
+        lista_puntos = nueva_linea.dibujar()
 
         # Ejecuta el comando de dibujo y lo añade al historial
-        comando_dibujo = _DibujarLineaCommand(self._lienzo, nueva_linea)
-        self._command_manager.execute(comando_dibujo)
+        # comando_dibujo = _DibujarLineaCommand(self._lienzo, nueva_linea, lista_puntos)
+        # lista_puntos = self._command_manager.execute(comando_dibujo)
+        # print(lista_puntos)
+        self._anadir_texto(lista_puntos)
 
         # Reinicia los puntos
         self._punto_inicial, self._punto_final = None, None
@@ -268,12 +201,16 @@ class VentanaMenuCanvas(VentanaMenu):
         Args:
             event (tk.Event): Evento de clic del ratón.
         """
+        
+        punto_real = self._crear_punto(event.x, event.y)
+        
         self._linea_seleccionada = None
         for linea in self._figuras:
             if isinstance(linea, Linea) and self._es_cercano_a_linea(
-                event.x, event.y, linea
+                punto_real.x, punto_real.y, linea
             ):
                 self._linea_seleccionada = linea
+                print(f"linea seleccionada: {linea}")
                 break
 
     def _es_cercano_a_linea(self, x: int, y: int, linea: Linea) -> bool:
@@ -312,10 +249,12 @@ class VentanaMenuCanvas(VentanaMenu):
         Args:
             event (tk.Event): Evento de movimiento del ratón.
         """
+        
+        punto_real = self._crear_punto(event.x, event.y)
+        
         if self._linea_seleccionada:
-            new_x1 = event.x - self._offset_x
-            new_y1 = event.y - self._offset_y
-            self._linea_seleccionada.mover(new_x1, new_y1)
+
+            self._linea_seleccionada.mover(punto_real.x, punto_real.y)
 
     def _finalizar_mover_linea(self, event: tk.Event) -> None:
         """
@@ -336,14 +275,32 @@ class VentanaMenuCanvas(VentanaMenu):
         scale_factor = (
             Default.ZOOM_IN_FACTOR if evento.delta > 0 else Default.ZOOM_OUT_FACTOR
         )
-        nuevo_nivel_zoom = self._nivel_zoom * scale_factor
+        # va cambiando la escala (todo tiene que cambiar segun la escala)
+        nivel_actual_zoom = round(self._nivel_zoom + scale_factor, 1)
+        punto = self._crear_punto(evento.x, evento.y)
+        
+        zoom = 1 + scale_factor
 
-        # Limita el nivel de zoom a un rango entre 0.5x y 3x
-        if Default.ZOOM_LIMIT_MIN <= nuevo_nivel_zoom <= Default.ZOOM_LIMIT_MAX:
-            self._nivel_zoom = nuevo_nivel_zoom
-            # falta escalar los puntos de las lineas desde dentro de la linea
-            self._lienzo.scale("all", evento.x, evento.y, scale_factor, scale_factor)
+        # Limita el nivel de zoom a un rango entre min y max
+        if Default.ZOOM_LIMIT_MIN <= nivel_actual_zoom <= Default.ZOOM_LIMIT_MAX:
+            self._nivel_zoom = nivel_actual_zoom
+            
+            # falta escalar los clicks de los eventos
+            self._lienzo.scale("all", punto.x, punto.y, zoom, zoom)
+            self._scroll_total = self._scroll_total + (2000 * scale_factor)
+            self.lienzo.configure(scrollregion=(-self._scroll_total, -self._scroll_total, self._scroll_total, self._scroll_total))
+            
+    def _resetear_zoom(self) -> None:
+        """Restablece el zoom a su valor predeterminado."""
+        super()._resetear_zoom()
 
+        inverso = 1 / self._nivel_zoom
+        # falta escalar los clicks de los eventos
+        self._lienzo.scale("all", 0, 0, inverso, inverso)
+        self._scroll_total = 2000
+        self.lienzo.configure(scrollregion=(-self._scroll_total, -self._scroll_total, self._scroll_total, self._scroll_total))
+        self._nivel_zoom = 1
+        
     def _borrar_todo(self) -> None:
         """
         Borra todo el contenido del lienzo y resetea el estado de las figuras dibujadas.
@@ -351,6 +308,33 @@ class VentanaMenuCanvas(VentanaMenu):
         super()._borrar_todo()
         self._lienzo.delete("all")
         self._figuras.eliminar_todo()
+        self._crear_ejes()
+        
+    def _deshacer_accion(self):
+        super()._deshacer_accion()
+        ultimo = self._figuras._elementos.pop()
+        self._figuras.eliminar(ultimo)
+
+
+    def _mover_canvas(self, dx: int, dy: int) -> None:
+        """
+        Desplaza el canvas en función de los valores de desplazamiento proporcionados.
+
+        Args:
+            dx (int): Desplazamiento horizontal en unidades.
+            dy (int): Desplazamiento vertical en unidades.
+
+        Returns:
+            None
+        """
+        if not isinstance(dx, int) or not isinstance(dy, int):
+            raise ValueError("Los valores de desplazamiento deben ser enteros.")
+
+        # Desplazamiento horizontal del canvas
+        self.lienzo.xview_scroll(dx, tk.UNITS)
+
+        # Desplazamiento vertical del canvas
+        self.lienzo.yview_scroll(dy, tk.UNITS)
 
     ########### Getters y setters ###########
 

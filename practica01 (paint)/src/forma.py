@@ -82,7 +82,7 @@ class ObjetoDibujo(ABC):
 
     # Métodos abstractos
     @abstractmethod
-    def dibujar(self):
+    def dibujar(self) -> list:
         """Método abstracto para dibujar el objeto en el lienzo."""
         raise NotImplementedError(ErrorMessages.NOT_IMPLEMENTED)
 
@@ -134,14 +134,12 @@ class Linea(ObjetoDibujo):
         return Punto(self._puntos[1][0], self._puntos[1][1])
 
     # Métodos principales
-    def dibujar(self) -> None:
+    def dibujar(self) -> list:
         """Dibuja una línea en el lienzo."""
-        self.herramienta.dibujar_linea(
-            self.lienzo,
-            self.color,
-            self.tamanho,
-            *self._puntos.flatten(),  # Descompone el array en argumentos
+        lista_puntos = self.herramienta.dibujar_linea(
+            self.lienzo, self.color, self.tamanho, *self._puntos.flatten()
         )
+        return lista_puntos
 
     def mover(self, dx: int, dy: int) -> None:
         """Mueve la línea desplazando ambos puntos."""
@@ -226,6 +224,7 @@ class Figura(ObjetoDibujo):
         """Elimina un objeto de dibujo específico de la colección."""
         if elemento in self._elementos:
             self._elementos.remove(elemento)
+            
             return True
         return False
 

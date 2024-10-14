@@ -89,6 +89,10 @@ class Texts:
 
     SECTION_TEXT = "Salida de texto"
     SECTION_TEXT_CLEAR = "Limpiar"
+    
+    SECTION_SETTINGS = "Ajustes aplicacion"
+    SECTION_SETTINGS_ZOOM = "Resetear zoom"
+    SECTION_SETTINGS_EXIT = "Cerrar aplicacion"
 
     LEFT_FRAME_LABEL = "Área de trabajo"
     RIGHT_FRAME_LABEL = "Herramientas"
@@ -116,7 +120,11 @@ class UserEvents:
     RIGHT_RELEASE = "<ButtonRelease-3>"  # Evento de liberación del clic derecho
     MOUSE_WHEEL = "<MouseWheel>"  # Evento al mover la rueda del ratón
     MOUSE_WHEEL_DRAG = "<B2-Motion>"  # Evento al mover la rueda del ratón
-
+    
+    ARROW_UP = "<Up>"
+    ARROW_DOWN = "<Down>"
+    ARROW_LEFT = "<Left>"
+    ARROW_RIGHT = "<Right>"
 
 class Default:
     """Clase que define las constantes por defecto para la aplicación."""
@@ -127,10 +135,13 @@ class Default:
     CANVAS_BACKGROUND_COLOR = Color.WHITE  # Color de fondo del canvas
 
     ZOOM_FACTOR = 1
-    ZOOM_OUT_FACTOR = 0.9  # Más pequeño
-    ZOOM_IN_FACTOR = 1.1  # Más grande
-    ZOOM_LIMIT_MIN = 0.5
+    ZOOM_OUT_FACTOR = -0.1  # Más pequeño
+    ZOOM_IN_FACTOR = 0.1  # Más grande
+    ZOOM_LIMIT_MIN = 0.4
     ZOOM_LIMIT_MAX = 3.0
+    
+    CANVAS_MOVE_X = 1 # velocidad desplazamiento en x
+    CANVAS_MOVE_Y = 1 # velocidad desplazamiento en y
 
     MIN_DISTANCE = 10  # Distancia mínima para ciertas interacciones
 

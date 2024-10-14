@@ -1,65 +1,63 @@
-import tkinter as tk
+import customtkinter as ctk
 
-# Función para mostrar las coordenadas al hacer clic, invirtiendo el eje Y
-def mostrar_coordenadas(event):
-    x_canvas = canvas.canvasx(event.x)  # Obtener la coordenada X relativa al canvas
-    y_canvas = canvas.canvasy(event.y)  # Obtener la coordenada Y relativa al canvas
-    # Invertir el eje Y
-    print(f"Coordenadas: ({x_canvas}, {y_canvas})")
+class VentanaCanvas(ctk.CTk):
+    def __init__(self):
+        super().__init__()
+        self.title("Canvas con líneas movibles")
+        self.geometry("800x600")
 
-# Función para mover el canvas, donde la cantidad de desplazamiento se puede ajustar
-def mover_canvas(dx, dy):
-    # Desplazar horizontalmente
-    canvas.xview_scroll(dx, "units")  
-    # Desplazar verticalmente
-    canvas.yview_scroll(dy, "units")
+        self.canvas = ctk.CTkCanvas(self, bg="white")
+        self.canvas.pack(fill="both", expand=True)
 
-# Crear la ventana principal
-root = tk.Tk()
-root.geometry("1300x700")
+        # Lista para almacenar las líneas y su ID
+        self.lineas = []
+        self.selected_line = None
+        self.start_x = None
+        self.start_y = None
 
-# Crear un frame para contener el canvas y las barras de scroll
-frame = tk.Frame(root)
-frame.pack(fill="both", expand=True)
+        # Dibujar líneas iniciales
+        self.dibujar_lineas()
 
-# Crear el canvas
-canvas = tk.Canvas(frame, background="white", width=700, height=700)
-canvas.pack(side="left")
+        # Eventos de ratón
+        self.canvas.bind("<Button-1>", self.seleccionar_linea)
+        self.canvas.bind("<B1-Motion>", self.mover_linea)
+        self.canvas.bind("<ButtonRelease-1>", self.liberar_linea)
 
-# Crear las barras de desplazamiento
-scrollbar_x = tk.Scrollbar(frame, orient=tk.HORIZONTAL, command=canvas.xview)
-scrollbar_x.pack(side="bottom", fill="x")
+    def dibujar_lineas(self):
+        # Crear líneas en el canvas
+        self.lineas.append(self.canvas.create_line(100, 100, 200, 200, fill="blue", width=2))
+        self.lineas.append(self.canvas.create_line(300, 150, 400, 250, fill="red", width=2))
+        self.lineas.append(self.canvas.create_line(500, 100, 600, 200, fill="green", width=2))
 
-scrollbar_y = tk.Scrollbar(frame, orient=tk.VERTICAL, command=canvas.yview)
-scrollbar_y.pack(side="right", fill="y")
+    def seleccionar_linea(self, event):
+        # Comprobar si se hace clic en una línea
+        for linea_id in self.lineas:
+            x1, y1, x2, y2 = self.canvas.coords(linea_id)
+            if self.punto_en_linea(event.x, event.y, x1, y1, x2, y2):
+                self.selected_line = linea_id
+                self.start_x = event.x
+                self.start_y = event.y
+                break
 
-# Configurar el canvas para usar las barras de desplazamiento
-canvas.configure(xscrollcommand=scrollbar_x.set, yscrollcommand=scrollbar_y.set)
+    def mover_linea(self, event):
+        if self.selected_line:
+            dx = event.x - self.start_x
+            dy = event.y - self.start_y
+            # Mover la línea seleccionada
+            self.canvas.move(self.selected_line, dx, dy)
+            # Actualizar las coordenadas de inicio
+            self.start_x = event.x
+            self.start_y = event.y
 
-# Configurar el área desplazable (scrollregion) más amplia para que el origen esté en el centro
-canvas.configure(scrollregion=(-1000, -1000, 1000, 1000))
+    def liberar_linea(self, event):
+        # Restablecer la línea seleccionada
+        self.selected_line = None
 
-# Mover la vista del canvas al centro (donde está el origen)
+    def punto_en_linea(self, x, y, x1, y1, x2, y2, tolerancia=5):
+        # Comprobar si el punto (x, y) está cerca de la línea (x1, y1) a (x2, y2)
+        dist = abs((y2 - y1) * x - (x2 - x1) * y1 + x2 * y1 - y2 * x1) / ((y2 - y1) ** 2 + (x2 - x1) ** 2) ** 0.5
+        return dist <= tolerancia
 
-# Invertir el eje Y al crear las líneas de los ejes
-canvas.create_line(-1000, 0, 1000, 0, fill="black", width=2)  # Eje X
-canvas.create_line(0, 1000, 0, -1000, fill="black", width=2)  # Eje Y
-
-canvas.create_line(344, 1555, 625, -56, fill="black", width=4)
-canvas.create_line(-1334, 200, -0, -344, fill="black", width=4)
-
-
-# Vincular el evento de clic con la función mostrar_coordenadas
-canvas.bind("<Button-1>", mostrar_coordenadas)
-
-# Teclado para mover el canvas
-# Para aumentar el desplazamiento, puedes aumentar el número (por ejemplo, 10)
-dx_units = 1  # Cambia este valor para ajustar el desplazamiento horizontal
-dy_units = 1  # Cambia este valor para ajustar el desplazamiento vertical
-
-root.bind("<Up>", lambda event: mover_canvas(0, -dy_units))    # Mover arriba
-root.bind("<Down>", lambda event: mover_canvas(0, dy_units))    # Mover abajo
-root.bind("<Left>", lambda event: mover_canvas(-dx_units, 0))   # Mover izquierda
-root.bind("<Right>", lambda event: mover_canvas(dx_units, 0))    # Mover derecha
-
-root.mainloop()
+if __name__ == "__main__":
+    app = VentanaCanvas()
+    app.mainloop()

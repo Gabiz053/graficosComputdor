@@ -194,7 +194,7 @@ class Ventana(ABC):
     @property
     def ventana(self) -> ctk.CTk:
         """Obtiene la instancia de la ventana customtkinter."""
-        return self._
+        return self._ventana
 
     @property
     def fuente(self) -> ctk.CTkFont:
