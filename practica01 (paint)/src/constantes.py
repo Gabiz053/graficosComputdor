@@ -88,8 +88,9 @@ class Texts:
     SECTION_ACTIONS_DELETE = "Borrar"
     SECTION_ACTIONS_CHANGE_COLOR = "Cambiar Color"
     
-    SECTION_ACTIONS_GROUP = "Agrupar"
-    SECTION_ACTIONS_UNGROUP = "Desagrupar"
+    SECTION_GRUPO = "Grupo"
+    SECTION_GRUPO_GROUP = "Agrupar"
+    SECTION_GRUPO_UNGROUP = "Desagrupar"
 
     SECTION_TEXT = "Salida de texto"
     SECTION_TEXT_CLEAR = "Limpiar"
@@ -132,10 +133,15 @@ class UserEvents:
     TECLA_DOWN = "<KeyPress-s>"
     TECLA_RIGHT = "<KeyPress-d>"
     
+    CONTROL_Z = '<Control-z>'
+    
     ARROW_UP = "<Up>"
     ARROW_DOWN = "<Down>"
     ARROW_LEFT = "<Left>"
     ARROW_RIGHT = "<Right>"
+    
+    TECLA_G = "g"
+    TECLA_H = "h"
 
 class Default:
     """Clase que define las constantes por defecto para la aplicación."""

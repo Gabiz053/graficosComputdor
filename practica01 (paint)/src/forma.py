@@ -98,6 +98,10 @@ class ObjetoDibujo(ABC):
     def cambiar_color(self):
         """Método abstracto para cambiar color del el objeto de dibujo."""
         raise NotImplementedError(ErrorMessages.NOT_IMPLEMENTED)
+    
+    def cambiar_outline(self):
+        """Método abstracto para cambiar el outline del objeto de dibujo al seleccioanrlo."""
+        raise NotImplementedError(ErrorMessages.NOT_IMPLEMENTED)
 
 
 class Linea(ObjetoDibujo):
@@ -179,6 +183,12 @@ class Linea(ObjetoDibujo):
         for punto in self._puntos_dibujados:
             self._lienzo.itemconfig(punto, fill=color, outline=color)
 
+    def cambiar_outline(self, color):
+        """
+        Cambia el outline de la línea para resaltar cuando está seleccionada.
+        """
+        for punto in self._puntos_dibujados:
+            self._lienzo.itemconfig(punto, outline=color)  # Cambia el outline a un color específico
 
 class Puntos(ObjetoDibujo):
     """Clase que representa una figura geométrica formada por varios puntos."""
@@ -265,7 +275,22 @@ class Figura(ObjetoDibujo):
     def desagrupar(self):
         """Desagrupa los elementos devolviéndolos a la lista general de figuras."""
         return self._elementos[:]
-
+    
+    def cambiar_outline(self, color):
+        """
+        Cambia el outline de todos los elementos en la figura.
+        """
+        for elemento in self._elementos:
+            elemento.cambiar_outline(color)  # Llama al método de cada elemento
+            
+    def borrar(self) -> bool:
+        """Borra cada linea."""
+        for elemento in self._elementos:
+            elemento.borrar()
+        self.eliminar_todo()
+        
+        return True
+    
     # Métodos para iteración
     def __iter__(self):
         """Devuelve un iterador para las figuras."""

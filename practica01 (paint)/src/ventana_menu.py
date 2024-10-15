@@ -199,6 +199,7 @@ class VentanaMenu(Ventana):
         self._crear_seccion_colores(Texts.SECTION_COLOR, frame_panel_opciones)
         self._crear_seccion_borradores(Texts.SECTION_CLEAR, frame_panel_opciones)
         self._crear_seccion_acciones(Texts.SECTION_ACTIONS, frame_panel_opciones)
+        self._crear_seccion_agrupar(Texts.SECTION_GRUPO, frame_panel_opciones)
         self._crear_seccion_salida_texto(Texts.SECTION_TEXT, frame_panel_opciones)
         self._crear_seccion_ajustes(Texts.SECTION_SETTINGS, frame_panel_opciones)
 
@@ -219,7 +220,7 @@ class VentanaMenu(Ventana):
 
         # Título para el frame izquierdo
         titulo_area_dibujo = ctk.CTkLabel(
-            frame_area_dibujo, text=Texts.LEFT_FRAME_LABEL, font=self.fuente
+            frame_area_dibujo, text=Texts.LEFT_FRAME_LABEL, font=(self.fuente, 16)
         )
         titulo_area_dibujo.grid(
             row=0, column=0, columnspan=2, padx=10, pady=10, sticky="nsew"
@@ -244,7 +245,7 @@ class VentanaMenu(Ventana):
 
         # Título para el frame derecho
         titulo_panel_opciones = ctk.CTkLabel(
-            frame_panel_opciones, text=Texts.RIGHT_FRAME_LABEL, font=self.fuente
+            frame_panel_opciones, text=Texts.RIGHT_FRAME_LABEL, font=(self.fuente, 16)
         )
         titulo_panel_opciones.pack(pady=10)
 
@@ -341,6 +342,32 @@ class VentanaMenu(Ventana):
         # Configurar peso de las columnas
         for i in range(3):
             frame_opciones_pincel.grid_columnconfigure(i, weight=1)
+            
+    def _crear_seccion_colores(self, titulo: str, parent_frame) -> None:
+        """
+        Crea la sección de selección de colores en el menú de herramientas.
+
+        Args:
+            parent_frame (tk.Frame):
+                Frame en el que se añadirá la sección de colores.
+            instance (object):
+                Instancia de la clase que contiene métodos a usar.
+
+        Esta sección incluye un botón que permite al usuario seleccionar un color
+        para el pincel que utilizará en el lienzo.
+        """
+        frame_colores = self._crear_frame_seccion(parent_frame, titulo)
+
+        # Botón para seleccionar color
+        btn_seleccionar_color = ctk.CTkButton(
+            frame_colores,
+            text=Texts.SECTION_COLOR_SELECT,
+            command=self._seleccionar_color,
+        )
+        btn_seleccionar_color.grid(row=2, column=0, padx=10, pady=10, sticky="ew")
+
+        # Configurar peso de la columna
+        frame_colores.grid_columnconfigure(0, weight=1)
 
     def _crear_seccion_borradores(self, titulo: str, parent_frame) -> None:
         """
@@ -403,25 +430,8 @@ class VentanaMenu(Ventana):
         )
         self.boton_cambiar_color.grid(row=2, column=1, padx=10, pady=10, sticky="ew")
 
-        # Botones para agrupar y desagrupar
-        self.btn_agrupar = ctk.CTkButton(
-            frame_acciones,
-            text=Texts.SECTION_ACTIONS_GROUP,
-            command=lambda: self._seleccionar_accion(Texts.SECTION_ACTIONS_GROUP),
-            fg_color=Color.LIGHT_LIGHT_GREY,
-        )
-        self.btn_agrupar.grid(row=2, column=2, padx=10, pady=10, sticky="ew")
-
-        self.btn_desagrupar = ctk.CTkButton(
-            frame_acciones,
-            text=Texts.SECTION_ACTIONS_UNGROUP,
-            command=lambda: self._seleccionar_accion(Texts.SECTION_ACTIONS_UNGROUP),
-            fg_color=Color.LIGHT_LIGHT_GREY,
-        )
-        self.btn_desagrupar.grid(row=2, column=3, padx=10, pady=10, sticky="ew")
-
         # Configurar peso de las columnas
-        for i in range(4):
+        for i in range(2):
             frame_acciones.grid_columnconfigure(i, weight=1)
 
     def _seleccionar_accion(self, accion: str) -> None:
@@ -435,8 +445,6 @@ class VentanaMenu(Ventana):
         buttons = {
             Texts.SECTION_ACTIONS_DELETE: self.boton_borrar,
             Texts.SECTION_ACTIONS_CHANGE_COLOR: self.boton_cambiar_color,
-            Texts.SECTION_ACTIONS_GROUP: self.btn_agrupar,
-            Texts.SECTION_ACTIONS_UNGROUP: self.btn_desagrupar,
         }
 
         for key, button in buttons.items():
@@ -448,32 +456,6 @@ class VentanaMenu(Ventana):
         # Lógica adicional para manejar la acción seleccionada
         self._accion = accion
         print(f"Acción seleccionada: {self._accion}")
-
-    def _crear_seccion_colores(self, titulo: str, parent_frame) -> None:
-        """
-        Crea la sección de selección de colores en el menú de herramientas.
-
-        Args:
-            parent_frame (tk.Frame):
-                Frame en el que se añadirá la sección de colores.
-            instance (object):
-                Instancia de la clase que contiene métodos a usar.
-
-        Esta sección incluye un botón que permite al usuario seleccionar un color
-        para el pincel que utilizará en el lienzo.
-        """
-        frame_colores = self._crear_frame_seccion(parent_frame, titulo)
-
-        # Botón para seleccionar color
-        btn_seleccionar_color = ctk.CTkButton(
-            frame_colores,
-            text=Texts.SECTION_COLOR_SELECT,
-            command=self._seleccionar_color,
-        )
-        btn_seleccionar_color.grid(row=2, column=0, padx=10, pady=10, sticky="ew")
-
-        # Configurar peso de la columna
-        frame_colores.grid_columnconfigure(0, weight=1)
 
     def _crear_seccion_agrupar(self, titulo: str, parent_frame) -> None:
         """
@@ -489,6 +471,43 @@ class VentanaMenu(Ventana):
         en el lienzo.
         """
         frame_agrupar = self._crear_frame_seccion(parent_frame, titulo)
+        
+        self.btn_agrupar = ctk.CTkButton(
+            frame_agrupar,
+            text=Texts.SECTION_GRUPO_GROUP,
+            command=self._seleccionar_agrupar,
+        )
+        self.btn_agrupar.grid(row=2, column=0, padx=10, pady=10, sticky="ew")
+
+        self.btn_desagrupar = ctk.CTkButton(
+            frame_agrupar,
+            text=Texts.SECTION_GRUPO_UNGROUP,
+            command=self._seleccionar_desagrupar,
+        )
+        self.btn_desagrupar.grid(row=2, column=1, padx=10, pady=10, sticky="ew")
+        
+        # Configurar peso de las columnas
+        for i in range(2):
+            frame_agrupar.grid_columnconfigure(i, weight=1)
+    
+    def _seleccionar_agrupar(self) -> None:
+        """
+        Selecciona la acción de agrupar las líneas o figuras seleccionadas.
+        
+        Este método se activa cuando el usuario elige agrupar elementos, 
+        mostrando un mensaje de confirmación en la consola.
+        """
+        print("Acción seleccionada: Agrupar")
+
+    def _seleccionar_desagrupar(self) -> None:
+        """
+        Selecciona la acción de desagrupar las figuras agrupadas previamente.
+        
+        Este método se activa cuando el usuario elige desagrupar, mostrando 
+        un mensaje de confirmación en la consola.
+        """
+        print("Acción seleccionada: Desagrupar")
+
 
     def _crear_seccion_salida_texto(self, titulo: str, parent_frame) -> None:
         """
@@ -555,9 +574,63 @@ class VentanaMenu(Ventana):
         )
         btn_cerrar_app.grid(row=2, column=1, padx=10, pady=10, sticky="ew")
 
+        # Botón para mostrar atajos de teclado
+        btn_atajos_teclado = ctk.CTkButton(
+            frame_ajustes,
+            text="Atajos de Teclado",
+            command=self._mostrar_atajos_teclado,
+        )
+        btn_atajos_teclado.grid(row=3, column=0, columnspan=2, padx=10, pady=10, sticky="ew")
+
         # Configurar peso de las columnas
         frame_ajustes.grid_columnconfigure(0, weight=1)
         frame_ajustes.grid_columnconfigure(1, weight=1)
+
+    def _mostrar_atajos_teclado(self) -> None:
+        """Abre una ventana con los atajos de teclado de la aplicación."""
+        atajos_ventana = ctk.CTkToplevel(self._ventana)
+        atajos_ventana.title("Atajos de Teclado")
+
+        # Asegurar que la ventana se eleve por encima de la ventana principal
+        atajos_ventana.lift()
+        atajos_ventana.attributes('-topmost', True)
+        # Crear un marco para el contenido
+        frame_contenido = ctk.CTkFrame(atajos_ventana)
+        frame_contenido.pack(padx=10, pady=10)
+
+        # Texto con los atajos
+        atajos_texto = """
+        Atajos de Teclado:
+
+        Ctrl + Z: Deshacer
+        Esc: Cerrar ventana
+
+        Click Izquierdo: Iniciar dibujo
+        Click Derecho: Seleccionar línea
+        Arrastrar: Dibujar en movimiento
+        Rueda del ratón: Zoom
+        Espacio: Realizar acción
+
+        W: Mover arriba
+        A: Mover izquierda
+        S: Mover abajo
+        D: Mover derecha
+        Flechas: Mover canvas
+
+        G: Agrupar figuras
+        H: Desagrupar figuras
+        """
+
+        # Mostrar los atajos en un widget de texto
+        texto_atajos = ctk.CTkTextbox(frame_contenido, height=360, width=300,font=(self.fuente, 14))
+        texto_atajos.insert("0.0", atajos_texto)
+        texto_atajos.configure(state="disabled")  # Hacerlo de solo lectura
+        texto_atajos.pack()
+
+        # Botón para cerrar la ventana de atajos
+        btn_cerrar_atajos = ctk.CTkButton(atajos_ventana, text="Cerrar", command=atajos_ventana.destroy)
+        btn_cerrar_atajos.pack(pady=(10, 0))  # Aumentar el espacio en la parte superior
+
 
     def _resetear_zoom(self) -> None:
         """Restablece el zoom a su valor predeterminado."""
@@ -587,7 +660,7 @@ class VentanaMenu(Ventana):
         frame_seccion.pack(pady=10, padx=10, fill="x")
 
         # Título de la sección
-        titulo_seccion = ctk.CTkLabel(frame_seccion, text=titulo, font=self.fuente)
+        titulo_seccion = ctk.CTkLabel(frame_seccion, text=titulo, font=(self.fuente, 14))
         titulo_seccion.grid(row=0, column=0, pady=(10, 0), sticky="nsew", columnspan=3)
 
         # Línea separadora
