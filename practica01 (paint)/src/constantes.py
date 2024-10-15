@@ -24,6 +24,8 @@ class Color:
     LIGHT_GRAY = "#333333"
     DARK_GRAY = "#242424"
     GRAY = "#2B2B2B"
+    GREEN = "#2FA572"
+    LIGHT_LIGHT_GREY = "#3B3B3B"
 
 
 class ErrorMessages:
@@ -74,18 +76,20 @@ class Texts:
 
     SECTION_OPTIONS = "Opciones de Pincel"
     SECTION_OPTIONS_LINE = "Tamaño de línea:"
-
-    SECTION_CLEAR = "Borradores"
-    SECTION_CLEAR_LAST = "Borrar Última"
-    SECTION_CLEAR_ALL = "Borrar Todo"
-    SECTION_CLEAR_UNDO = "Deshacer"
-
+    
     SECTION_COLOR = "Colores"
     SECTION_COLOR_SELECT = "Seleccionar Color"
-
-    SECTION_GROUP = "Agrupar figuras"
-    SECTION_GROUP_GROUP = "Agrupar"
-    SECTION_GROUP_UNGROUP = "Desagrupar"
+    
+    SECTION_CLEAR = "Borradores"
+    SECTION_CLEAR_ALL = "Borrar Todo"
+    SECTION_CLEAR_UNDO = "Deshacer"
+    
+    SECTION_ACTIONS = "Acciones"
+    SECTION_ACTIONS_DELETE = "Borrar"
+    SECTION_ACTIONS_CHANGE_COLOR = "Cambiar Color"
+    
+    SECTION_ACTIONS_GROUP = "Agrupar"
+    SECTION_ACTIONS_UNGROUP = "Desagrupar"
 
     SECTION_TEXT = "Salida de texto"
     SECTION_TEXT_CLEAR = "Limpiar"
@@ -120,6 +124,13 @@ class UserEvents:
     RIGHT_RELEASE = "<ButtonRelease-3>"  # Evento de liberación del clic derecho
     MOUSE_WHEEL = "<MouseWheel>"  # Evento al mover la rueda del ratón
     MOUSE_WHEEL_DRAG = "<B2-Motion>"  # Evento al mover la rueda del ratón
+    
+    SPACE = "<space>"
+    
+    TECLA_UP = "<KeyPress-w>"
+    TECLA_LEFT = "<KeyPress-a>"
+    TECLA_DOWN = "<KeyPress-s>"
+    TECLA_RIGHT = "<KeyPress-d>"
     
     ARROW_UP = "<Up>"
     ARROW_DOWN = "<Down>"

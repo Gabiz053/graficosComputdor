@@ -90,6 +90,14 @@ class ObjetoDibujo(ABC):
     def mover(self, dx: int, dy: int):
         """Método abstracto para mover el objeto de dibujo."""
         raise NotImplementedError(ErrorMessages.NOT_IMPLEMENTED)
+    
+    def borrar(self) -> bool:
+        """Método abstracto para borrar el objeto de dibujo."""
+        raise NotImplementedError(ErrorMessages.NOT_IMPLEMENTED)
+    
+    def cambiar_color(self):
+        """Método abstracto para cambiar color del el objeto de dibujo."""
+        raise NotImplementedError(ErrorMessages.NOT_IMPLEMENTED)
 
 
 class Linea(ObjetoDibujo):
@@ -119,6 +127,7 @@ class Linea(ObjetoDibujo):
         self._puntos: np.ndarray = np.array(
             [[punto_inicial.x, punto_inicial.y], [punto_final.x, punto_final.y]]
         )
+        self._puntos_dibujados = [] # lista de id de puntos que se han dibujado
 
     def __str__(self) -> str:
         """Devuelve una representación en cadena de la línea."""
@@ -132,24 +141,43 @@ class Linea(ObjetoDibujo):
     @property
     def punto_final(self) -> Punto:
         return Punto(self._puntos[1][0], self._puntos[1][1])
+    
+    @property
+    def puntos_dibujados(self) -> list[int]:
+        """Obtiene la lista de IDs de puntos dibujados."""
+        return self._puntos_dibujados
+
+    @puntos_dibujados.setter
+    def puntos_dibujados(self, ids: list[int]) -> None:
+        """Establece la lista de IDs de puntos dibujados."""
+        self._puntos_dibujados = ids
 
     # Métodos principales
     def dibujar(self) -> list:
         """Dibuja una línea en el lienzo."""
-        lista_puntos = self.herramienta.dibujar_linea(
+        lista_puntos, self._puntos_dibujados = self.herramienta.dibujar_linea(
             self.lienzo, self.color, self.tamanho, *self._puntos.flatten()
         )
         return lista_puntos
 
     def mover(self, dx: int, dy: int) -> None:
         """Mueve la línea desplazando ambos puntos."""
+        self.borrar()
         self._puntos += np.array([[dx, dy]])
-        self.actualizar_lienzo()
-
-    def actualizar_lienzo(self) -> None:
-        """Actualiza las coordenadas en el lienzo de Tkinter y dibuja la línea."""
-        self.lienzo.coords(self, *self._puntos.flatten())
         self.dibujar()
+        
+    def borrar(self) -> bool:
+        """Borra los puntos dibujados del lienzo."""
+        if len(self.puntos_dibujados) == 0:
+            return False
+        for punto_id in self.puntos_dibujados:
+            self.lienzo.delete(punto_id)
+        return True
+    
+    def cambiar_color(self, color):
+        self._color = color
+        for punto in self._puntos_dibujados:
+            self._lienzo.itemconfig(punto, fill=color, outline=color)
 
 
 class Puntos(ObjetoDibujo):
@@ -222,15 +250,21 @@ class Figura(ObjetoDibujo):
 
     def eliminar(self, elemento: ObjetoDibujo) -> bool:
         """Elimina un objeto de dibujo específico de la colección."""
-        if elemento in self._elementos:
-            self._elementos.remove(elemento)
-            
-            return True
-        return False
-
+        elemento.borrar()  # Intenta borrar del lienzo
+        return True
+        
     def eliminar_todo(self) -> None:
         """Elimina todos los objetos de la colección."""
         self._elementos.clear()
+        
+    def cambiar_color(self, color):
+        """Cambia el color de todos los elementos de la colección."""
+        for elemento in self._elementos:
+            elemento.cambiar_color(color)
+            
+    def desagrupar(self):
+        """Desagrupa los elementos devolviéndolos a la lista general de figuras."""
+        return self._elementos[:]
 
     # Métodos para iteración
     def __iter__(self):

@@ -68,6 +68,7 @@ class VentanaMenu(Ventana):
         self._herramienta_seleccionada = herramienta_seleccionada
         self._tamanho_pincel = tamanho_pincel
         self._lienzo = None
+        self._accion = Texts.SECTION_ACTIONS_DELETE
 
     def _crear_contenido_ventana(self) -> None:
         """
@@ -80,10 +81,14 @@ class VentanaMenu(Ventana):
         self._crear_menu_herramientas()
 
     ########### Métodos de selección y actualización ###########
+
+    def _abrir_seleccion_color(self) -> str:
+        pick_color = AskColor()  # Abre el selector de color
+        return pick_color.get()  # Obtiene la cadena de color
+
     def _seleccionar_color(self) -> None:
         """Abre un selector de color y actualiza el color seleccionado."""
-        pick_color = AskColor()  # Abre el selector de color
-        self.color_seleccionado = pick_color.get()  # Obtiene la cadena de color
+        self.color_seleccionado = self._abrir_seleccion_color()
         print(f"{Texts.SELECT_COLOR} {self.color_seleccionado}")
 
     def _seleccionar_pincel(self, seleccion: int) -> None:
@@ -94,7 +99,7 @@ class VentanaMenu(Ventana):
         """
         self.herramienta_seleccionada = DrawingStrategies.STRATEGIES[seleccion]
         print(f"{Texts.SELECT_TOOL} {self.herramienta_seleccionada}")
-        
+
     def _actualizar_tamanho(self, valor: float) -> None:
         """Actualiza el tamaño del pincel según el valor del slider.
 
@@ -158,28 +163,42 @@ class VentanaMenu(Ventana):
 
         # Crear el canvas en el frame izquierdo
         self._lienzo = self._crear_canvas(self.frame_area_dibujo)
-    
-        # Crear las barras de desplazamiento
-        scrollbar_x = ctk.CTkScrollbar(self.frame_area_dibujo, orientation=ctk.HORIZONTAL, command=self._lienzo.xview)
-        scrollbar_x.grid(row=2, column=0, padx=0, pady=0, sticky="ew")  # Barra en la parte inferior (horizontal)
 
-        scrollbar_y = ctk.CTkScrollbar(self.frame_area_dibujo, orientation=ctk.VERTICAL, command=self._lienzo.yview)
-        scrollbar_y.grid(row=1, column=1, padx=0, pady=0, sticky="ns")  # Barra en el lado derecho (vertical)
+        # Crear las barras de desplazamiento
+        scrollbar_x = ctk.CTkScrollbar(
+            self.frame_area_dibujo,
+            orientation=ctk.HORIZONTAL,
+            command=self._lienzo.xview,
+        )
+        scrollbar_x.grid(
+            row=2, column=0, padx=0, pady=0, sticky="ew"
+        )  # Barra en la parte inferior (horizontal)
+
+        scrollbar_y = ctk.CTkScrollbar(
+            self.frame_area_dibujo, orientation=ctk.VERTICAL, command=self._lienzo.yview
+        )
+        scrollbar_y.grid(
+            row=1, column=1, padx=0, pady=0, sticky="ns"
+        )  # Barra en el lado derecho (vertical)
 
         # Configurar el canvas para usar las barras de desplazamiento
-        self.lienzo.configure(xscrollcommand=scrollbar_x.set, yscrollcommand=scrollbar_y.set)
-        
+        self.lienzo.configure(
+            xscrollcommand=scrollbar_x.set, yscrollcommand=scrollbar_y.set
+        )
+
         # Configurar expansión del grid
-        self.frame_area_dibujo.grid_rowconfigure(1, weight=1)  # Hacer que la fila del canvas se expanda
-        self.frame_area_dibujo.grid_columnconfigure(0, weight=1)  # Hacer que la columna del canvas se expanda
+        self.frame_area_dibujo.grid_rowconfigure(
+            1, weight=1
+        )  # Hacer que la fila del canvas se expanda
+        self.frame_area_dibujo.grid_columnconfigure(
+            0, weight=1
+        )  # Hacer que la columna del canvas se expanda
 
-
-        
         # Crear frames para las diferentes secciones de opciones en el frame derecho
         self._crear_seccion_opciones(Texts.SECTION_OPTIONS, frame_panel_opciones)
-        self._crear_seccion_borradores(Texts.SECTION_CLEAR, frame_panel_opciones)
         self._crear_seccion_colores(Texts.SECTION_COLOR, frame_panel_opciones)
-        self._crear_seccion_agrupar(Texts.SECTION_GROUP, frame_panel_opciones)
+        self._crear_seccion_borradores(Texts.SECTION_CLEAR, frame_panel_opciones)
+        self._crear_seccion_acciones(Texts.SECTION_ACTIONS, frame_panel_opciones)
         self._crear_seccion_salida_texto(Texts.SECTION_TEXT, frame_panel_opciones)
         self._crear_seccion_ajustes(Texts.SECTION_SETTINGS, frame_panel_opciones)
 
@@ -202,7 +221,9 @@ class VentanaMenu(Ventana):
         titulo_area_dibujo = ctk.CTkLabel(
             frame_area_dibujo, text=Texts.LEFT_FRAME_LABEL, font=self.fuente
         )
-        titulo_area_dibujo.grid(row=0, column=0, columnspan=2, padx=10, pady=10, sticky="nsew")  # Ocupar el espacio horizontal
+        titulo_area_dibujo.grid(
+            row=0, column=0, columnspan=2, padx=10, pady=10, sticky="nsew"
+        )  # Ocupar el espacio horizontal
 
         return frame_area_dibujo
 
@@ -256,7 +277,9 @@ class VentanaMenu(Ventana):
         canvas_dibujo = ctk.CTkCanvas(
             parent_frame, highlightthickness=0, bg=Default.CANVAS_BACKGROUND_COLOR
         )
-        canvas_dibujo.grid(row=1, column=0, padx=10, pady=10, sticky="nsew")  # Ocupa el espacio restante
+        canvas_dibujo.grid(
+            row=1, column=0, padx=10, pady=10, sticky="nsew"
+        )  # Ocupa el espacio restante
 
         return canvas_dibujo
 
@@ -335,24 +358,96 @@ class VentanaMenu(Ventana):
         frame_borradores = self._crear_frame_seccion(parent_frame, titulo)
 
         # Botones para las acciones de borrado
-        btn_borrar_ultima_figura = ctk.CTkButton(
-            frame_borradores, text=Texts.SECTION_CLEAR_LAST, command=self._borrar_figura
-        )
-        btn_borrar_ultima_figura.grid(row=2, column=0, padx=10, pady=10, sticky="ew")
-
         btn_borrar_todas_figuras = ctk.CTkButton(
             frame_borradores, text=Texts.SECTION_CLEAR_ALL, command=self._borrar_todo
         )
-        btn_borrar_todas_figuras.grid(row=2, column=1, padx=10, pady=10, sticky="ew")
+        btn_borrar_todas_figuras.grid(row=2, column=0, padx=10, pady=10, sticky="ew")
 
         btn_deshacer_accion = ctk.CTkButton(
-            frame_borradores, text=Texts.SECTION_CLEAR_UNDO, command=self._deshacer_accion
+            frame_borradores,
+            text=Texts.SECTION_CLEAR_UNDO,
+            command=self._deshacer_accion,
         )
-        btn_deshacer_accion.grid(row=2, column=2, padx=10, pady=10, sticky="ew")
+        btn_deshacer_accion.grid(row=2, column=1, padx=10, pady=10, sticky="ew")
 
         # Configurar peso de las columnas
-        for i in range(3):
+        for i in range(2):
             frame_borradores.grid_columnconfigure(i, weight=1)
+
+    def _crear_seccion_acciones(self, titulo: str, parent_frame) -> None:
+        """
+        Crea la sección de acciones (borrar, cambiar color, mover) en el menú de herramientas.
+
+        Args:
+            parent_frame (tk.Frame): Frame en el que se añadirá la sección de acciones.
+        """
+
+        frame_acciones = self._crear_frame_seccion(parent_frame, titulo)
+
+        # Botones de acción
+        self.boton_borrar = ctk.CTkButton(
+            frame_acciones,
+            text=Texts.SECTION_ACTIONS_DELETE,
+            command=lambda: self._seleccionar_accion(Texts.SECTION_ACTIONS_DELETE),
+            fg_color=Color.GREEN,
+        )
+        self.boton_borrar.grid(row=2, column=0, padx=10, pady=10, sticky="ew")
+
+        self.boton_cambiar_color = ctk.CTkButton(
+            frame_acciones,
+            text=Texts.SECTION_ACTIONS_CHANGE_COLOR,
+            command=lambda: self._seleccionar_accion(
+                Texts.SECTION_ACTIONS_CHANGE_COLOR
+            ),
+            fg_color=Color.LIGHT_LIGHT_GREY,
+        )
+        self.boton_cambiar_color.grid(row=2, column=1, padx=10, pady=10, sticky="ew")
+
+        # Botones para agrupar y desagrupar
+        self.btn_agrupar = ctk.CTkButton(
+            frame_acciones,
+            text=Texts.SECTION_ACTIONS_GROUP,
+            command=lambda: self._seleccionar_accion(Texts.SECTION_ACTIONS_GROUP),
+            fg_color=Color.LIGHT_LIGHT_GREY,
+        )
+        self.btn_agrupar.grid(row=2, column=2, padx=10, pady=10, sticky="ew")
+
+        self.btn_desagrupar = ctk.CTkButton(
+            frame_acciones,
+            text=Texts.SECTION_ACTIONS_UNGROUP,
+            command=lambda: self._seleccionar_accion(Texts.SECTION_ACTIONS_UNGROUP),
+            fg_color=Color.LIGHT_LIGHT_GREY,
+        )
+        self.btn_desagrupar.grid(row=2, column=3, padx=10, pady=10, sticky="ew")
+
+        # Configurar peso de las columnas
+        for i in range(4):
+            frame_acciones.grid_columnconfigure(i, weight=1)
+
+    def _seleccionar_accion(self, accion: str) -> None:
+        """
+        Cambia el estado de los botones según la acción seleccionada.
+
+        Args:
+            accion (str): La acción que se ha seleccionado.
+        """
+        # Cambiar el color de los botones según la acción seleccionada
+        buttons = {
+            Texts.SECTION_ACTIONS_DELETE: self.boton_borrar,
+            Texts.SECTION_ACTIONS_CHANGE_COLOR: self.boton_cambiar_color,
+            Texts.SECTION_ACTIONS_GROUP: self.btn_agrupar,
+            Texts.SECTION_ACTIONS_UNGROUP: self.btn_desagrupar,
+        }
+
+        for key, button in buttons.items():
+            if key == accion:
+                button.configure(fg_color=Color.GREEN)  # Color activo
+            else:
+                button.configure(fg_color=Color.LIGHT_LIGHT_GREY)  # Color inactivo
+
+        # Lógica adicional para manejar la acción seleccionada
+        self._accion = accion
+        print(f"Acción seleccionada: {self._accion}")
 
     def _crear_seccion_colores(self, titulo: str, parent_frame) -> None:
         """
@@ -371,7 +466,9 @@ class VentanaMenu(Ventana):
 
         # Botón para seleccionar color
         btn_seleccionar_color = ctk.CTkButton(
-            frame_colores, text=Texts.SECTION_COLOR_SELECT, command=self._seleccionar_color
+            frame_colores,
+            text=Texts.SECTION_COLOR_SELECT,
+            command=self._seleccionar_color,
         )
         btn_seleccionar_color.grid(row=2, column=0, padx=10, pady=10, sticky="ew")
 
@@ -392,21 +489,6 @@ class VentanaMenu(Ventana):
         en el lienzo.
         """
         frame_agrupar = self._crear_frame_seccion(parent_frame, titulo)
-
-        # Botones para agrupar y desagrupar
-        btn_agrupar = ctk.CTkButton(
-            frame_agrupar, text=Texts.SECTION_GROUP_GROUP, command=self._agrupar_figuras
-        )
-        btn_agrupar.grid(row=2, column=0, padx=10, pady=10, sticky="ew")
-
-        btn_desagrupar = ctk.CTkButton(
-            frame_agrupar, text=Texts.SECTION_GROUP_UNGROUP, command=self._desagrupar_figuras
-        )
-        btn_desagrupar.grid(row=2, column=1, padx=10, pady=10, sticky="ew")
-
-        # Configurar peso de las columnas
-        for i in range(2):
-            frame_agrupar.grid_columnconfigure(i, weight=1)
 
     def _crear_seccion_salida_texto(self, titulo: str, parent_frame) -> None:
         """
@@ -429,7 +511,11 @@ class VentanaMenu(Ventana):
         self.area_texto.grid(row=2, column=0, padx=10, pady=10, sticky="nsew")
 
         # Botón para limpiar el área de texto
-        btn_limpiar = ctk.CTkButton(frame_salida_texto, text=Texts.SECTION_TEXT_CLEAR, command=self._limpiar_texto)
+        btn_limpiar = ctk.CTkButton(
+            frame_salida_texto,
+            text=Texts.SECTION_TEXT_CLEAR,
+            command=self._limpiar_texto,
+        )
         btn_limpiar.grid(row=2, column=1, padx=10, pady=10, sticky="ew")
 
         # Configurar peso de las columnas
@@ -439,12 +525,12 @@ class VentanaMenu(Ventana):
     def _limpiar_texto(self):
         """Limpia el texto del textbox."""
         self.area_texto.delete("1.0", ctk.END)  # Elimina todo el texto
-        
+
     def _anadir_texto(self, texto):
         """Añade texto al textbox."""
         texto_a_anadir = f"{texto}\n"
         self.area_texto.insert(ctk.END, texto_a_anadir)  # Añade texto al final
-        
+
     def _crear_seccion_ajustes(self, titulo: str, parent_frame) -> None:
         """
         Crea la sección de ajustes en el menú de herramientas.
@@ -463,7 +549,9 @@ class VentanaMenu(Ventana):
 
         # Botón para cerrar la aplicación
         btn_cerrar_app = ctk.CTkButton(
-            frame_ajustes, text=Texts.SECTION_SETTINGS_EXIT, command=self._cerrar_aplicacion
+            frame_ajustes,
+            text=Texts.SECTION_SETTINGS_EXIT,
+            command=self._cerrar_aplicacion,
         )
         btn_cerrar_app.grid(row=2, column=1, padx=10, pady=10, sticky="ew")
 

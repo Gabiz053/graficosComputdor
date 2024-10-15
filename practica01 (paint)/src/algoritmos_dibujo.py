@@ -43,13 +43,13 @@ class AlgoritmoDibujo(ABC):
 
     def _dibujar_pack(
         self, lienzo: Canvas, color: str, tamanho_pincel: int, x: int, y: int
-    ) -> None:
+    ) -> int:
         """
         Dibuja un rectángulo de tamanho_pincel x tamanho_pincel en lugar de un píxel individual.
 
         Esto permite que las líneas se vean más gruesas según el tamaño de la brocha.
         """
-        lienzo.create_rectangle(
+        return lienzo.create_rectangle(
             x, y, x + tamanho_pincel, y + tamanho_pincel, outline=color, fill=color
         )
 
@@ -73,6 +73,7 @@ class SlopeLineStrategy(AlgoritmoDibujo):
         Dibuja una línea en el lienzo usando el algoritmo de pendiente.
         """
         lista_puntos = []
+        lista_dibujados = []
 
         # Transformar las coordenadas y para que sean positivas hacia arriba
         y_inicial = -y_inicial
@@ -89,12 +90,20 @@ class SlopeLineStrategy(AlgoritmoDibujo):
                 y = m * x + b
 
                 x_pack = math.floor(x / tamanho_pincel) * tamanho_pincel
-                y_pack = math.floor(y / tamanho_pincel) * tamanho_pincel + tamanho_pincel
+                y_pack = (
+                    math.floor(y / tamanho_pincel) * tamanho_pincel + tamanho_pincel
+                )
 
                 # Invertir coordenada Y de nuevo antes de dibujar en el canvas
                 y_pack_canvas = -y_pack  # Ajuste para invertir la coordenada y
-                self._dibujar_pack(lienzo, color, tamanho_pincel, x_pack, y_pack_canvas)
-                lista_puntos.append((x_pack // tamanho_pincel, y_pack // tamanho_pincel - 1))
+                lista_dibujados.append(
+                    self._dibujar_pack(
+                        lienzo, color, tamanho_pincel, x_pack, y_pack_canvas
+                    )
+                )
+                lista_puntos.append(
+                    (x_pack // tamanho_pincel, y_pack // tamanho_pincel - 1)
+                )
 
         def plot_line_high(x0, y0, x1, y1):
             """Dibuja una línea de pendiente alta (m > 1 o m < -1)"""
@@ -107,26 +116,40 @@ class SlopeLineStrategy(AlgoritmoDibujo):
                 x = m * y + b  # Resolviendo x en función de y
 
                 x_pack = math.floor(x / tamanho_pincel) * tamanho_pincel
-                y_pack = math.floor(y / tamanho_pincel) * tamanho_pincel + tamanho_pincel
+                y_pack = (
+                    math.floor(y / tamanho_pincel) * tamanho_pincel + tamanho_pincel
+                )
 
                 # Invertir coordenada Y de nuevo antes de dibujar en el canvas
                 y_pack_canvas = -y_pack  # Ajuste para invertir la coordenada y
-                self._dibujar_pack(lienzo, color, tamanho_pincel, x_pack, y_pack_canvas)
-                lista_puntos.append((x_pack // tamanho_pincel, y_pack // tamanho_pincel- 1))
+                lista_dibujados.append(
+                    self._dibujar_pack(
+                        lienzo, color, tamanho_pincel, x_pack, y_pack_canvas
+                    )
+                )
+                lista_puntos.append(
+                    (x_pack // tamanho_pincel, y_pack // tamanho_pincel - 1)
+                )
 
         # Lógica principal para elegir la dirección de trazado
-        if abs(y_final - y_inicial) < abs(x_final - x_inicial):  # si la pendiente mayor que 1
+        if abs(y_final - y_inicial) < abs(
+            x_final - x_inicial
+        ):  # si la pendiente mayor que 1
             if x_inicial > x_final:
-                plot_line_low(x_final, y_final, x_inicial, y_inicial)  # Invertir los puntos
+                plot_line_low(
+                    x_final, y_final, x_inicial, y_inicial
+                )  # Invertir los puntos
             else:
                 plot_line_low(x_inicial, y_inicial, x_final, y_final)
         else:
             if y_inicial > y_final:
-                plot_line_high(x_final, y_final, x_inicial, y_inicial)  # Invertir los puntos
+                plot_line_high(
+                    x_final, y_final, x_inicial, y_inicial
+                )  # Invertir los puntos
             else:
                 plot_line_high(x_inicial, y_inicial, x_final, y_final)
 
-        return lista_puntos
+        return lista_puntos, lista_dibujados
 
 
 class DDALineStrategy(AlgoritmoDibujo):
@@ -153,6 +176,8 @@ class DDALineStrategy(AlgoritmoDibujo):
         y_final = -y_final
 
         lista_puntos = []
+        lista_dibujados = []
+
         dx = x_final - x_inicial
         dy = y_final - y_inicial
 
@@ -172,13 +197,15 @@ class DDALineStrategy(AlgoritmoDibujo):
 
             # entre tamanho pincel para que se pinten bonitos de 1 en 1
             lista_puntos.append((x_pack / tamanho_pincel, y_pack / tamanho_pincel - 1))
-            self._dibujar_pack(lienzo, color, tamanho_pincel, x_pack, -y_pack)
+            lista_dibujados.append(
+                self._dibujar_pack(lienzo, color, tamanho_pincel, x_pack, -y_pack)
+            )
 
             x += x_incremento
             y += y_incremento
             i += 1
 
-        return lista_puntos
+        return lista_puntos, lista_dibujados
 
 
 class BresenhamLineStrategy(AlgoritmoDibujo):
@@ -187,19 +214,20 @@ class BresenhamLineStrategy(AlgoritmoDibujo):
     """
 
     def dibujar_linea(
-            self,
-            lienzo: Canvas,
-            color: str,
-            tamanho_pincel: int,
-            x_inicial: int,
-            y_inicial: int,
-            x_final: int,
-            y_final: int,
-        ) -> list:
+        self,
+        lienzo: Canvas,
+        color: str,
+        tamanho_pincel: int,
+        x_inicial: int,
+        y_inicial: int,
+        x_final: int,
+        y_final: int,
+    ) -> list:
         """
         Dibuja una línea en el lienzo usando el algoritmo Bresenham con números reales.
         """
         lista_puntos = []
+        lista_dibujados = []
 
         # Transformar las coordenadas y para que sean positivas hacia arriba
         y_inicial = -y_inicial
@@ -220,12 +248,20 @@ class BresenhamLineStrategy(AlgoritmoDibujo):
 
             for x in range(x0, x1 + 1, tamanho_pincel):
                 x_pack = math.floor(x / tamanho_pincel) * tamanho_pincel
-                y_pack = math.floor(y / tamanho_pincel) * tamanho_pincel + tamanho_pincel
+                y_pack = (
+                    math.floor(y / tamanho_pincel) * tamanho_pincel + tamanho_pincel
+                )
 
                 # Invertir coordenada Y de nuevo antes de dibujar en el canvas
                 y_pack_canvas = -y_pack
-                self._dibujar_pack(lienzo, color, tamanho_pincel, x_pack, y_pack_canvas)
-                lista_puntos.append((x_pack // tamanho_pincel, y_pack // tamanho_pincel -1))
+                lista_dibujados.append(
+                    self._dibujar_pack(
+                        lienzo, color, tamanho_pincel, x_pack, y_pack_canvas
+                    )
+                )
+                lista_puntos.append(
+                    (x_pack // tamanho_pincel, y_pack // tamanho_pincel - 1)
+                )
 
                 if e > 0:
                     y += yi * tamanho_pincel
@@ -247,12 +283,20 @@ class BresenhamLineStrategy(AlgoritmoDibujo):
 
             for y in range(y0, y1 + 1, tamanho_pincel):
                 x_pack = math.floor(x / tamanho_pincel) * tamanho_pincel
-                y_pack = math.floor(y / tamanho_pincel) * tamanho_pincel + tamanho_pincel
+                y_pack = (
+                    math.floor(y / tamanho_pincel) * tamanho_pincel + tamanho_pincel
+                )
 
                 # Invertir coordenada Y de nuevo antes de dibujar en el canvas
                 y_pack_canvas = -y_pack
-                self._dibujar_pack(lienzo, color, tamanho_pincel, x_pack, y_pack_canvas)
-                lista_puntos.append((x_pack // tamanho_pincel, y_pack // tamanho_pincel -1))
+                lista_dibujados.append(
+                    self._dibujar_pack(
+                        lienzo, color, tamanho_pincel, x_pack, y_pack_canvas
+                    )
+                )
+                lista_puntos.append(
+                    (x_pack // tamanho_pincel, y_pack // tamanho_pincel - 1)
+                )
 
                 if e > 0:
                     x += xi * tamanho_pincel
@@ -260,19 +304,24 @@ class BresenhamLineStrategy(AlgoritmoDibujo):
                 e += m
 
         # Lógica principal para elegir la dirección de trazado
-        if abs(y_final - y_inicial) < abs(x_final - x_inicial):  # Si la pendiente es menor que 1
+        if abs(y_final - y_inicial) < abs(
+            x_final - x_inicial
+        ):  # Si la pendiente es menor que 1
             if x_inicial > x_final:
-                plot_line_low(x_final, y_final, x_inicial, y_inicial)  # Invertir los puntos
+                plot_line_low(
+                    x_final, y_final, x_inicial, y_inicial
+                )  # Invertir los puntos
             else:
                 plot_line_low(x_inicial, y_inicial, x_final, y_final)
         else:
             if y_inicial > y_final:
-                plot_line_high(x_final, y_final, x_inicial, y_inicial)  # Invertir los puntos
+                plot_line_high(
+                    x_final, y_final, x_inicial, y_inicial
+                )  # Invertir los puntos
             else:
                 plot_line_high(x_inicial, y_inicial, x_final, y_final)
 
-        return lista_puntos
-
+        return lista_puntos, lista_dibujados
 
 
 class BresenhamLineStrategyInt(AlgoritmoDibujo):
@@ -294,10 +343,11 @@ class BresenhamLineStrategyInt(AlgoritmoDibujo):
         Dibuja una línea en el lienzo usando el algoritmo de Bresenham.
         """
         lista_puntos = []
+        lista_dibujados = []
 
         # Transformar las coordenadas y para que sean positivas hacia arriba
-        y_inicial = - y_inicial
-        y_final = - y_final
+        y_inicial = -y_inicial
+        y_final = -y_final
 
         def plot_line_low(x0, y0, x1, y1):
             """Dibuja una línea de pendiente baja (0 <= m < 1)"""
@@ -314,16 +364,24 @@ class BresenhamLineStrategyInt(AlgoritmoDibujo):
 
             for x in range(x0, x1 + 1, tamanho_pincel):
                 x_pack = math.floor(x / tamanho_pincel) * tamanho_pincel
-                y_pack = math.floor(y / tamanho_pincel) * tamanho_pincel + tamanho_pincel
+                y_pack = (
+                    math.floor(y / tamanho_pincel) * tamanho_pincel + tamanho_pincel
+                )
 
                 # Invertir coordenada Y de nuevo antes de dibujar en el canvas
-                y_pack_canvas = - y_pack
-                self._dibujar_pack(lienzo, color, tamanho_pincel, x_pack, y_pack_canvas)
-                lista_puntos.append((x_pack // tamanho_pincel, y_pack // tamanho_pincel - 1))
+                y_pack_canvas = -y_pack
+                lista_dibujados.append(
+                    self._dibujar_pack(
+                        lienzo, color, tamanho_pincel, x_pack, y_pack_canvas
+                    )
+                )
+                lista_puntos.append(
+                    (x_pack // tamanho_pincel, y_pack // tamanho_pincel - 1)
+                )
 
                 if D > 0:
                     y += yi * tamanho_pincel
-                    D += (2 * (dy - dx))
+                    D += 2 * (dy - dx)
                 else:
                     D += 2 * dy
 
@@ -341,31 +399,44 @@ class BresenhamLineStrategyInt(AlgoritmoDibujo):
             x = x0
 
             for y in range(y0, y1 + 1, tamanho_pincel):
-                x_pack = math.floor(x / tamanho_pincel) * tamanho_pincel 
-                y_pack = math.floor(y / tamanho_pincel) * tamanho_pincel + tamanho_pincel
+                x_pack = math.floor(x / tamanho_pincel) * tamanho_pincel
+                y_pack = (
+                    math.floor(y / tamanho_pincel) * tamanho_pincel + tamanho_pincel
+                )
 
                 # Invertir coordenada Y de nuevo antes de dibujar en el canvas
-                y_pack_canvas = - y_pack
-                self._dibujar_pack(lienzo, color, tamanho_pincel, x_pack, y_pack_canvas)
-                lista_puntos.append((x_pack // tamanho_pincel, y_pack // tamanho_pincel - 1))
+                y_pack_canvas = -y_pack
+                lista_dibujados.append(
+                    self._dibujar_pack(
+                        lienzo, color, tamanho_pincel, x_pack, y_pack_canvas
+                    )
+                )
+                lista_puntos.append(
+                    (x_pack // tamanho_pincel, y_pack // tamanho_pincel - 1)
+                )
 
                 if D > 0:
                     x += xi * tamanho_pincel
-                    D += (2 * (dx - dy))
+                    D += 2 * (dx - dy)
                 else:
                     D += 2 * dx
 
         # Lógica principal para elegir la dirección de trazado
-        if abs(y_final - y_inicial) < abs(x_final - x_inicial):  # si la pendiente mayor que 1
+        if abs(y_final - y_inicial) < abs(
+            x_final - x_inicial
+        ):  # si la pendiente mayor que 1
             if x_inicial > x_final:
-                plot_line_low(x_final, y_final, x_inicial, y_inicial)  # Invertir los puntos
+                plot_line_low(
+                    x_final, y_final, x_inicial, y_inicial
+                )  # Invertir los puntos
             else:
                 plot_line_low(x_inicial, y_inicial, x_final, y_final)
         else:
             if y_inicial > y_final:
-                plot_line_high(x_final, y_final, x_inicial, y_inicial)  # Invertir los puntos
+                plot_line_high(
+                    x_final, y_final, x_inicial, y_inicial
+                )  # Invertir los puntos
             else:
                 plot_line_high(x_inicial, y_inicial, x_final, y_final)
 
-        return lista_puntos
-
+        return lista_puntos, lista_dibujados
