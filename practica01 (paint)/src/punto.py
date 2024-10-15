@@ -1,12 +1,13 @@
 """
 Archivo: punto.py
 
-Este archivo define un punto como un array para aplicar transformaciones geometricas
+Este archivo define un punto como un array para aplicar transformaciones geometricas.
 
 Autor: Gabriel Gomez Garcia
 Fecha: 23 de septiembre de 2024
 """
 
+# Imports de terceros
 import numpy as np
 
 
@@ -16,7 +17,7 @@ class Punto:
     Almacena las coordenadas en formato columna para facilitar operaciones vectoriales.
     """
 
-    def __init__(self, x: int, y: int):
+    def __init__(self, x: int, y: int) -> None:
         """
         Inicializa el punto con las coordenadas x e y almacenadas en un array columna de NumPy.
 
@@ -24,7 +25,7 @@ class Punto:
             x (int): Coordenada horizontal del punto.
             y (int): Coordenada vertical del punto.
         """
-        self._coordenadas = np.array(
+        self._coordenadas: np.ndarray = np.array(
             [[x], [y]], dtype=int
         )  # Almacena las coordenadas en formato columna
 
@@ -55,6 +56,9 @@ class Punto:
 
         Args:
             coordenadas (np.ndarray): Matriz columna de tamaño (2, 1) que contiene las nuevas coordenadas [x, y].
+
+        Raises:
+            ValueError: Si las coordenadas no tienen el tamaño adecuado.
         """
         if coordenadas.shape == (2, 1):
             self._coordenadas = coordenadas
@@ -72,7 +76,7 @@ class Punto:
         return self._coordenadas[0, 0]
 
     @x.setter
-    def x(self, valor: int):
+    def x(self, valor: int) -> None:
         """
         Establece un nuevo valor para la coordenada x del punto.
 
@@ -92,7 +96,7 @@ class Punto:
         return self._coordenadas[1, 0]
 
     @y.setter
-    def y(self, valor: int):
+    def y(self, valor: int) -> None:
         """
         Establece un nuevo valor para la coordenada y del punto.
 

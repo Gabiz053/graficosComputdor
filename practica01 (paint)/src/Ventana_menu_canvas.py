@@ -1,10 +1,11 @@
 """
 Archivo: Ventana_menu_canvas.py
 
-Este archivo contiene la definición de la clase `VentanaMenuCanvas`, que extiende
-la funcionalidad de la clase `VentanaMenu` añadiendo un lienzo (canvas) interactivo
-con capacidades de dibujo. Permite a los usuarios dibujar, seleccionar y manipular
-figuras en el lienzo, así como aplicar comandos de deshacer y rehacer.
+Descripción:
+    Este archivo define la clase `VentanaMenuCanvas`, que amplía las funcionalidades 
+    de la clase `VentanaMenu` al incorporar un lienzo interactivo para dibujo. 
+    Los usuarios pueden dibujar, seleccionar y manipular figuras en el lienzo, 
+    además de contar con opciones para deshacer y rehacer acciones.
 
 Autor: Gabriel Gomez Garcia
 Fecha: 21 de septiembre de 2024
@@ -22,9 +23,10 @@ from constantes import Default, UserEvents, Color, Texts
 
 class VentanaMenuCanvas(VentanaMenu):
     """
-    Clase que extiende 'VentanaMenu', añadiendo la funcionalidad de un lienzo
-    (canvas) interactivo donde el usuario puede dibujar formas, realizar zoom,
-    y manipular figuras. Permite el uso de diferentes herramientas de dibujo.
+    Clase `VentanaMenuCanvas`:
+    Extiende la clase 'VentanaMenu', añadiendo un lienzo interactivo donde los
+    usuarios pueden dibujar formas, realizar zoom y manipular figuras, usando
+    diversas herramientas de dibujo.
     """
 
     def __init__(
@@ -37,8 +39,10 @@ class VentanaMenuCanvas(VentanaMenu):
         tamanho_pincel: int = Default.DRAWING_SIZE,
     ) -> None:
         """
-        Constructor de la clase VentanaMenuCanvas. Inicializa la ventana con
-        un lienzo interactivo, configurando tamaño, título y otras propiedades.
+        Constructor de la clase VentanaMenuCanvas.
+
+        Inicializa una ventana con un lienzo interactivo, configurando el tamaño,
+        el título y otras propiedades de dibujo.
 
         Args:
             width (int): Ancho de la ventana.
@@ -46,7 +50,7 @@ class VentanaMenuCanvas(VentanaMenu):
             title (str): Título de la ventana.
             color_seleccionado (str): Color por defecto para dibujar.
             herramienta_seleccionada (AlgoritmoDibujo): Herramienta de dibujo seleccionada por defecto.
-            tamanho_pincel (int): Tamaño del pincel usado para dibujar.
+            tamanho_pincel (int): Tamaño del pincel utilizado para dibujar.
         """
         super().__init__(
             width,
@@ -63,25 +67,25 @@ class VentanaMenuCanvas(VentanaMenu):
         self._figuras: Figura = Figura()  # Colección de figuras dibujadas en el lienzo
         self._nivel_zoom: float = Default.ZOOM_FACTOR  # Nivel actual de zoom
         self._lineas_seleccionadas: list[Linea] = []  # Lista de líneas seleccionadas
-        self._offset_x: int = 0  # Offset horizontal para el movimiento de líneas
-        self._offset_y: int = 0  # Offset vertical para el movimiento de líneas
-        self._scroll_total = 2000 # maximo scroll que se puede hacer
+        self._offset_x: int = 0  # Desplazamiento horizontal para mover líneas
+        self._offset_y: int = 0  # Desplazamiento vertical para mover líneas
+        self._scroll_total = 2000  # Máximo desplazamiento de scroll permitido
         self._grupos_figuras: list[Figura] = []  # Lista que almacena grupos de figuras
+
     def _crear_contenido_ventana(self) -> None:
         """
-        Sobrescribe el método de `VentanaMenu` para añadir el lienzo de dibujo
-        a la ventana.
+        Sobrescribe el método `VentanaMenu` para añadir el lienzo interactivo
+        en la ventana.
         """
         super()._crear_contenido_ventana()
         self._crear_lienzo()
 
     def _crear_lienzo(self) -> None:
         """
-        Modifica el lienzo para asignar eventos del ratón para la
-        interacción y devuelve la referencia al lienzo.
+        Configura el lienzo con eventos del ratón para la interacción.
         """
         lienzo = self.lienzo
-        
+
         self._centrar_canvas()
         self._crear_ejes()
 
@@ -91,44 +95,78 @@ class VentanaMenuCanvas(VentanaMenu):
         lienzo.bind(UserEvents.LEFT_RELEASE, self._terminar_dibujo)
         lienzo.bind(UserEvents.RIGHT_CLICK, self._seleccionar_linea)
         lienzo.bind(UserEvents.MOUSE_WHEEL, self._zoom)
-        
-        # Vincular las teclas WASD para mover la línea
-        self.ventana.bind(UserEvents.TECLA_UP, lambda e: self._mover_linea(0, -self.tamanho_pincel))  # Arriba
-        self.ventana.bind(UserEvents.TECLA_LEFT, lambda e: self._mover_linea(-self.tamanho_pincel, 0))  # Izquierda
-        self.ventana.bind(UserEvents.TECLA_DOWN, lambda e: self._mover_linea(0, self.tamanho_pincel))   # Abajo
-        self.ventana.bind(UserEvents.TECLA_RIGHT, lambda e: self._mover_linea(self.tamanho_pincel, 0))   # Derecha
-        
-        self.ventana.bind(UserEvents.SPACE, self._realizar_accion)
-        self.ventana.bind(UserEvents.CONTROL_Z, lambda e: self._deshacer_accion())  # Control + Z para deshacer
 
-        # tiene que ser a la ventana para que lea las flechas y lambda porque usa argumentos
-        self.ventana.bind(UserEvents.ARROW_UP, lambda e: self._mover_canvas(0, -Default.CANVAS_MOVE_Y))  # Mover arriba
-        self.ventana.bind(UserEvents.ARROW_DOWN, lambda e: self._mover_canvas(0, Default.CANVAS_MOVE_Y))  # Mover abajo
-        self.ventana.bind(UserEvents.ARROW_LEFT, lambda e: self._mover_canvas(-Default.CANVAS_MOVE_X, 0))  # Mover izquierda
-        self.ventana.bind(UserEvents.ARROW_RIGHT, lambda e: self._mover_canvas(Default.CANVAS_MOVE_X, 0))  # Mover derecha
-        # Asignar eventos a teclas para agrupar/desagrupar
-        self.ventana.bind(UserEvents.TECLA_G, lambda e: self._agrupar_figuras())  # Agrupar con tecla 'g'
-        self.ventana.bind(UserEvents.TECLA_H, lambda e: self._desagrupar_figuras())  # Desagrupar con tecla 'd'
+        # Vincular teclas WASD para mover líneas seleccionadas
+        self.ventana.bind(
+            UserEvents.TECLA_UP, lambda e: self._mover_linea(0, -self.tamanho_pincel)
+        )  # Arriba
+        self.ventana.bind(
+            UserEvents.TECLA_LEFT, lambda e: self._mover_linea(-self.tamanho_pincel, 0)
+        )  # Izquierda
+        self.ventana.bind(
+            UserEvents.TECLA_DOWN, lambda e: self._mover_linea(0, self.tamanho_pincel)
+        )  # Abajo
+        self.ventana.bind(
+            UserEvents.TECLA_RIGHT, lambda e: self._mover_linea(self.tamanho_pincel, 0)
+        )  # Derecha
+
+        # Asignar eventos para comandos adicionales
+        self.ventana.bind(UserEvents.SPACE, self._realizar_accion)
+        self.ventana.bind(
+            UserEvents.CONTROL_Z, lambda e: self._deshacer_accion()
+        )  # Control + Z para deshacer
+
+        # Eventos para mover el lienzo usando las flechas del teclado
+        self.ventana.bind(
+            UserEvents.ARROW_UP, lambda e: self._mover_canvas(0, -Default.CANVAS_MOVE_Y)
+        )  # Mover arriba
+        self.ventana.bind(
+            UserEvents.ARROW_DOWN,
+            lambda e: self._mover_canvas(0, Default.CANVAS_MOVE_Y),
+        )  # Mover abajo
+        self.ventana.bind(
+            UserEvents.ARROW_LEFT,
+            lambda e: self._mover_canvas(-Default.CANVAS_MOVE_X, 0),
+        )  # Mover izquierda
+        self.ventana.bind(
+            UserEvents.ARROW_RIGHT,
+            lambda e: self._mover_canvas(Default.CANVAS_MOVE_X, 0),
+        )  # Mover derecha
+
+        # Asignar eventos para agrupar y desagrupar figuras
+        self.ventana.bind(
+            UserEvents.TECLA_G, lambda e: self._agrupar_figuras()
+        )  # Agrupar con tecla 'G'
+        self.ventana.bind(
+            UserEvents.TECLA_H, lambda e: self._desagrupar_figuras()
+        )  # Desagrupar con tecla 'H'
+
     ########### Manejo de eventos ###########
     def _crear_ejes(self) -> None:
         self.lienzo.create_line(-2000, 0, 2000, 0, fill=Color.GRAY, width=1)  # Eje X
         self.lienzo.create_line(0, 2000, 0, -2000, fill=Color.GRAY, width=1)  # Eje Y
-        
+
     def _centrar_canvas(self) -> None:
         # Configurar el área desplazable (scrollregion) más amplia para que el origen esté en el centro
-        self.lienzo.configure(scrollregion=(-self._scroll_total, -self._scroll_total, self._scroll_total, self._scroll_total))
+        self.lienzo.configure(
+            scrollregion=(
+                -self._scroll_total,
+                -self._scroll_total,
+                self._scroll_total,
+                self._scroll_total,
+            )
+        )
         self.lienzo.xview_scroll(-10000, tk.UNITS)
         self.lienzo.yview_scroll(-10000, tk.UNITS)
-        
+
         self.lienzo.xview_scroll(121, tk.UNITS)
         self.lienzo.yview_scroll(172, tk.UNITS)
 
-        
     def _crear_punto(self, x: int, y: int) -> Punto:
         x_canvas = self.lienzo.canvasx(x)  # Obtener la coordenada X relativa al canvas
         y_canvas = self.lienzo.canvasy(y)  # Obtener la coordenada Y relativa al canvas
         return Punto(x_canvas, y_canvas)
-        
+
     def _iniciar_dibujo(self, evento: tk.Event) -> None:
         """
         Inicia el proceso de dibujo cuando el usuario hace clic izquierdo en el lienzo.
@@ -136,7 +174,7 @@ class VentanaMenuCanvas(VentanaMenu):
         Args:
             evento (tk.Event): Evento de clic del ratón que contiene las coordenadas.
         """
-        self._punto_inicial = self._crear_punto(evento.x,evento.y)
+        self._punto_inicial = self._crear_punto(evento.x, evento.y)
 
     def _dibujar_en_movimiento(self, evento: tk.Event) -> None:
         """
@@ -220,8 +258,13 @@ class VentanaMenuCanvas(VentanaMenu):
 
         # Buscar la nueva figura cercana al punto clicado
         for figura in self._figuras:
-            if (isinstance(figura, Linea) and self._es_cercano_a_linea(punto_real.x, punto_real.y, figura)) or \
-            (isinstance(figura, Figura) and self._es_cercano_a_figura(punto_real.x, punto_real.y, figura)):
+            if (
+                isinstance(figura, Linea)
+                and self._es_cercano_a_linea(punto_real.x, punto_real.y, figura)
+            ) or (
+                isinstance(figura, Figura)
+                and self._es_cercano_a_figura(punto_real.x, punto_real.y, figura)
+            ):
                 if figura not in self._lineas_seleccionadas:
                     self._lineas_seleccionadas.append(figura)
                     figura.cambiar_outline("red")  # Marcarla como seleccionada
@@ -230,7 +273,7 @@ class VentanaMenuCanvas(VentanaMenu):
                     self._lineas_seleccionadas.remove(figura)
                     figura.cambiar_outline(figura.color)
                 break  # Deja de buscar después de encontrar la primera figura
-            
+
     def _es_cercano_a_figura(self, x: int, y: int, figura: Figura) -> bool:
         """
         Verifica si un punto está cerca de una figura compuesta por líneas.
@@ -277,11 +320,11 @@ class VentanaMenuCanvas(VentanaMenu):
             event (tk.Event): Evento de movimiento del ratón.
         """
         for figura in self._lineas_seleccionadas:
-                grupo = self.pertenece_grupo(figura)
-                if grupo is not None:
-                    grupo.mover(x, y)
-                else:
-                    figura.mover(x, y)
+            grupo = self.pertenece_grupo(figura)
+            if grupo is not None:
+                grupo.mover(x, y)
+            else:
+                figura.mover(x, y)
 
     def _zoom(self, evento: tk.Event) -> None:
         """
@@ -294,10 +337,10 @@ class VentanaMenuCanvas(VentanaMenu):
         scale_factor = (
             Default.ZOOM_IN_FACTOR if evento.delta > 0 else Default.ZOOM_OUT_FACTOR
         )
-        
+
         # Nuevo nivel de zoom a aplicar
         nuevo_nivel_zoom = round(self._nivel_zoom + scale_factor, 1)
-        
+
         # Limita el nivel de zoom a un rango entre min y max
         if Default.ZOOM_LIMIT_MIN <= nuevo_nivel_zoom <= Default.ZOOM_LIMIT_MAX:
             # Calcula el factor relativo respecto al nivel actual
@@ -305,7 +348,7 @@ class VentanaMenuCanvas(VentanaMenu):
 
             # Actualiza el nivel de zoom
             self._nivel_zoom = nuevo_nivel_zoom
-            
+
             # Punto donde el cursor está, para hacer el zoom relativo
             punto = self._crear_punto(evento.x, evento.y)
 
@@ -314,7 +357,14 @@ class VentanaMenuCanvas(VentanaMenu):
 
             # Actualiza el rango de desplazamiento (scroll)
             self._scroll_total = self._scroll_total + (2000 * scale_factor)
-            self.lienzo.configure(scrollregion=(-self._scroll_total, -self._scroll_total, self._scroll_total, self._scroll_total))
+            self.lienzo.configure(
+                scrollregion=(
+                    -self._scroll_total,
+                    -self._scroll_total,
+                    self._scroll_total,
+                    self._scroll_total,
+                )
+            )
 
     def _resetear_zoom(self) -> None:
         """
@@ -328,14 +378,20 @@ class VentanaMenuCanvas(VentanaMenu):
         # Restablece el valor del zoom y la región de desplazamiento
         self._nivel_zoom = 1
         self._scroll_total = 2000
-        self.lienzo.configure(scrollregion=(-self._scroll_total, -self._scroll_total, self._scroll_total, self._scroll_total))
+        self.lienzo.configure(
+            scrollregion=(
+                -self._scroll_total,
+                -self._scroll_total,
+                self._scroll_total,
+                self._scroll_total,
+            )
+        )
 
         # Centra el canvas
         self._centrar_canvas()
         self.lienzo.xview_scroll(-19, tk.UNITS)
         self.lienzo.yview_scroll(-24, tk.UNITS)
 
-        
     def _borrar_todo(self) -> None:
         """
         Borra todo el contenido del lienzo y resetea el estado de las figuras dibujadas.
@@ -344,12 +400,11 @@ class VentanaMenuCanvas(VentanaMenu):
         self._lienzo.delete("all")
         self._figuras.eliminar_todo()
         self._crear_ejes()
-        
+
     def _deshacer_accion(self):
         super()._deshacer_accion()
         ultimo = self._figuras._elementos.pop()
         self._figuras.eliminar(ultimo)
-
 
     def _mover_canvas(self, dx: int, dy: int) -> None:
         """
@@ -370,45 +425,44 @@ class VentanaMenuCanvas(VentanaMenu):
 
         # Desplazamiento vertical del canvas
         self.lienzo.yview_scroll(dy, tk.UNITS)
-        
+
     def _realizar_accion(self, event: tk.Event):
-    
+
         if self._accion == Texts.SECTION_ACTIONS_DELETE:
-           self._borrar()
-        
+            self._borrar()
+
         elif self._accion == Texts.SECTION_ACTIONS_CHANGE_COLOR:
             self._cambiar_color()
 
     def _seleccionar_agrupar(self) -> None:
         """
         Selecciona la acción de agrupar las líneas o figuras seleccionadas.
-        
-        Este método se activa cuando el usuario elige agrupar elementos, 
+
+        Este método se activa cuando el usuario elige agrupar elementos,
         mostrando un mensaje de confirmación en la consola.
         """
         super()._seleccionar_agrupar()
         self._agrupar_figuras()
-        
 
     def _seleccionar_desagrupar(self) -> None:
         """
         Selecciona la acción de desagrupar las figuras agrupadas previamente.
-        
-        Este método se activa cuando el usuario elige desagrupar, mostrando 
+
+        Este método se activa cuando el usuario elige desagrupar, mostrando
         un mensaje de confirmación en la consola.
         """
         super()._seleccionar_desagrupar()
         self._desagrupar_figuras()
-        
+
     def _cambiar_color(self):
         color = self._abrir_seleccion_color()
         for linea in self._lineas_seleccionadas:
             linea.cambiar_color(color)
-            
+
             grupo = self.pertenece_grupo(linea)
             if grupo is not None:
                 grupo.cambiar_color(color)
-            
+
     def pertenece_grupo(self, linea):
         """
         Verifica si una línea pertenece a un grupo específico.
@@ -419,8 +473,12 @@ class VentanaMenuCanvas(VentanaMenu):
         Returns:
             bool: True si la línea pertenece al grupo, False en caso contrario.
         """
-        for grupo in self._grupos_figuras:  # Asumiendo que self.grupos es una lista de grupos
-            if linea in grupo._elementos:  # Asumiendo que cada grupo tiene una lista de líneas
+        for (
+            grupo
+        ) in self._grupos_figuras:  # Asumiendo que self.grupos es una lista de grupos
+            if (
+                linea in grupo._elementos
+            ):  # Asumiendo que cada grupo tiene una lista de líneas
                 return grupo
         return None
 
@@ -430,23 +488,24 @@ class VentanaMenuCanvas(VentanaMenu):
         """
         # Crear una copia de la lista de líneas seleccionadas
         lineas_a_borrar = self._lineas_seleccionadas.copy()
-        
+
         for linea in lineas_a_borrar:
             linea.borrar()  # Llama al método para borrar la línea del lienzo
-            self._lineas_seleccionadas.remove(linea)  # Elimina de la lista de líneas seleccionadas
+            self._lineas_seleccionadas.remove(
+                linea
+            )  # Elimina de la lista de líneas seleccionadas
             self.figuras.eliminar(linea)  # Elimina de la lista de figuras
             grupo = self.pertenece_grupo(linea)
             if grupo is not None:
                 grupo.borrar()
-        
-        
+
     def _agrupar_figuras(self) -> None:
         """
         Agrupa las líneas seleccionadas en un nuevo grupo (Figura).
         """
         if self._lineas_seleccionadas:
             nuevo_grupo = Figura()
-            
+
             for linea in self._lineas_seleccionadas:
                 nuevo_grupo.anhadir(linea)
 
@@ -464,7 +523,9 @@ class VentanaMenuCanvas(VentanaMenu):
         """
         if self._lineas_seleccionadas:
             for figura in self._grupos_figuras:
-                if any(linea in figura._elementos for linea in self._lineas_seleccionadas):
+                if any(
+                    linea in figura._elementos for linea in self._lineas_seleccionadas
+                ):
                     # Eliminar el grupo
                     self._grupos_figuras.remove(figura)
                     print(f"Grupo desagregado: {figura}")

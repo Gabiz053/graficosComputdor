@@ -2,7 +2,7 @@
 Archivo: forma.py
 
 Este archivo define las distintas formas que se pueden pintar en el lienzo.
-Utiliza el patrón Composite para organizar y crear estas formas.
+Utiliza el patron Composite para organizar y crear estas formas.
 
 Autor: Gabriel Gomez Garcia
 Fecha: 23 de septiembre de 2024
@@ -26,8 +26,9 @@ class ObjetoDibujo(ABC):
     Clase base abstracta para todos los objetos de dibujo.
 
     Esta clase define la estructura general que deben seguir todos los
-    objetos de dibujo, obligando a las subclases a implementar el método
-    'dibujar' para aparecer en el dibujo.
+    objetos de dibujo, obligando a las subclases a implementar los metodos
+    'dibujar', 'mover', 'borrar', 'cambiar_color' y 'cambiar_outline'
+    para aparecer y comportarse correctamente en el dibujo.
     """
 
     def __init__(
@@ -36,15 +37,15 @@ class ObjetoDibujo(ABC):
         color: str = Default.DRAWING_COLOR,
         herramienta: AlgoritmoDibujo = Default.DRAWING_TOOL,
         tamanho: int = Default.DRAWING_SIZE,
-    ):
+    ) -> None:
         """
-        Inicializa un objeto de dibujo con color y tamaño de trazo.
+        Inicializa un objeto de dibujo con color y tamano de trazo.
 
         Args:
             lienzo (Canvas): La instancia de lienzo principal de tkinter.
             color (str): Color del objeto de dibujo.
             herramienta (AlgoritmoDibujo): Herramienta utilizada para dibujar.
-            tamanho (int): Tamaño del objeto de dibujo.
+            tamanho (int): Tamano del objeto de dibujo.
         """
         self._lienzo = lienzo
         self._color = color
@@ -54,58 +55,101 @@ class ObjetoDibujo(ABC):
     # Getters y setters
     @property
     def lienzo(self) -> Canvas:
+        """Obtiene el lienzo en el que se dibuja el objeto."""
         return self._lienzo
 
     @property
     def color(self) -> str:
+        """Obtiene el color del objeto de dibujo."""
         return self._color
 
     @color.setter
-    def color(self, valor: str):
+    def color(self, valor: str) -> None:
+        """Establece el color del objeto de dibujo.
+
+        Args:
+            valor (str): El nuevo color del objeto.
+        """
         self._color = valor
 
     @property
     def herramienta(self) -> AlgoritmoDibujo:
+        """Obtiene la herramienta utilizada para dibujar."""
         return self._herramienta
 
     @herramienta.setter
-    def herramienta(self, valor: AlgoritmoDibujo):
+    def herramienta(self, valor: AlgoritmoDibujo) -> None:
+        """Establece la herramienta utilizada para dibujar.
+
+        Args:
+            valor (AlgoritmoDibujo): La nueva herramienta para dibujar.
+        """
         self._herramienta = valor
 
     @property
     def tamanho(self) -> int:
+        """Obtiene el tamano del objeto de dibujo."""
         return self._tamanho
 
     @tamanho.setter
-    def tamanho(self, valor: int):
+    def tamanho(self, valor: int) -> None:
+        """Establece el tamano del objeto de dibujo.
+
+        Args:
+            valor (int): El nuevo tamano del objeto.
+        """
         self._tamanho = valor
 
-    # Métodos abstractos
+    # Metodos abstractos
     @abstractmethod
     def dibujar(self) -> list:
-        """Método abstracto para dibujar el objeto en el lienzo."""
+        """Metodo abstracto para dibujar el objeto en el lienzo.
+
+        Debe ser implementado por las subclases para realizar la
+        representacion grafica del objeto.
+        """
         raise NotImplementedError(ErrorMessages.NOT_IMPLEMENTED)
 
     @abstractmethod
-    def mover(self, dx: int, dy: int):
-        """Método abstracto para mover el objeto de dibujo."""
+    def mover(self, dx: int, dy: int) -> None:
+        """Metodo abstracto para mover el objeto de dibujo.
+
+        Args:
+            dx (int): Desplazamiento en el eje x.
+            dy (int): Desplazamiento en el eje y.
+        """
         raise NotImplementedError(ErrorMessages.NOT_IMPLEMENTED)
-    
+
+    @abstractmethod
     def borrar(self) -> bool:
-        """Método abstracto para borrar el objeto de dibujo."""
+        """Metodo abstracto para borrar el objeto de dibujo.
+
+        Returns:
+            bool: True si el objeto fue borrado correctamente, False si no habia nada que borrar.
+        """
         raise NotImplementedError(ErrorMessages.NOT_IMPLEMENTED)
-    
-    def cambiar_color(self):
-        """Método abstracto para cambiar color del el objeto de dibujo."""
+
+    @abstractmethod
+    def cambiar_color(self, color: str) -> None:
+        """Metodo abstracto para cambiar el color del objeto de dibujo.
+
+        Args:
+            color (str): El nuevo color para el objeto de dibujo.
+        """
         raise NotImplementedError(ErrorMessages.NOT_IMPLEMENTED)
-    
-    def cambiar_outline(self):
-        """Método abstracto para cambiar el outline del objeto de dibujo al seleccioanrlo."""
+
+    @abstractmethod
+    def cambiar_outline(self, color: str) -> None:
+        """Metodo abstracto para cambiar el outline del objeto de dibujo al seleccionarlo.
+
+        Args:
+            color (str): El nuevo color del outline para resaltar el objeto.
+        """
         raise NotImplementedError(ErrorMessages.NOT_IMPLEMENTED)
 
 
 class Linea(ObjetoDibujo):
-    """Clase que representa una línea definida por dos puntos."""
+    """Clase que representa una linea definida por dos puntos."""
 
     def __init__(
         self,
@@ -115,37 +159,41 @@ class Linea(ObjetoDibujo):
         color: str = Default.DRAWING_COLOR,
         herramienta: AlgoritmoDibujo = Default.DRAWING_TOOL,
         tamanho: int = Default.DRAWING_SIZE,
-    ):
+    ) -> None:
         """
-        Inicializa la línea con dos puntos, color, tamaño y herramienta.
+        Inicializa la linea con dos puntos, color, tamano y herramienta.
 
         Args:
-            punto_inicial (Punto): El primer punto que define el inicio de la línea.
-            punto_final (Punto): El segundo punto que define el final de la línea.
+            punto_inicial (Punto): El primer punto que define el inicio de la linea.
+            punto_final (Punto): El segundo punto que define el final de la linea.
             lienzo (Canvas): La instancia de lienzo principal de tkinter.
-            color (str): Color de la línea.
-            herramienta (AlgoritmoDibujo): Herramienta utilizada para dibujar la línea.
-            tamanho (int): Tamaño de la línea.
+            color (str): Color de la linea.
+            herramienta (AlgoritmoDibujo): Herramienta utilizada para dibujar la linea.
+            tamanho (int): Tamano de la linea.
         """
         super().__init__(lienzo, color, herramienta, tamanho)
         self._puntos: np.ndarray = np.array(
             [[punto_inicial.x, punto_inicial.y], [punto_final.x, punto_final.y]]
         )
-        self._puntos_dibujados = [] # lista de id de puntos que se han dibujado
+        self._puntos_dibujados: list[int] = (
+            []
+        )  # Lista de IDs de puntos que se han dibujado
 
     def __str__(self) -> str:
-        """Devuelve una representación en cadena de la línea."""
-        return f"Línea de color {self.color} desde {self.punto_inicial} hasta {self.punto_final}"
+        """Devuelve una representacion en cadena de la linea."""
+        return f"Linea de color {self.color} desde {self.punto_inicial} hasta {self.punto_final}"
 
     # Getters
     @property
     def punto_inicial(self) -> Punto:
+        """Obtiene el punto inicial de la linea."""
         return Punto(self._puntos[0][0], self._puntos[0][1])
 
     @property
     def punto_final(self) -> Punto:
+        """Obtiene el punto final de la linea."""
         return Punto(self._puntos[1][0], self._puntos[1][1])
-    
+
     @property
     def puntos_dibujados(self) -> list[int]:
         """Obtiene la lista de IDs de puntos dibujados."""
@@ -153,155 +201,306 @@ class Linea(ObjetoDibujo):
 
     @puntos_dibujados.setter
     def puntos_dibujados(self, ids: list[int]) -> None:
-        """Establece la lista de IDs de puntos dibujados."""
+        """Establece la lista de IDs de puntos dibujados.
+
+        Args:
+            ids (list[int]): Lista de IDs de puntos dibujados.
+        """
         self._puntos_dibujados = ids
 
-    # Métodos principales
+    # Metodos principales
     def dibujar(self) -> list:
-        """Dibuja una línea en el lienzo."""
+        """Dibuja una linea en el lienzo.
+
+        Returns:
+            list: Lista de IDs de los elementos dibujados.
+        """
         lista_puntos, self._puntos_dibujados = self.herramienta.dibujar_linea(
             self.lienzo, self.color, self.tamanho, *self._puntos.flatten()
         )
         return lista_puntos
 
     def mover(self, dx: int, dy: int) -> None:
-        """Mueve la línea desplazando ambos puntos."""
+        """Mueve la linea desplazando ambos puntos.
+
+        Args:
+            dx (int): Desplazamiento en el eje x.
+            dy (int): Desplazamiento en el eje y.
+        """
         self.borrar()
         self._puntos += np.array([[dx, dy]])
         self.dibujar()
-        
+
     def borrar(self) -> bool:
-        """Borra los puntos dibujados del lienzo."""
+        """Borra los puntos dibujados del lienzo.
+
+        Returns:
+            bool: True si se borro con exito, False si no habia puntos que borrar.
+        """
+        if len(self._puntos_dibujados) == 0:
+            return False
+        for punto_id in self._puntos_dibujados:
+            self.lienzo.delete(punto_id)
+        return True
+
+    def cambiar_color(self, color: str) -> None:
+        """Cambia el color de la linea.
+
+        Args:
+            color (str): El nuevo color de la linea.
+        """
+        self.color = color
+        for punto in self._puntos_dibujados:
+            self.lienzo.itemconfig(punto, fill=color, outline=color)
+
+    def cambiar_outline(self, color: str) -> None:
+        """Cambia el outline de la linea para resaltar cuando esta seleccionada.
+
+        Args:
+            color (str): El nuevo color del outline.
+        """
+        for punto in self._puntos_dibujados:
+            self.lienzo.itemconfig(
+                punto, outline=color
+            )  # Cambia el outline a un color especifico
+
+
+class Puntos(ObjetoDibujo):
+    """Clase que representa una figura geometrica basada en puntos."""
+
+    def __init__(
+        self,
+        lista_puntos: list[Punto],
+        lienzo: Canvas,
+        color: str = Default.DRAWING_COLOR,
+        herramienta: AlgoritmoDibujo = Default.DRAWING_TOOL,
+        tamanho: int = Default.DRAWING_SIZE,
+    ) -> None:
+        """
+        Inicializa la figura geometrica con una lista de puntos.
+
+        Args:
+            lista_puntos (list[Punto]): Lista de puntos que definen la figura.
+            lienzo (Canvas): La instancia de lienzo principal de tkinter.
+            color (str): Color de los puntos.
+            herramienta (AlgoritmoDibujo): Herramienta utilizada para dibujar.
+            tamanho (int): Tamano de los puntos.
+        """
+        super().__init__(lienzo, color, herramienta, tamanho)
+        self._lista_puntos: list[Punto] = lista_puntos
+        self._puntos_dibujados: list[int] = []
+
+    def __str__(self) -> str:
+        """Devuelve una representacion en cadena de los puntos."""
+        return f"Puntos: {', '.join(str(punto) for punto in self._lista_puntos)}"
+
+    @property
+    def lista_puntos(self) -> list[Punto]:
+        """Obtiene la lista de puntos que componen la figura."""
+        return self._lista_puntos
+
+    @property
+    def puntos_dibujados(self) -> list[int]:
+        """Obtiene la lista de IDs de puntos dibujados."""
+        return self._puntos_dibujados
+
+    @puntos_dibujados.setter
+    def puntos_dibujados(self, ids: list[int]) -> None:
+        """Establece la lista de IDs de puntos dibujados.
+
+        Args:
+            ids (list[int]): Lista de IDs de puntos dibujados.
+        """
+        self._puntos_dibujados = ids
+
+    def dibujar(self) -> list:
+        """Dibuja la figura en el lienzo.
+
+        Returns:
+            list: Lista de IDs de los elementos dibujados.
+        """
+        self.puntos_dibujados = [
+            self.lienzo.create_oval(
+                punto.x - self.tamanho / 2,
+                punto.y - self.tamanho / 2,
+                punto.x + self.tamanho / 2,
+                punto.y + self.tamanho / 2,
+                fill=self.color,
+                outline=self.color,
+            )
+            for punto in self.lista_puntos
+        ]
+        return self.puntos_dibujados
+
+    def mover(self, dx: int, dy: int) -> None:
+        """Mueve los puntos de la figura en el lienzo.
+
+        Args:
+            dx (int): Desplazamiento en el eje x.
+            dy (int): Desplazamiento en el eje y.
+        """
+        self.borrar()
+        for punto in self.lista_puntos:
+            punto.x += dx
+            punto.y += dy
+        self.dibujar()
+
+    def borrar(self) -> bool:
+        """Borra los puntos dibujados del lienzo.
+
+        Returns:
+            bool: True si se borro con exito, False si no habia puntos que borrar.
+        """
         if len(self.puntos_dibujados) == 0:
             return False
         for punto_id in self.puntos_dibujados:
             self.lienzo.delete(punto_id)
         return True
-    
-    def cambiar_color(self, color):
-        self._color = color
-        for punto in self._puntos_dibujados:
-            self._lienzo.itemconfig(punto, fill=color, outline=color)
 
-    def cambiar_outline(self, color):
-        """
-        Cambia el outline de la línea para resaltar cuando está seleccionada.
-        """
-        for punto in self._puntos_dibujados:
-            self._lienzo.itemconfig(punto, outline=color)  # Cambia el outline a un color específico
-
-class Puntos(ObjetoDibujo):
-    """Clase que representa una figura geométrica formada por varios puntos."""
-
-    def __init__(self, puntos: list[Punto]):
-        """
-        Inicializa una figura con una lista de puntos.
+    def cambiar_color(self, color: str) -> None:
+        """Cambia el color de los puntos.
 
         Args:
-            puntos (list[Punto]): Lista de puntos que forman la figura.
+            color (str): El nuevo color de los puntos.
         """
-        if len(puntos) < 3:
-            raise ValueError("Una figura debe tener al menos 3 puntos.")
-        self._puntos = puntos
+        self.color = color
+        for punto in self.puntos_dibujados:
+            self.lienzo.itemconfig(punto, fill=color, outline=color)
 
-    def __str__(self) -> str:
-        """Devuelve una representación en cadena de la figura mostrando sus puntos."""
-        return f"Figura con {len(self._puntos)} puntos: " + ", ".join(
-            [str(punto) for punto in self._puntos]
-        )
+    def cambiar_outline(self, color: str) -> None:
+        """Cambia el outline de los puntos para resaltar cuando estan seleccionados.
 
-    # Getters
-    def obtener_puntos(self) -> list[Punto]:
-        """Devuelve una lista con los puntos que forman la figura."""
-        return self._puntos.copy()
-
-    # Métodos principales
-    def agregar_punto(self, punto: Punto) -> None:
-        """Agrega un nuevo punto a la figura."""
-        self._puntos.append(punto)
-
-    def obtener_punto(self, indice: int) -> Punto:
-        """Devuelve el punto en la posición indicada."""
-        if 0 <= indice < len(self._puntos):
-            return self._puntos[indice]
-        else:
-            raise IndexError("Índice fuera de rango.")
-
-    def transformar(self, matriz_transformacion: np.ndarray) -> None:
-        """Aplica una transformación a todos los puntos de la figura."""
-        for punto in self._puntos:
-            nuevas_coordenadas = np.dot(
-                matriz_transformacion, punto.obtener_coordenadas()
-            )
-            punto._set_coordenadas(nuevas_coordenadas)
+        Args:
+            color (str): El nuevo color del outline.
+        """
+        for punto in self.puntos_dibujados:
+            self.lienzo.itemconfig(
+                punto, outline=color
+            )  # Cambia el outline a un color especifico
 
 
 class Figura(ObjetoDibujo):
-    """Clase que representa una colección de objetos de dibujo."""
+    """
+    Representa una coleccion de objetos de dibujo, gestionando sus operaciones en conjunto.
+    """
 
-    def __init__(self):
-        """Inicializa una colección vacía para almacenar objetos de dibujo."""
+    def __init__(self) -> None:
+        """Inicializa una coleccion vacia para objetos de dibujo."""
         self._elementos: list[ObjetoDibujo] = []
 
-    # Métodos principales
-    def dibujar(self) -> None:
-        """Dibuja todos los objetos en la colección."""
-        for elemento in self._elementos:
-            elemento.dibujar()
+    # Getters y setters
+    @property
+    def elementos(self) -> list[ObjetoDibujo]:
+        """Devuelve la lista de elementos en la coleccion."""
+        return self._elementos
 
-    def mover(self, dx: int, dy: int) -> None:
-        """Mueve todos los elementos de la colección."""
-        for elemento in self._elementos:
-            elemento.mover(dx, dy)
+    @elementos.setter
+    def elementos(self, nuevos_elementos: list[ObjetoDibujo]) -> None:
+        """Permite establecer una nueva lista de elementos."""
+        self._elementos = nuevos_elementos
 
+    # Gestión de la colección
     def anhadir(self, elemento: ObjetoDibujo) -> None:
-        """Agrega un objeto de dibujo a la colección."""
+        """
+        Agrega un objeto de dibujo a la coleccion.
+
+        Args:
+            elemento (ObjetoDibujo): El objeto a agregar.
+        """
         self._elementos.append(elemento)
+
+    def eliminar(self, elemento: ObjetoDibujo) -> bool:
+        """
+        Elimina un objeto especifico de la coleccion.
+
+        Args:
+            elemento (ObjetoDibujo): El objeto a eliminar.
+
+        Returns:
+            bool: True si se elimino con exito, False si no estaba presente.
+        """
+        elemento.borrar()  # Intenta borrar del lienzo
+        return True
 
     def eliminar(self, elemento: ObjetoDibujo) -> bool:
         """Elimina un objeto de dibujo específico de la colección."""
         elemento.borrar()  # Intenta borrar del lienzo
         return True
-        
+
     def eliminar_todo(self) -> None:
         """Elimina todos los objetos de la colección."""
         self._elementos.clear()
-        
-    def cambiar_color(self, color):
-        """Cambia el color de todos los elementos de la colección."""
+
+    def desagrupar(self) -> list[ObjetoDibujo]:
+        """
+        Devuelve todos los elementos de la coleccion y vacia la lista interna.
+
+        Returns:
+            list[ObjetoDibujo]: Lista de objetos de dibujo.
+        """
+        elementos = self._elementos.copy()
+        self._elementos.clear()
+        return elementos
+
+    # Operaciones sobre los elementos
+    def dibujar(self) -> None:
+        """Dibuja todos los objetos de la coleccion."""
+        for elemento in self._elementos:
+            elemento.dibujar()
+
+    def mover(self, dx: int, dy: int) -> None:
+        """
+        Mueve todos los elementos de la coleccion.
+
+        Args:
+            dx (int): Desplazamiento en el eje x.
+            dy (int): Desplazamiento en el eje y.
+        """
+        for elemento in self._elementos:
+            elemento.mover(dx, dy)
+
+    def cambiar_color(self, color: str) -> None:
+        """
+        Cambia el color de todos los elementos de la coleccion.
+
+        Args:
+            color (str): El nuevo color para los elementos.
+        """
         for elemento in self._elementos:
             elemento.cambiar_color(color)
-            
-    def desagrupar(self):
-        """Desagrupa los elementos devolviéndolos a la lista general de figuras."""
-        return self._elementos[:]
-    
-    def cambiar_outline(self, color):
+
+    def cambiar_outline(self, color: str) -> None:
         """
-        Cambia el outline de todos los elementos en la figura.
+        Cambia el outline de todos los elementos en la coleccion.
+
+        Args:
+            color (str): El nuevo color para resaltar el outline.
         """
         for elemento in self._elementos:
-            elemento.cambiar_outline(color)  # Llama al método de cada elemento
-            
+            elemento.cambiar_outline(color)
+
     def borrar(self) -> bool:
-        """Borra cada linea."""
+        """
+        Borra cada objeto en la coleccion y elimina todos los elementos.
+
+        Returns:
+            bool: True si se borraron los elementos.
+        """
         for elemento in self._elementos:
             elemento.borrar()
         self.eliminar_todo()
-        
         return True
-    
-    # Métodos para iteración
-    def __iter__(self):
-        """Devuelve un iterador para las figuras."""
-        self._indice = 0  # Inicializa el índice
+
+    # Iteración
+    def __iter__(self) -> "Figura":
+        """Devuelve un iterador para recorrer los elementos de la coleccion."""
+        self._indice = 0
         return self
 
     def __next__(self) -> ObjetoDibujo:
-        """Devuelve la siguiente figura o levanta StopIteration."""
+        """Devuelve el siguiente objeto de dibujo o levanta StopIteration."""
         if self._indice < len(self._elementos):
-            figura = self._elementos[self._indice]
+            elemento = self._elementos[self._indice]
             self._indice += 1
-            return figura
-        else:
-            raise StopIteration  # Fin de la iteración
+            return elemento
+        raise StopIteration

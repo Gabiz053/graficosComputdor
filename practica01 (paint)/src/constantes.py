@@ -8,6 +8,7 @@ Autor: Gabriel Gomez Garcia
 Fecha: 17 de septiembre de 2024
 """
 
+# Importaciones
 from algoritmos_dibujo import (
     SlopeLineStrategy,
     DDALineStrategy,
@@ -16,6 +17,7 @@ from algoritmos_dibujo import (
 )
 
 
+# Colores
 class Color:
     """Clase que contiene los colores utilizados en la aplicación."""
 
@@ -28,6 +30,7 @@ class Color:
     LIGHT_LIGHT_GREY = "#3B3B3B"
 
 
+# Mensajes de error
 class ErrorMessages:
     """Clase que contiene mensajes de error utilizados en la aplicación."""
 
@@ -41,6 +44,7 @@ class ErrorMessages:
     NOT_IMPLEMENTED = "Este método debe ser implementado en las subclases."
 
 
+# Etiquetas del menú ( no las uso pero era parte de la barra de herramientas sin implementar)
 class MenuLabels:
     """Clase que define las constantes utilizadas en el menú de la aplicación."""
 
@@ -51,58 +55,68 @@ class MenuLabels:
     EXIT = "Salir"
     HELP = "Ayuda"
     ABOUT = "Acerca de"
+
     PENCIL_1 = "lápiz M1"
     PENCIL_2 = "lápiz M2"
     PENCIL_3 = "lápiz M3"
     PENCIL_4 = "lápiz M4"
+
     ERASER = "borrador"
     CLEAR_ALL = "borrar todo"
+
     COLOR_CHOOSER = "elegir color"
     BRUSH_SIZE_LABEL = "Tamaño pincel"
 
 
+# Textos de la aplicación
 class Texts:
     """Clase que contiene los textos utilizados en la aplicación."""
 
+    # Sección: Colores
     SELECT_COLOR = "Color seleccionado:"
+
+    # Sección: Herramientas
     SELECT_TOOL = "Herramienta seleccionada:"
     SELECT_SIZE = "Tamaño de línea:"
 
+    # Sección: Figuras y acciones de dibujo
     SHAPE_CLEAR = "Borrar al hacer clic sobre figura"
     SHAPE_CLEAR_ALL = "Borrar todo"
     SHAPE_UNDO = "Deshacer última acción"
     SHAPE_GROUP = "Figuras agrupadas:"
     SHAPE_UNGROUP = "Desagrupando"
 
+    # Sección: Opciones de pincel y acciones generales
     SECTION_OPTIONS = "Opciones de Pincel"
     SECTION_OPTIONS_LINE = "Tamaño de línea:"
-    
     SECTION_COLOR = "Colores"
     SECTION_COLOR_SELECT = "Seleccionar Color"
-    
     SECTION_CLEAR = "Borradores"
     SECTION_CLEAR_ALL = "Borrar Todo"
     SECTION_CLEAR_UNDO = "Deshacer"
-    
+
+    # Sección: Acciones de grupo
     SECTION_ACTIONS = "Acciones"
     SECTION_ACTIONS_DELETE = "Borrar"
     SECTION_ACTIONS_CHANGE_COLOR = "Cambiar Color"
-    
+
     SECTION_GRUPO = "Grupo"
     SECTION_GRUPO_GROUP = "Agrupar"
     SECTION_GRUPO_UNGROUP = "Desagrupar"
 
+    # Otras secciones
     SECTION_TEXT = "Salida de texto"
     SECTION_TEXT_CLEAR = "Limpiar"
-    
-    SECTION_SETTINGS = "Ajustes aplicacion"
+
+    SECTION_SETTINGS = "Ajustes aplicación"
     SECTION_SETTINGS_ZOOM = "Resetear zoom"
-    SECTION_SETTINGS_EXIT = "Cerrar aplicacion"
+    SECTION_SETTINGS_EXIT = "Cerrar aplicación"
 
     LEFT_FRAME_LABEL = "Área de trabajo"
     RIGHT_FRAME_LABEL = "Herramientas"
 
 
+# Estrategias de dibujo
 class DrawingStrategies:
     """Clase que define las estrategias de dibujo disponibles como constantes."""
 
@@ -114,61 +128,71 @@ class DrawingStrategies:
     }
 
 
+# Eventos del usuario
 class UserEvents:
     """Clase que define los eventos de interacción del usuario."""
 
-    LEFT_CLICK = "<Button-1>"  # Evento de clic izquierdo
-    LEFT_DRAG = "<B1-Motion>"  # Evento de movimiento con clic izquierdo
-    LEFT_RELEASE = "<ButtonRelease-1>"  # Evento de liberación del clic izquierdo
-    RIGHT_CLICK = "<Button-3>"  # Evento de clic derecho
-    RIGHT_DRAG = "<B3-Motion>"  # Evento de movimiento con clic derecho
-    RIGHT_RELEASE = "<ButtonRelease-3>"  # Evento de liberación del clic derecho
-    MOUSE_WHEEL = "<MouseWheel>"  # Evento al mover la rueda del ratón
-    MOUSE_WHEEL_DRAG = "<B2-Motion>"  # Evento al mover la rueda del ratón
-    
-    SPACE = "<space>"
-    
-    TECLA_UP = "<KeyPress-w>"
-    TECLA_LEFT = "<KeyPress-a>"
-    TECLA_DOWN = "<KeyPress-s>"
-    TECLA_RIGHT = "<KeyPress-d>"
-    
-    CONTROL_Z = '<Control-z>'
-    
-    ARROW_UP = "<Up>"
-    ARROW_DOWN = "<Down>"
-    ARROW_LEFT = "<Left>"
-    ARROW_RIGHT = "<Right>"
-    
-    TECLA_G = "g"
-    TECLA_H = "h"
+    LEFT_CLICK = "<Button-1>"  # Clic izquierdo
+    LEFT_DRAG = "<B1-Motion>"  # Arrastre con clic izquierdo
+    LEFT_RELEASE = "<ButtonRelease-1>"  # Liberación del clic izquierdo
 
+    RIGHT_CLICK = "<Button-3>"  # Clic derecho
+    RIGHT_DRAG = "<B3-Motion>"  # Arrastre con clic derecho
+    RIGHT_RELEASE = "<ButtonRelease-3>"  # Liberación del clic derecho
+
+    MOUSE_WHEEL = "<MouseWheel>"  # Movimiento de la rueda del ratón
+    MOUSE_WHEEL_DRAG = "<B2-Motion>"  # Arrastre con rueda del ratón
+
+    SPACE = "<space>"  # Tecla Espacio
+
+    TECLA_UP = "<KeyPress-w>"  # Tecla 'W'
+    TECLA_LEFT = "<KeyPress-a>"  # Tecla 'A'
+    TECLA_DOWN = "<KeyPress-s>"  # Tecla 'S'
+    TECLA_RIGHT = "<KeyPress-d>"  # Tecla 'D'
+
+    CONTROL_Z = "<Control-z>"  # Combinación Ctrl+Z
+
+    ARROW_UP = "<Up>"  # Flecha arriba
+    ARROW_DOWN = "<Down>"  # Flecha abajo
+    ARROW_LEFT = "<Left>"  # Flecha izquierda
+    ARROW_RIGHT = "<Right>"  # Flecha derecha
+
+    TECLA_G = "g"  # Tecla 'G'
+    TECLA_H = "h"  # Tecla 'H'
+
+
+# Configuraciones por defecto
 class Default:
     """Clase que define las constantes por defecto para la aplicación."""
 
-    WINDOW_WIDTH = 1600  # Ancho de la ventana por defecto
-    WINDOW_HEIGHT = 800  # Alto de la ventana por defecto
-    WINDOW_TITLE = "Ventana con Menú y Canvas Interactivo"  # Título de la ventana
+    # Dimensiones de ventana y canvas
+    WINDOW_WIDTH = 1600  # Ancho de la ventana
+    WINDOW_HEIGHT = 800  # Alto de la ventana
+    WINDOW_TITLE = "Ventana con Menú y Canvas Interactivo"  # Título por defecto
+
     CANVAS_BACKGROUND_COLOR = Color.WHITE  # Color de fondo del canvas
 
+    # Zoom
     ZOOM_FACTOR = 1
-    ZOOM_OUT_FACTOR = -0.1  # Más pequeño
-    ZOOM_IN_FACTOR = 0.1  # Más grande
+    ZOOM_OUT_FACTOR = -0.1  # Zoom alejar
+    ZOOM_IN_FACTOR = 0.1  # Zoom acercar
     ZOOM_LIMIT_MIN = 0.4
     ZOOM_LIMIT_MAX = 3.0
-    
-    CANVAS_MOVE_X = 1 # velocidad desplazamiento en x
-    CANVAS_MOVE_Y = 1 # velocidad desplazamiento en y
 
-    MIN_DISTANCE = 10  # Distancia mínima para ciertas interacciones
+    # Movimiento
+    CANVAS_MOVE_X = 1  # Velocidad de desplazamiento en x
+    CANVAS_MOVE_Y = 1  # Velocidad de desplazamiento en y
 
-    DRAWING_COLOR = Color.BLACK  # Color de dibujo por defecto
-    DRAWING_TOOL = DrawingStrategies.STRATEGIES[
-        "BresenhamLine Float"
-    ]  # Pincel por defecto
+    # Parámetros adicionales
+    MIN_DISTANCE = 10  # Distancia mínima para interacciones
+
+    # Herramientas de dibujo
+    DRAWING_COLOR = Color.BLACK  # Color de dibujo
+    DRAWING_TOOL = DrawingStrategies.STRATEGIES["BresenhamLine Float"]  # Pincel
     DRAWING_TOOL_NAME = list(DrawingStrategies.STRATEGIES.keys())[2]
-    DRAWING_SIZE = 1  # Tamaño del pincel para dibujar
+    DRAWING_SIZE = 1  # Tamaño del pincel
 
-    WINDOW_THEME = "green"  # Tema de la ventana
-    FONT_FAMILY = "Segoe UI"
-    FONT_SIZE = 12
+    # Apariencia de la ventana
+    WINDOW_THEME = "green"  # Tema
+    FONT_FAMILY = "Segoe UI"  # Fuente
+    FONT_SIZE = 12  # Tamaño de fuente

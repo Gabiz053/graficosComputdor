@@ -19,7 +19,7 @@ from CTkColorPicker import AskColor
 # Imports locales
 from ventana import Ventana
 from algoritmos_dibujo import AlgoritmoDibujo
-from constantes import Default, DrawingStrategies, MenuLabels, Texts, Color
+from constantes import Default, DrawingStrategies, Texts, Color
 
 
 class VentanaMenu(Ventana):
@@ -52,16 +52,15 @@ class VentanaMenu(Ventana):
         tamanho_pincel: int = Default.DRAWING_SIZE,
     ) -> None:
         """
-        Inicializa la ventana con las dimensiones y el título proporcionados.
+        Inicializa la ventana con las dimensiones, el título y las configuraciones iniciales de dibujo.
 
         Args:
-            width (int): Ancho de la ventana en píxeles (por defecto, VENTANA_WIDTH).
-            height (int): Alto de la ventana en píxeles (por defecto, VENTANA_HEIGHT).
-            title (str): Título de la ventana (por defecto, VENTANA_TITLE).
-            color_seleccionado (str): Color seleccionado para dibujar (por defecto, COLOR).
-            herramienta_seleccionada (AlgoritmoDibujo): Herramienta seleccionada para dibujar
-                (por defecto, HERRAMIENTA).
-            tamanho_pincel (int): Grosor de las figuras dibujadas (por defecto, TAMANHO_DIBUJAR).
+            width (int): Ancho de la ventana en píxeles.
+            height (int): Alto de la ventana en píxeles.
+            title (str): Título de la ventana.
+            color_seleccionado (str): Color inicial seleccionado para dibujar.
+            herramienta_seleccionada (AlgoritmoDibujo): Herramienta de dibujo seleccionada por defecto.
+            tamanho_pincel (int): Tamaño del pincel o grosor de las figuras dibujadas.
         """
         super().__init__(width, height, title)
         self._color_seleccionado = color_seleccionado
@@ -70,68 +69,18 @@ class VentanaMenu(Ventana):
         self._lienzo = None
         self._accion = Texts.SECTION_ACTIONS_DELETE
 
+    ########### Métodos de creación y configuración de la interfaz ###########
+
     def _crear_contenido_ventana(self) -> None:
         """
-        Configura el contenido de la ventana añadiendo un menú de opciones.
+        Configura el contenido de la ventana añadiendo el menú y las herramientas.
 
-        Este método sobrescribe la función abstracta heredada para implementar
-        un menú superior y una barra de herramientas para interactividad.
+        Sobrescribe el método heredado para crear el menú superior y la barra de herramientas,
+        que permite interactuar con el lienzo.
         """
         self._crear_menu_superior()
         self._crear_menu_herramientas()
 
-    ########### Métodos de selección y actualización ###########
-
-    def _abrir_seleccion_color(self) -> str:
-        pick_color = AskColor()  # Abre el selector de color
-        return pick_color.get()  # Obtiene la cadena de color
-
-    def _seleccionar_color(self) -> None:
-        """Abre un selector de color y actualiza el color seleccionado."""
-        self.color_seleccionado = self._abrir_seleccion_color()
-        print(f"{Texts.SELECT_COLOR} {self.color_seleccionado}")
-
-    def _seleccionar_pincel(self, seleccion: int) -> None:
-        """Selecciona un pincel según el índice proporcionado.
-
-        Args:
-            seleccion (int): El índice del pincel seleccionado.
-        """
-        self.herramienta_seleccionada = DrawingStrategies.STRATEGIES[seleccion]
-        print(f"{Texts.SELECT_TOOL} {self.herramienta_seleccionada}")
-
-    def _actualizar_tamanho(self, valor: float) -> None:
-        """Actualiza el tamaño del pincel según el valor del slider.
-
-        Args:
-            valor (float): El nuevo tamaño del pincel en forma de número flotante.
-        """
-        self.tamanho_pincel = int(valor)  # Actualiza el tamaño del pincel
-        self.label_tamanho.configure(
-            text=f"{Texts.SELECT_SIZE} {self.tamanho_pincel}"
-        )  # Actualiza la etiqueta
-
-    ########### Métodos de manipulación de figuras ###########
-
-    def _borrar_figura(self) -> None:
-        """Borra la figura seleccionada al hacer clic sobre ella."""
-        print(Texts.SHAPE_CLEAR)
-
-    def _borrar_todo(self) -> None:
-        """Borra todas las figuras del lienzo."""
-        print(Texts.SHAPE_CLEAR_ALL)
-
-    def _deshacer_accion(self) -> None:
-        """Deshace la última acción realizada en el lienzo."""
-        print(Texts.SHAPE_UNDO)
-
-    def _agrupar_figuras(self) -> None:
-        """Agrupa las figuras seleccionadas en un solo objeto."""
-        print(Texts.SHAPE_GROUP)
-
-    def _desagrupar_figuras(self) -> None:
-        """Desagrupa las figuras agrupadas, si hay alguna."""
-        print(Texts.SHAPE_UNGROUP)
 
     def _crear_menu_superior(self) -> None:
         pass
@@ -283,6 +232,40 @@ class VentanaMenu(Ventana):
         )  # Ocupa el espacio restante
 
         return canvas_dibujo
+    
+    def _crear_frame_seccion(self, parent_frame, titulo: str) -> ctk.CTkFrame:
+        """
+        Crea y retorna un frame para una sección del menú.
+
+        Args:
+            parent_frame (tk.Frame):
+                Frame en el que se añadirá el nuevo frame.
+            titulo (str):
+                Título de la sección.
+
+        Returns:
+            ctk.CTkFrame:
+                El frame de sección configurado.
+        """
+        frame_seccion = ctk.CTkFrame(
+            parent_frame, corner_radius=10, fg_color=Color.LIGHT_GRAY
+        )
+        frame_seccion.pack(pady=10, padx=10, fill="x")
+
+        # Título de la sección
+        titulo_seccion = ctk.CTkLabel(frame_seccion, text=titulo, font=(self.fuente, 14))
+        titulo_seccion.grid(row=0, column=0, pady=(10, 0), sticky="nsew", columnspan=3)
+
+        # Línea separadora
+        separator = ctk.CTkFrame(
+            frame_seccion, height=2, corner_radius=10, fg_color=Color.GRAY
+        )
+        separator.grid(
+            row=1, column=0, columnspan=3, pady=(10, 0), padx=20, sticky="ew"
+        )
+
+        return frame_seccion
+
 
     def _crear_seccion_opciones(self, titulo: str, parent_frame) -> None:
         """
@@ -489,25 +472,6 @@ class VentanaMenu(Ventana):
         # Configurar peso de las columnas
         for i in range(2):
             frame_agrupar.grid_columnconfigure(i, weight=1)
-    
-    def _seleccionar_agrupar(self) -> None:
-        """
-        Selecciona la acción de agrupar las líneas o figuras seleccionadas.
-        
-        Este método se activa cuando el usuario elige agrupar elementos, 
-        mostrando un mensaje de confirmación en la consola.
-        """
-        print("Acción seleccionada: Agrupar")
-
-    def _seleccionar_desagrupar(self) -> None:
-        """
-        Selecciona la acción de desagrupar las figuras agrupadas previamente.
-        
-        Este método se activa cuando el usuario elige desagrupar, mostrando 
-        un mensaje de confirmación en la consola.
-        """
-        print("Acción seleccionada: Desagrupar")
-
 
     def _crear_seccion_salida_texto(self, titulo: str, parent_frame) -> None:
         """
@@ -632,6 +596,56 @@ class VentanaMenu(Ventana):
         btn_cerrar_atajos.pack(pady=(10, 0))  # Aumentar el espacio en la parte superior
 
 
+    ########### Métodos de selección y actualización ###########
+
+    def _abrir_seleccion_color(self) -> str:
+        pick_color = AskColor()  # Abre el selector de color
+        return pick_color.get()  # Obtiene la cadena de color
+
+    def _seleccionar_color(self) -> None:
+        """Abre un selector de color y actualiza el color seleccionado."""
+        self.color_seleccionado = self._abrir_seleccion_color()
+        print(f"{Texts.SELECT_COLOR} {self.color_seleccionado}")
+
+    def _seleccionar_pincel(self, seleccion: int) -> None:
+        """Selecciona un pincel según el índice proporcionado.
+
+        Args:
+            seleccion (int): El índice del pincel seleccionado.
+        """
+        self.herramienta_seleccionada = DrawingStrategies.STRATEGIES[seleccion]
+        print(f"{Texts.SELECT_TOOL} {self.herramienta_seleccionada}")
+        
+        
+    def _seleccionar_agrupar(self) -> None:
+        """
+        Selecciona la acción de agrupar las líneas o figuras seleccionadas.
+        
+        Este método se activa cuando el usuario elige agrupar elementos, 
+        mostrando un mensaje de confirmación en la consola.
+        """
+        print("Acción seleccionada: Agrupar")
+
+    def _seleccionar_desagrupar(self) -> None:
+        """
+        Selecciona la acción de desagrupar las figuras agrupadas previamente.
+        
+        Este método se activa cuando el usuario elige desagrupar, mostrando 
+        un mensaje de confirmación en la consola.
+        """
+        print("Acción seleccionada: Desagrupar")
+
+    def _actualizar_tamanho(self, valor: float) -> None:
+        """Actualiza el tamaño del pincel según el valor del slider.
+
+        Args:
+            valor (float): El nuevo tamaño del pincel en forma de número flotante.
+        """
+        self.tamanho_pincel = int(valor)  # Actualiza el tamaño del pincel
+        self.label_tamanho.configure(
+            text=f"{Texts.SELECT_SIZE} {self.tamanho_pincel}"
+        )  # Actualiza la etiqueta
+        
     def _resetear_zoom(self) -> None:
         """Restablece el zoom a su valor predeterminado."""
         print("Resetear zoom")
@@ -640,38 +654,27 @@ class VentanaMenu(Ventana):
         """Cierra la aplicación."""
         self._ventana.quit()  # Método para cerrar la ventana
 
-    def _crear_frame_seccion(self, parent_frame, titulo: str) -> ctk.CTkFrame:
-        """
-        Crea y retorna un frame para una sección del menú.
+    ########### Métodos de manipulación de figuras ###########
 
-        Args:
-            parent_frame (tk.Frame):
-                Frame en el que se añadirá el nuevo frame.
-            titulo (str):
-                Título de la sección.
+    def _borrar_figura(self) -> None:
+        """Borra la figura seleccionada al hacer clic sobre ella."""
+        print(Texts.SHAPE_CLEAR)
 
-        Returns:
-            ctk.CTkFrame:
-                El frame de sección configurado.
-        """
-        frame_seccion = ctk.CTkFrame(
-            parent_frame, corner_radius=10, fg_color=Color.LIGHT_GRAY
-        )
-        frame_seccion.pack(pady=10, padx=10, fill="x")
+    def _borrar_todo(self) -> None:
+        """Borra todas las figuras del lienzo."""
+        print(Texts.SHAPE_CLEAR_ALL)
 
-        # Título de la sección
-        titulo_seccion = ctk.CTkLabel(frame_seccion, text=titulo, font=(self.fuente, 14))
-        titulo_seccion.grid(row=0, column=0, pady=(10, 0), sticky="nsew", columnspan=3)
+    def _deshacer_accion(self) -> None:
+        """Deshace la última acción realizada en el lienzo."""
+        print(Texts.SHAPE_UNDO)
 
-        # Línea separadora
-        separator = ctk.CTkFrame(
-            frame_seccion, height=2, corner_radius=10, fg_color=Color.GRAY
-        )
-        separator.grid(
-            row=1, column=0, columnspan=3, pady=(10, 0), padx=20, sticky="ew"
-        )
+    def _agrupar_figuras(self) -> None:
+        """Agrupa las figuras seleccionadas en un solo objeto."""
+        print(Texts.SHAPE_GROUP)
 
-        return frame_seccion
+    def _desagrupar_figuras(self) -> None:
+        """Desagrupa las figuras agrupadas, si hay alguna."""
+        print(Texts.SHAPE_UNGROUP)
 
     ########### Getters y setters ###########
 
