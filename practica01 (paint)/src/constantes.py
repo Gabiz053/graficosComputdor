@@ -188,8 +188,8 @@ class Default:
 
     # Herramientas de dibujo
     DRAWING_COLOR = Color.BLACK  # Color de dibujo
-    DRAWING_TOOL = DrawingStrategies.STRATEGIES["BresenhamLine Float"]  # Pincel
-    DRAWING_TOOL_NAME = list(DrawingStrategies.STRATEGIES.keys())[2]
+    DRAWING_TOOL = DrawingStrategies.STRATEGIES["BresenhamLine Integer"]  # Pincel
+    DRAWING_TOOL_NAME = list(DrawingStrategies.STRATEGIES.keys())[3]
     DRAWING_SIZE = 1  # Tamaño del pincel
 
     # Apariencia de la ventana

@@ -120,10 +120,6 @@ class SlopeLineStrategy(AlgoritmoDibujo):
         lista_puntos = []
         lista_dibujados = []
 
-        # Transformar las coordenadas y para que sean positivas hacia arriba
-        y_inicial = -y_inicial
-        y_final = -y_final
-
         def _plot_line_low(x0: int, y0: int, x1: int, y1: int) -> None:
             """Dibuja una línea de pendiente baja (0 <= m < 1)."""
             dx = x1 - x0
@@ -131,7 +127,7 @@ class SlopeLineStrategy(AlgoritmoDibujo):
             m = dy / dx
             b = y0 - m * x0  # altura de la línea en x=0
 
-            for x in range(x0, x1 + 1, tamanho_pincel):
+            for x in range(x0, x1 + 2, tamanho_pincel):
                 y = m * x + b
 
                 x_pack = math.floor(x / tamanho_pincel) * tamanho_pincel
@@ -157,7 +153,7 @@ class SlopeLineStrategy(AlgoritmoDibujo):
             m = dx / dy  # Ahora la pendiente se calcula como dx/dy
             b = x0 - m * y0  # Nueva intersección en x=0
 
-            for y in range(y0, y1 + 1, tamanho_pincel):
+            for y in range(y0, y1 + 2, tamanho_pincel):
                 x = m * y + b  # Resolviendo x en función de y
 
                 x_pack = math.floor(x / tamanho_pincel) * tamanho_pincel
@@ -238,33 +234,33 @@ class DDALineStrategy(AlgoritmoDibujo):
         lista_puntos = []
         lista_dibujados = []
 
-        # Invertir coordenadas y
-        y_inicial = -y_inicial
-        y_final = -y_final
-
         dx = x_final - x_inicial
         dy = y_final - y_inicial
-        pixeles = max(abs(dx), abs(dy))  # Número de pasos a seguir
 
         # Calcular el incremento
-        pasos_x = dx / pixeles if pixeles != 0 else 0
-        pasos_y = dy / pixeles if pixeles != 0 else 0
+        pixeles = max(abs(dx), abs(dy)) / tamanho_pincel
 
-        # Trazar la línea
-        x = x_inicial
-        y = y_inicial
-        for _ in range(int(pixeles)):
+        x_incremento = dx / pixeles
+        y_incremento = dy / pixeles
+
+        x = x_inicial + 0.5
+        y = y_inicial + 0.5
+
+        i = 0
+        while i <= pixeles:
             x_pack = math.floor(x / tamanho_pincel) * tamanho_pincel
             y_pack = math.floor(y / tamanho_pincel) * tamanho_pincel + tamanho_pincel
-            y_pack_canvas = -y_pack  # Ajuste para invertir la coordenada y
+            # Invertir coordenada Y de nuevo antes de dibujar en el canvas
+            y_pack_canvas = -y_pack
             lista_dibujados.append(
                 self._dibujar_pack(lienzo, color, tamanho_pincel, x_pack, y_pack_canvas)
             )
             lista_puntos.append(
                 (x_pack // tamanho_pincel, y_pack // tamanho_pincel - 1)
             )
-            x += pasos_x
-            y += pasos_y
+            x += x_incremento
+            y += y_incremento
+            i += 1
 
         return lista_puntos, lista_dibujados
 
@@ -303,10 +299,6 @@ class BresenhamLineStrategy(AlgoritmoDibujo):
         """
         lista_puntos = []
         lista_dibujados = []
-
-        # Transformar las coordenadas y para que sean positivas hacia arriba
-        y_inicial = -y_inicial
-        y_final = -y_final
 
         def plot_line_low(x0: float, y0: float, x1: float, y1: float) -> None:
             """Dibuja una linea de pendiente baja (0 <= pendiente < 1)"""
@@ -434,10 +426,6 @@ class BresenhamLineStrategyInt(AlgoritmoDibujo):
         lista_puntos = []
         lista_dibujados = []
 
-        # Transformar las coordenadas y para que sean positivas hacia arriba
-        y_inicial = -y_inicial
-        y_final = -y_final
-
         def plot_line_low(x0: int, y0: int, x1: int, y1: int) -> None:
             """Dibuja una linea de pendiente baja (0 <= m < 1)"""
             dx = x1 - x0
@@ -500,9 +488,7 @@ class BresenhamLineStrategyInt(AlgoritmoDibujo):
                         lienzo, color, tamanho_pincel, x_pack, y_pack_canvas
                     )
                 )
-                lista_puntos.append(
-                    (x_pack // tamanho_pincel, y_pack // tamanho_pincel - 1)
-                )
+                lista_puntos.append((x_pack, y_pack))
 
                 if D > 0:
                     x += xi * tamanho_pincel

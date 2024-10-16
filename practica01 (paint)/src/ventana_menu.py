@@ -303,8 +303,8 @@ class VentanaMenu(Ventana):
         slider_tamanho = ctk.CTkSlider(
             frame_opciones_pincel,
             from_=1,
-            to=100,
-            number_of_steps=50,
+            to=50,
+            number_of_steps=10,
             width=200,
             height=20,
             command=self._actualizar_tamanho,
@@ -491,6 +491,7 @@ class VentanaMenu(Ventana):
 
         # Área de texto para mostrar salida
         self.area_texto = ctk.CTkTextbox(frame_salida_texto, width=200, height=100)
+        self.area_texto.configure(state="disabled")
         self.area_texto.grid(row=2, column=0, padx=10, pady=10, sticky="nsew")
 
         # Botón para limpiar el área de texto

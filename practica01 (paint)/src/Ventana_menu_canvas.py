@@ -98,13 +98,13 @@ class VentanaMenuCanvas(VentanaMenu):
 
         # Vincular teclas WASD para mover líneas seleccionadas
         self.ventana.bind(
-            UserEvents.TECLA_UP, lambda e: self._mover_linea(0, -self.tamanho_pincel)
+            UserEvents.TECLA_UP, lambda e: self._mover_linea(0, self.tamanho_pincel)
         )  # Arriba
         self.ventana.bind(
             UserEvents.TECLA_LEFT, lambda e: self._mover_linea(-self.tamanho_pincel, 0)
         )  # Izquierda
         self.ventana.bind(
-            UserEvents.TECLA_DOWN, lambda e: self._mover_linea(0, self.tamanho_pincel)
+            UserEvents.TECLA_DOWN, lambda e: self._mover_linea(0, -self.tamanho_pincel)
         )  # Abajo
         self.ventana.bind(
             UserEvents.TECLA_RIGHT, lambda e: self._mover_linea(self.tamanho_pincel, 0)
@@ -222,6 +222,10 @@ class VentanaMenuCanvas(VentanaMenu):
         self._lienzo.delete("linea_temporal")  # Elimina la línea temporal
 
         # Crea y almacena una nueva línea
+        # Con las coordenadas ajustadas
+        self._punto_inicial = self.ajustar_coordenadas(self._punto_inicial, self.tamanho_pincel)
+        self._punto_final = self.ajustar_coordenadas(self._punto_final, self.tamanho_pincel)
+        
         nueva_linea = Linea(
             self._punto_inicial,
             self._punto_final,
@@ -242,7 +246,25 @@ class VentanaMenuCanvas(VentanaMenu):
 
         # Reinicia los puntos
         self._punto_inicial, self._punto_final = None, None
+        
+    def ajustar_coordenadas(self, punto: Punto, tamanho_pincel: int) -> Punto:
+        """
+        Encuentra el punto medio del píxel en el que está el punto dado, basado en el tamaño del pincel.
+        Ademas, cambia la y de signo para que esten las positivas hacia arriba
 
+        Args:
+            punto (Punto): Coordenadas del punto (x, y).
+            tamanho_pincel (int): Tamaño del pincel que define el tamaño del píxel.
+
+        Returns:
+            Punto: Punto con las coordenadas ajustadas.
+        """
+
+        # Encontrar las coordenadas del punto medio del píxel
+        x_medio = (punto.x // tamanho_pincel) * tamanho_pincel + tamanho_pincel // 2
+        y_medio = (-punto.y // tamanho_pincel) * tamanho_pincel + tamanho_pincel // 2
+
+        return Punto(x_medio, y_medio)
     def _seleccionar_linea(self, event: tk.Event) -> None:
         """
         Selecciona una línea o figura, o múltiples líneas si se mantiene presionada una tecla modificadora.
@@ -296,8 +318,8 @@ class VentanaMenuCanvas(VentanaMenu):
         Returns:
             bool: True si el punto está cerca de la línea, False en caso contrario.
         """
-        x1, y1 = linea.punto_inicial.x, linea.punto_inicial.y
-        x2, y2 = linea.punto_final.x, linea.punto_final.y
+        x1, y1 = linea.punto_inicial.x, -linea.punto_inicial.y
+        x2, y2 = linea.punto_final.x, -linea.punto_final.y
         distancia_minima = Default.MIN_DISTANCE
 
         # Cálculo de la distancia entre el punto (x, y) y la línea definida por (x1, y1) y (x2, y2)
@@ -402,9 +424,11 @@ class VentanaMenuCanvas(VentanaMenu):
         self._crear_ejes()
 
     def _deshacer_accion(self):
-        super()._deshacer_accion()
-        ultimo = self._figuras._elementos.pop()
-        self._figuras.eliminar(ultimo)
+
+        if len(self._figuras.elementos) != 0:
+            super()._deshacer_accion()
+            ultimo = self._figuras._elementos.pop()
+            self._figuras.eliminar(ultimo)
 
     def _mover_canvas(self, dx: int, dy: int) -> None:
         """

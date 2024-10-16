@@ -1,3 +1,7 @@
+# de la bash del git
+*.bash
+
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]

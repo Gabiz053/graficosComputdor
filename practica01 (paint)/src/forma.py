@@ -178,7 +178,7 @@ class Linea(ObjetoDibujo):
         self._puntos_dibujados: list[int] = (
             []
         )  # Lista de IDs de puntos que se han dibujado
-
+    
     def __str__(self) -> str:
         """Devuelve una representacion en cadena de la linea."""
         return f"Linea de color {self.color} desde {self.punto_inicial} hasta {self.punto_final}"
