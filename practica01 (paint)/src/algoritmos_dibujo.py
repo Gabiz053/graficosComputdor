@@ -150,7 +150,13 @@ class SlopeLineStrategy(AlgoritmoDibujo):
             """Dibuja una línea de pendiente alta (m > 1 o m < -1)."""
             dx = x1 - x0
             dy = y1 - y0
-            m = dx / dy  # Ahora la pendiente se calcula como dx/dy
+            
+            # caso especial para crear un punto (seria 0/0)
+            if dx == 0 and dy == 0:
+                m = 1
+            else:
+                m = dx / dy  # Ahora la pendiente se calcula como dx/dy
+                
             b = x0 - m * y0  # Nueva intersección en x=0
 
             for y in range(y0, y1 + 2, tamanho_pincel):

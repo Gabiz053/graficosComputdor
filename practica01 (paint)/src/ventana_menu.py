@@ -491,7 +491,6 @@ class VentanaMenu(Ventana):
 
         # Área de texto para mostrar salida
         self.area_texto = ctk.CTkTextbox(frame_salida_texto, width=200, height=100)
-        self.area_texto.configure(state="disabled")
         self.area_texto.grid(row=2, column=0, padx=10, pady=10, sticky="nsew")
 
         # Botón para limpiar el área de texto
