@@ -8,6 +8,10 @@ Esta es una aplicación gráfica de dibujo inspirada en **Paint**, desarrollada 
 - Cambiar el color del lápiz utilizando una paleta de colores.
 - Borrar todo el contenido del canvas o figuras con un solo clic.
 - Configuración del canvas con coordenadas (0, 0) en el centro.
+- zoom en el canvas
+- posibilidad de agrupar figuras
+- mover y colorear lineas al seleccionarlas
+- cambiar el grosor de las lineas
 
 ## Instalación
 
