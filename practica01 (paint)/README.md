@@ -17,24 +17,29 @@ Esta es una aplicación gráfica de dibujo inspirada en **Paint**, desarrollada 
 
 ### Requisitos Previos
 
-Asegúrate de tener instalado **Python 3.9 o superior**. Tkinter generalmente viene preinstalado con Python, pero si no lo tienes, sigue estos pasos para instalarlo:
+Asegúrate de tener instalado **Python 3.12 o superior**. Tkinter generalmente viene preinstalado con Python, pero si no lo tienes, sigue estos pasos para instalarlo:
 
 1. Para **Windows** o **macOS**, no necesitas instalar Tkinter ya que está incluido con la instalación estándar de Python.
 2. Para **Linux**, si no tienes Tkinter, puedes instalarlo con:
     sudo apt-get install python3-tk
+3. pip install customtkinter
+4. pip install CTkColorPicker
 
 ## Uso
-
-Una vez que la aplicación está corriendo, puedes:
+Ejecutar el main para empezar la aplicacion.
+Una vez que la aplicación está ejecutandose, puedes:
 
 - Hacer clic y arrastrar para dibujar.
 - Utilizar el botón de la paleta de colores para cambiar el color del lápiz.
 - Presionar el botón de borrar para limpiar todo el canvas.
+- muchas mas cosas!
 
 ## Tecnologías Utilizadas
 
 - Python 3.12
 - Tkinter para la interfaz gráfica
+- customTkinter para una interfaz mas bonita
+- CTkColorPicker para la rueda de color
 
 ## Autor
 

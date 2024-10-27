@@ -8,29 +8,39 @@ Esta es una aplicación gráfica de dibujo inspirada en **Paint**, desarrollada 
 - Cambiar el color del lápiz utilizando una paleta de colores.
 - Borrar todo el contenido del canvas o figuras con un solo clic.
 - Configuración del canvas con coordenadas (0, 0) en el centro.
+- zoom en el canvas
+- posibilidad de agrupar figuras
+- mover y colorear lineas al seleccionarlas
+- cambiar el grosor de las lineas
 
 ## Instalación
 
 ### Requisitos Previos
 
-Asegúrate de tener instalado **Python 3.9 o superior**. Tkinter generalmente viene preinstalado con Python, pero si no lo tienes, sigue estos pasos para instalarlo:
+Asegúrate de tener instalado **Python 3.12 o superior**. Tkinter generalmente viene preinstalado con Python, pero si no lo tienes, sigue estos pasos para instalarlo:
 
 1. Para **Windows** o **macOS**, no necesitas instalar Tkinter ya que está incluido con la instalación estándar de Python.
 2. Para **Linux**, si no tienes Tkinter, puedes instalarlo con:
     sudo apt-get install python3-tk
+3. pip install customtkinter
+4. pip install CTkColorPicker
 
 ## Uso
 
+Ejecutar el main para empezar la aplicacion.
 Una vez que la aplicación está corriendo, puedes:
 
 - Hacer clic y arrastrar para dibujar.
 - Utilizar el botón de la paleta de colores para cambiar el color del lápiz.
 - Presionar el botón de borrar para limpiar todo el canvas.
+- muchas mas cosas!
 
 ## Tecnologías Utilizadas
 
 - Python 3.12
 - Tkinter para la interfaz gráfica
+- customTkinter para una interfaz mas bonita
+- CTkColorPicker para la rueda de color
 
 ## Autor
 
