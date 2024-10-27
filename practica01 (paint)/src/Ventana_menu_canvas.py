@@ -1,5 +1,5 @@
 """
-Archivo: Ventana_menu_canvas.py
+Archivo: ventana_menu_canvas.py
 
 Descripción:
     Este archivo define la clase `VentanaMenuCanvas`, que amplía las funcionalidades 
