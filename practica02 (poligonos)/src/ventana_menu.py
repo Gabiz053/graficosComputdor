@@ -69,6 +69,32 @@ class VentanaMenu(Ventana):
         self._lienzo = None
         self._accion = Texts.SECTION_ACTIONS_DELETE
 
+        # todas las variables a tener en cuenta para las transformaciones
+        # Variables de translación
+        self.input_translacion_x = None  # Entrada para coordenada X en translación
+        self.input_translacion_y = None  # Entrada para coordenada Y en translación
+
+        # Variables de escalado
+        self.input_escalado_x = None  # Entrada para factor de escalado en X
+        self.input_escalado_y = None  # Entrada para factor de escalado en Y
+
+        # Variables de rotación
+        self.input_angulo_rotacion = None  # Entrada para ángulo de rotación
+        self.input_rotacion_clockwise = None  # boolean para saber si es cw o ccw
+
+        # Variables de shearing
+        self.input_shearing_x = None  # Entrada para factor de shearing en X
+        self.input_shearing_y = None  # Entrada para factor de shearing en Y
+
+        # Variables de reflexión
+        self.input_reflexion_modo = tk.StringVar(
+            value="x-axis"
+        )  # Opción de reflexión seleccionada
+        self.input_reflexion_pendiente = None  # Entrada para pendiente en reflexión
+        self.input_reflexion_ordenada = (
+            None  # Entrada para ordenada en el origen en reflexión
+        )
+
     ########### Métodos de creación y configuración de la interfaz ###########
 
     def _crear_contenido_ventana(self) -> None:
@@ -80,7 +106,6 @@ class VentanaMenu(Ventana):
         """
         self._crear_menu_superior()
         self._crear_menu_herramientas()
-
 
     def _crear_menu_superior(self) -> None:
         pass
@@ -106,6 +131,8 @@ class VentanaMenu(Ventana):
 
         # Crear el frame derecho para los botones
         frame_panel_opciones = self._crear_frame_derecho(self._ventana)
+
+        frame_panel_transformaciones = self._crear_frame_transformaciones(self._ventana)
 
         # Configurar la proporción de la cuadrícula
         self._configurar_grid(self._ventana)
@@ -143,14 +170,466 @@ class VentanaMenu(Ventana):
             0, weight=1
         )  # Hacer que la columna del canvas se expanda
 
-        # Crear frames para las diferentes secciones de opciones en el frame derecho
-        self._crear_seccion_opciones(Texts.SECTION_OPTIONS, frame_panel_opciones)
-        self._crear_seccion_colores(Texts.SECTION_COLOR, frame_panel_opciones)
-        self._crear_seccion_borradores(Texts.SECTION_CLEAR, frame_panel_opciones)
-        self._crear_seccion_acciones(Texts.SECTION_ACTIONS, frame_panel_opciones)
-        self._crear_seccion_agrupar(Texts.SECTION_GRUPO, frame_panel_opciones)
-        self._crear_seccion_salida_texto(Texts.SECTION_TEXT, frame_panel_opciones)
-        self._crear_seccion_ajustes(Texts.SECTION_SETTINGS, frame_panel_opciones)
+    ########### ADICIONAL PRACTICA 2 (frame de transformaciones) ###########
+    def _crear_frame_transformaciones(self, ventana) -> ctk.CTkFrame:
+        """
+        Crea y retorna el frame transformaciones para el área de contenido.
+
+        Args:
+            ventana (tk.Tk):
+                La ventana principal de la aplicación.
+
+        Returns:
+            ctk.CTkScrollableFrame:
+                El frame derecho configurado.
+        """
+        frame_panel_trans = ctk.CTkScrollableFrame(ventana, corner_radius=10)
+        frame_panel_trans.grid(row=0, column=2, padx=10, pady=10, sticky="nsew")
+
+        # Título para el frame derecho
+        titulo_panel_opciones = ctk.CTkLabel(
+            frame_panel_trans, text=Texts.TRANS_FRAME_LABEL, font=(self.fuente, 16)
+        )
+        titulo_panel_opciones.pack(pady=10)
+
+        self._crear_seccion_aplicar_transformaciones(Texts.TRANS, frame_panel_trans)
+        self._crear_seccion_translacion(Texts.TRANS_TRASLACION, frame_panel_trans)
+        self._crear_seccion_escalado(Texts.TRANS_ESCALADO, frame_panel_trans)
+        self._crear_seccion_rotacion(Texts.TRANS_ROTACION, frame_panel_trans)
+        self._crear_seccion_shearing(Texts.TRANS_SHEARING, frame_panel_trans)
+        self._crear_seccion_reflexion(Texts.TRANS_REFLEXION, frame_panel_trans)
+        self._crear_seccion_peli(Texts.TRANS_PELI, frame_panel_trans)
+
+        self._restablecer_valores_por_defecto()
+
+        return frame_panel_trans
+
+    def _crear_seccion_aplicar_transformaciones(
+        self, titulo: str, parent_frame
+    ) -> None:
+        """
+        Crea la sección de aplicar transformaciones con botones para aplicar y deshacer.
+
+        Args:
+            titulo (str): Título de la sección.
+            parent_frame (tk.Frame): Frame en el que se añadirá la sección de aplicar transformaciones.
+        """
+        frame_aplicar_transformaciones = self._crear_frame_seccion(parent_frame, titulo)
+
+        # Botón para aplicar transformaciones
+        boton_aplicar = ctk.CTkButton(
+            frame_aplicar_transformaciones,
+            text=Texts.TRANS_APLICAR,
+            command=self._aplicar_transformaciones,  # Método que manejará la aplicación
+        )
+        boton_aplicar.grid(row=2, column=0, padx=10, pady=10, sticky="nsew")
+
+        # Botón para deshacer transformaciones
+        boton_deshacer = ctk.CTkButton(
+            frame_aplicar_transformaciones,
+            text=Texts.TRANS_DESHACER,
+            command=self._deshacer_transformaciones,  # Método que manejará la deshacer
+        )
+        boton_deshacer.grid(row=2, column=1, padx=10, pady=10, sticky="nsew")
+
+        # Botón para rehacer transformaciones
+        boton_rehacer = ctk.CTkButton(
+            frame_aplicar_transformaciones,
+            text=Texts.TRANS_REHACER,
+            command=self._rehacer_transformaciones,  # Método que manejará la rehacer
+        )
+        boton_rehacer.grid(row=2, column=2, padx=10, pady=10, sticky="nsew")
+
+        # Configurar peso de las columnas
+        for i in range(3):
+            frame_aplicar_transformaciones.grid_columnconfigure(i, weight=1)
+
+    def _aplicar_transformaciones(self) -> dict:
+        """
+        Aplica las transformaciones seleccionadas por el usuario en el lienzo.
+        Recoge los valores actuales de translación, escalado, rotación y reflexión y aplica las transformaciones correspondientes a la figura en el lienzo.
+
+        Returns:
+            dict: Un diccionario con los valores de las transformaciones.
+        """
+        # Obtener valores de translación
+        x_translation = self.input_translacion_x.get()
+        y_translation = self.input_translacion_y.get()
+        print(f"Translación: X = {x_translation}, Y = {y_translation}")
+
+        # Obtener valores de escalado
+        x_scale = self.input_escalado_x.get()
+        y_scale = self.input_escalado_y.get()
+        print(f"Escalado: X = {x_scale}, Y = {y_scale}")
+
+        # Obtener valores de rotación
+        rotation_angle = self.input_angulo_rotacion.get()
+        rotation_direction = self.input_rotacion_clockwise.get()
+        print(
+            f"Rotación: Ángulo = {rotation_angle}, Dirección = {'Clockwise' if rotation_direction else 'Counterclockwise'}"
+        )
+
+        # Obtener valores de shearing
+        shearing_x = self.input_shearing_x.get()
+        shearing_y = self.input_shearing_y.get()
+        print(f"Shearing: X = {shearing_x}, Y = {shearing_y}")
+
+        # Obtener valores de reflexión
+        reflexion_modo = self.input_reflexion_modo.get()
+        pendiente = self.input_reflexion_pendiente.get()
+        ordenada = self.input_reflexion_ordenada.get()
+        print(
+            f"Reflexión: Modo = {reflexion_modo}, Pendiente = {pendiente}, Ordenada = {ordenada}"
+        )
+
+        # Crear un diccionario con los valores
+        transformaciones = {
+            Texts.TRANS_TRASLACION: (x_translation, y_translation),
+            Texts.TRANS_ESCALADO: (x_scale, y_scale),
+            Texts.TRANS_ROTACION: (rotation_angle, rotation_direction),
+            Texts.TRANS_SHEARING: (shearing_x, shearing_y),
+            Texts.TRANS_REFLEXION: (reflexion_modo, pendiente, ordenada),
+        }
+
+        self._restablecer_valores_por_defecto()
+        # Aplicar las transformaciones en el lienzo
+        # Aquí añadirás la lógica para aplicar las transformaciones a la figura
+        return transformaciones
+
+    def _deshacer_transformaciones(self) -> None:
+        """
+        Deshace la última transformación aplicada en el lienzo.
+        Aquí puedes implementar la lógica para revertir las transformaciones, dependiendo de cómo manejes el estado.
+        """
+        # Implementar lógica para deshacer la transformación
+
+    def _rehacer_transformaciones(self) -> None:
+        """
+        Rehace la última transformación aplicada en el lienzo.
+        Aquí puedes implementar la lógica para revertir las transformaciones, dependiendo de cómo manejes el estado.
+        """
+        # Implementar lógica para rehacer la transformación
+
+    def _restablecer_valores_por_defecto(self) -> None:
+        """
+        Restablece todas las entradas a su valor por defecto (0 para int).
+        """
+        # Restablecer valores de translación
+        self.input_translacion_x.delete(0, ctk.END)  # Eliminar el valor actual
+        self.input_translacion_x.insert(0, "0")  # Establecer a 0
+
+        self.input_translacion_y.delete(0, ctk.END)  # Eliminar el valor actual
+        self.input_translacion_y.insert(0, "0")  # Establecer a 0
+
+        # Restablecer valores de escalado
+        self.input_escalado_x.delete(0, ctk.END)  # Eliminar el valor actual
+        self.input_escalado_x.insert(0, "0")  # Establecer a 0
+
+        self.input_escalado_y.delete(0, ctk.END)  # Eliminar el valor actual
+        self.input_escalado_y.insert(0, "0")  # Establecer a 0
+
+        # Restablecer valores de rotación
+        self.input_angulo_rotacion.delete(0, ctk.END)  # Eliminar el valor actual
+        self.input_angulo_rotacion.insert(0, "0")  # Establecer a 0
+
+        # Restablecer valores de shearing
+        self.input_shearing_x.delete(0, ctk.END)  # Eliminar el valor actual
+        self.input_shearing_x.insert(0, "0")  # Establecer a 0
+
+        self.input_shearing_y.delete(0, ctk.END)  # Eliminar el valor actual
+        self.input_shearing_y.insert(0, "0")  # Establecer a 0
+
+        # Restablecer valores de reflexión
+        self.input_reflexion_pendiente.delete(0, ctk.END)  # Eliminar el valor actual
+        self.input_reflexion_pendiente.insert(0, "0")  # Establecer a 0
+
+        self.input_reflexion_ordenada.delete(0, ctk.END)  # Eliminar el valor actual
+        self.input_reflexion_ordenada.insert(0, "0")  # Establecer a 0
+
+        # Restablecer modo de reflexión a su valor por defecto
+        self.input_reflexion_modo.set("x-axis")  # Establecer a x-axis
+
+    def _crear_seccion_translacion(self, titulo: str, parent_frame) -> None:
+        """
+        Crea la sección de traducción para mover figuras en el lienzo.
+
+        Args:
+            titulo (str): Título de la sección.
+            parent_frame (tk.Frame): Frame en el que se añadirá la sección de traducción.
+        """
+        frame_translacion = self._crear_frame_seccion(parent_frame, titulo)
+
+        # Etiqueta para mostrar la coordenada X
+        self.label_x = ctk.CTkLabel(frame_translacion, text=Texts.TRANS_TRAS_X)
+        self.label_x.grid(
+            row=2, column=0, padx=(10, 5), pady=10, sticky="e"
+        )  # Ajuste de padding
+
+        # Entrada para coordenada X
+        self.input_translacion_x = ctk.CTkEntry(
+            frame_translacion, width=100, fg_color=Default.ENTRY_COLOR
+        )  # Ajustar el ancho del input
+        self.input_translacion_x.grid(
+            row=2, column=1, padx=(0, 10), pady=10, sticky="ns"
+        )  # Ajuste de padding
+
+        # Etiqueta para mostrar la coordenada Y
+        self.label_y = ctk.CTkLabel(frame_translacion, text=Texts.TRANS_TRAS_Y)
+        self.label_y.grid(
+            row=2, column=2, padx=(10, 5), pady=10, sticky="e"
+        )  # Ajuste de padding
+
+        # Entrada para coordenada Y
+        self.input_translacion_y = ctk.CTkEntry(
+            frame_translacion, width=100, fg_color=Default.ENTRY_COLOR
+        )  # Ajustar el ancho del input
+        self.input_translacion_y.grid(
+            row=2, column=3, padx=(0, 10), pady=10, sticky="ns"
+        )  # Ajuste de padding
+
+        # Configurar peso de las columnas
+        for i in range(4):
+            frame_translacion.grid_columnconfigure(i, weight=1)
+
+    def _crear_seccion_escalado(self, titulo: str, parent_frame) -> None:
+        """
+        Crea la sección de escalado para cambiar el tamaño de figuras en el lienzo.
+
+        Args:
+            titulo (str): Título de la sección.
+            parent_frame (tk.Frame): Frame en el que se añadirá la sección de escalado.
+        """
+        frame_escalado = self._crear_frame_seccion(parent_frame, titulo)
+
+        # Etiqueta para mostrar "Escalado X"
+        self.label_escalado_x = ctk.CTkLabel(
+            frame_escalado, text=Texts.TRANS_ESCALADO_X
+        )
+        self.label_escalado_x.grid(row=2, column=0, padx=(10, 5), pady=10, sticky="e")
+
+        # Entrada para factor de escalado X con color de fondo verde
+        self.input_escalado_x = ctk.CTkEntry(
+            frame_escalado, width=100, fg_color=Default.ENTRY_COLOR
+        )
+        self.input_escalado_x.grid(row=2, column=1, padx=(0, 10), pady=10, sticky="ns")
+
+        # Etiqueta para mostrar "Escalado Y"
+        self.label_escalado_y = ctk.CTkLabel(
+            frame_escalado, text=Texts.TRANS_ESCALADO_Y
+        )
+        self.label_escalado_y.grid(row=2, column=2, padx=(10, 5), pady=10, sticky="e")
+
+        # Entrada para factor de escalado Y con color de fondo verde
+        self.input_escalado_y = ctk.CTkEntry(
+            frame_escalado, width=100, fg_color=Default.ENTRY_COLOR
+        )
+        self.input_escalado_y.grid(row=2, column=3, padx=(0, 10), pady=10, sticky="ns")
+
+        # Configurar peso de las columnas
+        for i in range(4):
+            frame_escalado.grid_columnconfigure(i, weight=1)
+
+    def _crear_seccion_rotacion(self, titulo: str, parent_frame) -> None:
+        """
+        Crea la sección de rotación para rotar figuras en el lienzo.
+
+        Args:
+            titulo (str): Título de la sección.
+            parent_frame (tk.Frame): Frame en el que se añadirá la sección de rotación.
+        """
+        frame_rotacion = self._crear_frame_seccion(parent_frame, titulo)
+
+        # Etiqueta para el ángulo de rotación
+        self.label_angulo_rotacion = ctk.CTkLabel(
+            frame_rotacion, text=Texts.TRANS_ROTACION_ANGULO
+        )
+        self.label_angulo_rotacion.grid(
+            row=2, column=0, padx=(10, 5), pady=10, sticky="e"
+        )
+
+        # Entrada para el ángulo de rotación con color de fondo verde
+        self.input_angulo_rotacion = ctk.CTkEntry(
+            frame_rotacion, width=100, fg_color=Default.ENTRY_COLOR
+        )
+        self.input_angulo_rotacion.grid(
+            row=2, column=1, padx=(0, 10), pady=10, sticky="ns"
+        )
+
+        # Checkbox para rotación en sentido horario
+        self.input_rotacion_clockwise = tk.BooleanVar(value=False)
+        checkbox_rotacion_clockwise = ctk.CTkCheckBox(
+            frame_rotacion,
+            text=Texts.TRANS_ROTACION_CLOCK,
+            variable=self.input_rotacion_clockwise,
+        )
+        checkbox_rotacion_clockwise.grid(
+            row=2, column=2, padx=20, pady=10, sticky="nsew"
+        )
+
+        # Configurar peso de las columnas
+        for i in range(3):
+            frame_rotacion.grid_columnconfigure(i, weight=1)
+
+    def _crear_seccion_shearing(self, titulo: str, parent_frame) -> None:
+        """
+        Crea la sección de shearing para distorsionar figuras en el lienzo.
+
+        Args:
+            titulo (str): Título de la sección.
+            parent_frame (tk.Frame): Frame en el que se añadirá la sección de shearing.
+        """
+        frame_shearing = self._crear_frame_seccion(parent_frame, titulo)
+
+        # Etiqueta para el factor de shearing en X
+        self.label_shearing_x = ctk.CTkLabel(
+            frame_shearing, text=Texts.TRANS_SHEARING_X
+        )
+        self.label_shearing_x.grid(row=2, column=0, padx=(10, 5), pady=10, sticky="e")
+
+        # Entrada para el factor de shearing en X con color de fondo verde
+        self.input_shearing_x = ctk.CTkEntry(
+            frame_shearing, width=100, fg_color=Default.ENTRY_COLOR
+        )
+        self.input_shearing_x.grid(row=2, column=1, padx=(0, 10), pady=10, sticky="ns")
+
+        # Etiqueta para el factor de shearing en Y
+        self.label_shearing_y = ctk.CTkLabel(
+            frame_shearing, text=Texts.TRANS_SHEARING_Y
+        )
+        self.label_shearing_y.grid(row=2, column=2, padx=(10, 5), pady=10, sticky="e")
+
+        # Entrada para el factor de shearing en Y con color de fondo verde
+        self.input_shearing_y = ctk.CTkEntry(
+            frame_shearing, width=100, fg_color=Default.ENTRY_COLOR
+        )
+        self.input_shearing_y.grid(row=2, column=3, padx=(0, 10), pady=10, sticky="ns")
+
+        # Configurar peso de las columnas
+        for i in range(4):
+            frame_shearing.grid_columnconfigure(i, weight=1)
+
+    def _crear_seccion_reflexion(self, titulo: str, parent_frame) -> None:
+        """
+        Crea la sección de reflexión para reflejar figuras en el lienzo.
+
+        Args:
+            titulo (str): Título de la sección.
+            parent_frame (tk.Frame): Frame en el que se añadirá la sección de reflexión.
+        """
+        frame_reflexion = self._crear_frame_seccion(parent_frame, titulo)
+
+        # Variable para almacenar la opción seleccionada
+        self.input_reflexion_modo = tk.StringVar(value="x-axis")  # Valor por defecto
+
+        # Opciones de radio buttons para la reflexión
+        opciones = [
+            ("Eje X", Texts.REFLEXION_X_AXIS),
+            ("Eje Y", Texts.REFLEXION_Y_AXIS),
+            ("Origen", Texts.REFLEXION_ORIGEN),
+            ("Línea", Texts.REFLEXION_LINE),
+        ]
+
+        # Añadir los primeros tres radio buttons en la primera columna
+        for index in range(3):
+            text, value = opciones[index]
+            radio_button = ctk.CTkRadioButton(
+                frame_reflexion,
+                text=text,
+                variable=self.input_reflexion_modo,
+                value=value,
+                command=self._activar_inputs_linea,  # Método para habilitar inputs si se selecciona "line"
+            )
+            radio_button.grid(row=index + 2, column=0, padx=20, pady=5, sticky="nsew")
+
+        # Añadir el radio button de "Línea" en la segunda columna
+        radio_button_linea = ctk.CTkRadioButton(
+            frame_reflexion,
+            text=opciones[3][0],  # Texto "Línea"
+            variable=self.input_reflexion_modo,
+            value=opciones[3][1],  # Valor "line"
+            command=self._activar_inputs_linea,
+        )
+        radio_button_linea.grid(
+            row=2, column=2, columnspan=2, padx=20, pady=5, sticky="nsew"
+        )
+
+        # Etiqueta y entrada para "Pendiente"
+        self.label_pendiente = ctk.CTkLabel(
+            frame_reflexion, text=Texts.TRANS_REFLEXION_M
+        )
+        self.label_pendiente.grid(row=3, column=1, padx=(10, 5), pady=5, sticky="e")
+
+        self.input_reflexion_pendiente = ctk.CTkEntry(
+            frame_reflexion, width=100, fg_color=Default.ENTRY_COLOR, state="disabled"
+        )
+        self.input_reflexion_pendiente.grid(
+            row=3, column=2, padx=(0, 10), pady=5, sticky="nse"
+        )
+
+        # Etiqueta y entrada para "Ordenada en el origen"
+        self.label_ordenada = ctk.CTkLabel(
+            frame_reflexion, text=Texts.TRANS_REFLEXION_B
+        )
+        self.label_ordenada.grid(row=4, column=1, padx=(10, 5), pady=5, sticky="e")
+
+        self.input_reflexion_ordenada = ctk.CTkEntry(
+            frame_reflexion, width=100, fg_color=Default.ENTRY_COLOR, state="disabled"
+        )
+        self.input_reflexion_ordenada.grid(
+            row=4, column=2, padx=(0, 10), pady=5, sticky="nse"
+        )
+
+        # Configurar peso de las columnas
+        frame_reflexion.grid_columnconfigure(
+            0, weight=1
+        )  # Columna de radio buttons y etiquetas
+        frame_reflexion.grid_columnconfigure(1, weight=1)  # Columna de inputs
+
+    def _activar_inputs_linea(self):
+        """
+        Activa o desactiva los inputs de pendiente y ordenada en el origen
+        dependiendo de si se selecciona la opción 'Línea'.
+        """
+        if self.input_reflexion_modo.get() == "line":
+            self.input_reflexion_pendiente.configure(state="normal")
+            self.input_reflexion_ordenada.configure(state="normal")
+            self.input_reflexion_pendiente.delete(0, "end")  # Borra el contenido actual
+            self.input_reflexion_pendiente.insert(0, "0")  # Establece el valor en 0
+            self.input_reflexion_ordenada.delete(0, "end")  # Borra el contenido actual
+            self.input_reflexion_ordenada.insert(0, "0")
+        else:
+            self.input_reflexion_pendiente.delete(0, "end")  # Borra el contenido actual
+            self.input_reflexion_ordenada.delete(0, "end")  # Borra el contenido actual
+            self.input_reflexion_pendiente.configure(state="disabled")
+            self.input_reflexion_ordenada.configure(state="disabled")
+
+    def _crear_seccion_peli(self, titulo: str, parent_frame) -> None:
+        """
+        Crea la sección Peli con un botón para generar.
+
+        Args:
+            titulo (str): Título de la sección.
+            parent_frame (tk.Frame): Frame en el que se añadirá la sección Peli.
+        """
+        frame_peli = self._crear_frame_seccion(parent_frame, titulo)
+
+        # Botón para generar
+        boton_generar = ctk.CTkButton(
+            frame_peli,
+            text=Texts.TRANS_PELI_CREAR,
+            command=self._generar_peli,  # Método que manejará la generación
+        )
+        boton_generar.grid(row=2, column=0, padx=20, pady=10, sticky="nsew")
+
+        # Configurar peso de la columna
+        frame_peli.grid_columnconfigure(0, weight=1)
+
+    def _generar_peli(self):
+        """
+        Método que maneja la lógica para generar algo relacionado con la sección Peli.
+        """
+        # Aquí va la lógica para generar lo que necesites.
+        print("Generando...")
 
     def _crear_frame_izquierdo(self, ventana) -> ctk.CTkFrame:
         """
@@ -198,6 +677,14 @@ class VentanaMenu(Ventana):
         )
         titulo_panel_opciones.pack(pady=10)
 
+        # Crear frames para las diferentes secciones de opciones en el frame derecho
+        self._crear_seccion_opciones(Texts.SECTION_OPTIONS, frame_panel_opciones)
+        self._crear_seccion_colores(Texts.SECTION_COLOR, frame_panel_opciones)
+        self._crear_seccion_borradores(Texts.SECTION_CLEAR, frame_panel_opciones)
+        self._crear_seccion_acciones(Texts.SECTION_ACTIONS, frame_panel_opciones)
+        self._crear_seccion_agrupar(Texts.SECTION_GRUPO, frame_panel_opciones)
+        self._crear_seccion_ajustes(Texts.SECTION_SETTINGS, frame_panel_opciones)
+
         return frame_panel_opciones
 
     def _configurar_grid(self, ventana: ctk.CTkFrame) -> None:
@@ -209,8 +696,9 @@ class VentanaMenu(Ventana):
                 La ventana principal de la aplicación.
         """
         ventana.grid_rowconfigure(0, weight=1)
-        ventana.grid_columnconfigure(0, weight=1)
+        ventana.grid_columnconfigure(0, weight=2)
         ventana.grid_columnconfigure(1, weight=1)
+        ventana.grid_columnconfigure(2, weight=1)
 
     def _crear_canvas(self, parent_frame) -> ctk.CTkCanvas:
         """
@@ -232,7 +720,7 @@ class VentanaMenu(Ventana):
         )  # Ocupa el espacio restante
 
         return canvas_dibujo
-    
+
     def _crear_frame_seccion(self, parent_frame, titulo: str) -> ctk.CTkFrame:
         """
         Crea y retorna un frame para una sección del menú.
@@ -253,19 +741,20 @@ class VentanaMenu(Ventana):
         frame_seccion.pack(pady=10, padx=10, fill="x")
 
         # Título de la sección
-        titulo_seccion = ctk.CTkLabel(frame_seccion, text=titulo, font=(self.fuente, 14))
-        titulo_seccion.grid(row=0, column=0, pady=(10, 0), sticky="nsew", columnspan=3)
+        titulo_seccion = ctk.CTkLabel(
+            frame_seccion, text=titulo, font=(self.fuente, 14)
+        )
+        titulo_seccion.grid(row=0, column=0, pady=(10, 0), sticky="nsew", columnspan=4)
 
         # Línea separadora
         separator = ctk.CTkFrame(
             frame_seccion, height=2, corner_radius=10, fg_color=Color.GRAY
         )
         separator.grid(
-            row=1, column=0, columnspan=3, pady=(10, 0), padx=20, sticky="ew"
+            row=1, column=0, columnspan=4, pady=(10, 0), padx=20, sticky="ew"
         )
 
         return frame_seccion
-
 
     def _crear_seccion_opciones(self, titulo: str, parent_frame) -> None:
         """
@@ -325,7 +814,7 @@ class VentanaMenu(Ventana):
         # Configurar peso de las columnas
         for i in range(3):
             frame_opciones_pincel.grid_columnconfigure(i, weight=1)
-            
+
     def _crear_seccion_colores(self, titulo: str, parent_frame) -> None:
         """
         Crea la sección de selección de colores en el menú de herramientas.
@@ -373,16 +862,8 @@ class VentanaMenu(Ventana):
         )
         btn_borrar_todas_figuras.grid(row=2, column=0, padx=10, pady=10, sticky="ew")
 
-        btn_deshacer_accion = ctk.CTkButton(
-            frame_borradores,
-            text=Texts.SECTION_CLEAR_UNDO,
-            command=self._deshacer_accion,
-        )
-        btn_deshacer_accion.grid(row=2, column=1, padx=10, pady=10, sticky="ew")
-
         # Configurar peso de las columnas
-        for i in range(2):
-            frame_borradores.grid_columnconfigure(i, weight=1)
+        frame_borradores.grid_columnconfigure(0, weight=1)
 
     def _crear_seccion_acciones(self, titulo: str, parent_frame) -> None:
         """
@@ -454,7 +935,7 @@ class VentanaMenu(Ventana):
         en el lienzo.
         """
         frame_agrupar = self._crear_frame_seccion(parent_frame, titulo)
-        
+
         self.btn_agrupar = ctk.CTkButton(
             frame_agrupar,
             text=Texts.SECTION_GRUPO_GROUP,
@@ -468,51 +949,10 @@ class VentanaMenu(Ventana):
             command=self._seleccionar_desagrupar,
         )
         self.btn_desagrupar.grid(row=2, column=1, padx=10, pady=10, sticky="ew")
-        
+
         # Configurar peso de las columnas
         for i in range(2):
             frame_agrupar.grid_columnconfigure(i, weight=1)
-
-    def _crear_seccion_salida_texto(self, titulo: str, parent_frame) -> None:
-        """
-        Crea la sección de salida de texto en el menú de herramientas.
-
-        Args:
-            parent_frame (tk.Frame):
-                Frame en el que se añadirá la sección de salida de texto.
-            instance (object):
-                Instancia de la clase que contiene métodos a usar.
-
-        Esta sección incluye un área de texto donde se mostrará la salida de
-        información o mensajes relacionados con las acciones realizadas en el lienzo,
-        así como un botón para limpiar el área de texto.
-        """
-        frame_salida_texto = self._crear_frame_seccion(parent_frame, titulo)
-
-        # Área de texto para mostrar salida
-        self.area_texto = ctk.CTkTextbox(frame_salida_texto, width=200, height=100)
-        self.area_texto.grid(row=2, column=0, padx=10, pady=10, sticky="nsew")
-
-        # Botón para limpiar el área de texto
-        btn_limpiar = ctk.CTkButton(
-            frame_salida_texto,
-            text=Texts.SECTION_TEXT_CLEAR,
-            command=self._limpiar_texto,
-        )
-        btn_limpiar.grid(row=2, column=1, padx=10, pady=10, sticky="ew")
-
-        # Configurar peso de las columnas
-        for i in range(2):
-            frame_salida_texto.grid_columnconfigure(i, weight=1)
-
-    def _limpiar_texto(self):
-        """Limpia el texto del textbox."""
-        self.area_texto.delete("1.0", ctk.END)  # Elimina todo el texto
-
-    def _anadir_texto(self, texto):
-        """Añade texto al textbox."""
-        texto_a_anadir = f"{texto}\n"
-        self.area_texto.insert(ctk.END, texto_a_anadir)  # Añade texto al final
 
     def _crear_seccion_ajustes(self, titulo: str, parent_frame) -> None:
         """
@@ -544,7 +984,9 @@ class VentanaMenu(Ventana):
             text="Atajos de Teclado",
             command=self._mostrar_atajos_teclado,
         )
-        btn_atajos_teclado.grid(row=3, column=0, columnspan=2, padx=10, pady=10, sticky="ew")
+        btn_atajos_teclado.grid(
+            row=3, column=0, columnspan=2, padx=10, pady=10, sticky="ew"
+        )
 
         # Configurar peso de las columnas
         frame_ajustes.grid_columnconfigure(0, weight=1)
@@ -557,7 +999,7 @@ class VentanaMenu(Ventana):
 
         # Asegurar que la ventana se eleve por encima de la ventana principal
         atajos_ventana.lift()
-        atajos_ventana.attributes('-topmost', True)
+        atajos_ventana.attributes("-topmost", True)
         # Crear un marco para el contenido
         frame_contenido = ctk.CTkFrame(atajos_ventana)
         frame_contenido.pack(padx=10, pady=10)
@@ -586,15 +1028,18 @@ class VentanaMenu(Ventana):
         """
 
         # Mostrar los atajos en un widget de texto
-        texto_atajos = ctk.CTkTextbox(frame_contenido, height=360, width=300,font=(self.fuente, 14))
+        texto_atajos = ctk.CTkTextbox(
+            frame_contenido, height=360, width=300, font=(self.fuente, 14)
+        )
         texto_atajos.insert("0.0", atajos_texto)
         texto_atajos.configure(state="disabled")  # Hacerlo de solo lectura
         texto_atajos.pack()
 
         # Botón para cerrar la ventana de atajos
-        btn_cerrar_atajos = ctk.CTkButton(atajos_ventana, text="Cerrar", command=atajos_ventana.destroy)
+        btn_cerrar_atajos = ctk.CTkButton(
+            atajos_ventana, text="Cerrar", command=atajos_ventana.destroy
+        )
         btn_cerrar_atajos.pack(pady=(10, 0))  # Aumentar el espacio en la parte superior
-
 
     ########### Métodos de selección y actualización ###########
 
@@ -615,13 +1060,12 @@ class VentanaMenu(Ventana):
         """
         self.herramienta_seleccionada = DrawingStrategies.STRATEGIES[seleccion]
         print(f"{Texts.SELECT_TOOL} {self.herramienta_seleccionada}")
-        
-        
+
     def _seleccionar_agrupar(self) -> None:
         """
         Selecciona la acción de agrupar las líneas o figuras seleccionadas.
-        
-        Este método se activa cuando el usuario elige agrupar elementos, 
+
+        Este método se activa cuando el usuario elige agrupar elementos,
         mostrando un mensaje de confirmación en la consola.
         """
         print("Acción seleccionada: Agrupar")
@@ -629,8 +1073,8 @@ class VentanaMenu(Ventana):
     def _seleccionar_desagrupar(self) -> None:
         """
         Selecciona la acción de desagrupar las figuras agrupadas previamente.
-        
-        Este método se activa cuando el usuario elige desagrupar, mostrando 
+
+        Este método se activa cuando el usuario elige desagrupar, mostrando
         un mensaje de confirmación en la consola.
         """
         print("Acción seleccionada: Desagrupar")
@@ -645,7 +1089,7 @@ class VentanaMenu(Ventana):
         self.label_tamanho.configure(
             text=f"{Texts.SELECT_SIZE} {self.tamanho_pincel}"
         )  # Actualiza la etiqueta
-        
+
     def _resetear_zoom(self) -> None:
         """Restablece el zoom a su valor predeterminado."""
         print("Resetear zoom")
@@ -663,10 +1107,6 @@ class VentanaMenu(Ventana):
     def _borrar_todo(self) -> None:
         """Borra todas las figuras del lienzo."""
         print(Texts.SHAPE_CLEAR_ALL)
-
-    def _deshacer_accion(self) -> None:
-        """Deshace la última acción realizada en el lienzo."""
-        print(Texts.SHAPE_UNDO)
 
     def _agrupar_figuras(self) -> None:
         """Agrupa las figuras seleccionadas en un solo objeto."""

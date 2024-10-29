@@ -77,7 +77,7 @@ class Texts:
 
     # Sección: Herramientas
     SELECT_TOOL = "Herramienta seleccionada:"
-    SELECT_SIZE = "Tamaño de línea:"
+    SELECT_SIZE = ""
 
     # Sección: Figuras y acciones de dibujo
     SHAPE_CLEAR = "Borrar al hacer clic sobre figura"
@@ -88,7 +88,7 @@ class Texts:
 
     # Sección: Opciones de pincel y acciones generales
     SECTION_OPTIONS = "Opciones de Pincel"
-    SECTION_OPTIONS_LINE = "Tamaño de línea:"
+    SECTION_OPTIONS_LINE = ""
     SECTION_COLOR = "Colores"
     SECTION_COLOR_SELECT = "Seleccionar Color"
     SECTION_CLEAR = "Borradores"
@@ -114,6 +114,41 @@ class Texts:
 
     LEFT_FRAME_LABEL = "Área de trabajo"
     RIGHT_FRAME_LABEL = "Herramientas"
+    TRANS_FRAME_LABEL = "Transformaciones"
+
+    TRANS = "Transformaciones"
+    TRANS_TRASLACION = "Traslación"
+    TRANS_ESCALADO = "Escalado"
+    TRANS_ROTACION = "Rotación"
+    TRANS_SHEARING = "Shearing"
+    TRANS_REFLEXION = "Reflexión"
+    TRANS_PELI = "Pelicula"
+
+    TRANS_APLICAR = "Aplicar"
+    TRANS_DESHACER = "Deshacer"
+    TRANS_REHACER = "Rehacer"
+
+    TRANS_TRAS_X = "X:"
+    TRANS_TRAS_Y = "Y:"
+
+    TRANS_ESCALADO_X = "X:"
+    TRANS_ESCALADO_Y = "Y:"
+
+    TRANS_ROTACION_ANGULO = "Ángulo (grados)"
+    TRANS_ROTACION_CLOCK = "clockwise"
+
+    TRANS_SHEARING_X = "X:"
+    TRANS_SHEARING_Y = "Y:"
+
+    TRANS_REFLEXION_M = "Pendiente:"
+    TRANS_REFLEXION_B = "Ordenada origen:"
+
+    REFLEXION_X_AXIS = "x-axis"
+    REFLEXION_Y_AXIS = "y-axis"
+    REFLEXION_ORIGEN = "origin"
+    REFLEXION_LINE = "line"
+
+    TRANS_PELI_CREAR = "Generar animación"
 
 
 # Estrategias de dibujo
@@ -166,7 +201,7 @@ class Default:
     """Clase que define las constantes por defecto para la aplicación."""
 
     # Dimensiones de ventana y canvas
-    WINDOW_WIDTH = 1600  # Ancho de la ventana
+    WINDOW_WIDTH = 1900  # Ancho de la ventana
     WINDOW_HEIGHT = 800  # Alto de la ventana
     WINDOW_TITLE = "Ventana con Menú y Canvas Interactivo"  # Título por defecto
 
@@ -196,3 +231,5 @@ class Default:
     WINDOW_THEME = "green"  # Tema
     FONT_FAMILY = "Segoe UI"  # Fuente
     FONT_SIZE = 12  # Tamaño de fuente
+
+    ENTRY_COLOR = Color.GRAY

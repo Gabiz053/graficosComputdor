@@ -19,6 +19,7 @@ from tkinter import Canvas
 from algoritmos_dibujo import AlgoritmoDibujo
 from constantes import Default, ErrorMessages
 from punto import Punto
+from transformaciones import Transformacion
 
 
 class ObjetoDibujo(ABC):
@@ -111,16 +112,6 @@ class ObjetoDibujo(ABC):
         raise NotImplementedError(ErrorMessages.NOT_IMPLEMENTED)
 
     @abstractmethod
-    def mover(self, dx: int, dy: int) -> None:
-        """Metodo abstracto para mover el objeto de dibujo.
-
-        Args:
-            dx (int): Desplazamiento en el eje x.
-            dy (int): Desplazamiento en el eje y.
-        """
-        raise NotImplementedError(ErrorMessages.NOT_IMPLEMENTED)
-
-    @abstractmethod
     def borrar(self) -> bool:
         """Metodo abstracto para borrar el objeto de dibujo.
 
@@ -147,126 +138,20 @@ class ObjetoDibujo(ABC):
         """
         raise NotImplementedError(ErrorMessages.NOT_IMPLEMENTED)
 
+    @abstractmethod
+    def transformar(self, transformaciones: dict) -> None:
+        """Aplica las transformaciones especificadas al objeto de dibujo.
+
+        Args:
+            transformaciones (dict): Diccionario con transformaciones a aplicar.
+        """
+        raise NotImplementedError(ErrorMessages.NOT_IMPLEMENTED)
 
 class Linea(ObjetoDibujo):
-    """Clase que representa una linea definida por dos puntos."""
+    pass
 
-    def __init__(
-        self,
-        punto_inicial: Punto,
-        punto_final: Punto,
-        lienzo: Canvas,
-        color: str = Default.DRAWING_COLOR,
-        herramienta: AlgoritmoDibujo = Default.DRAWING_TOOL,
-        tamanho: int = Default.DRAWING_SIZE,
-    ) -> None:
-        """
-        Inicializa la linea con dos puntos, color, tamano y herramienta.
-
-        Args:
-            punto_inicial (Punto): El primer punto que define el inicio de la linea.
-            punto_final (Punto): El segundo punto que define el final de la linea.
-            lienzo (Canvas): La instancia de lienzo principal de tkinter.
-            color (str): Color de la linea.
-            herramienta (AlgoritmoDibujo): Herramienta utilizada para dibujar la linea.
-            tamanho (int): Tamano de la linea.
-        """
-        super().__init__(lienzo, color, herramienta, tamanho)
-        self._puntos: np.ndarray = np.array(
-            [[punto_inicial.x, punto_inicial.y], [punto_final.x, punto_final.y]]
-        )
-        self._puntos_dibujados: list[int] = (
-            []
-        )  # Lista de IDs de puntos que se han dibujado
-    
-    def __str__(self) -> str:
-        """Devuelve una representacion en cadena de la linea."""
-        return f"Linea de color {self.color} desde {self.punto_inicial} hasta {self.punto_final}"
-
-    # Getters
-    @property
-    def punto_inicial(self) -> Punto:
-        """Obtiene el punto inicial de la linea."""
-        return Punto(self._puntos[0][0], self._puntos[0][1])
-
-    @property
-    def punto_final(self) -> Punto:
-        """Obtiene el punto final de la linea."""
-        return Punto(self._puntos[1][0], self._puntos[1][1])
-
-    @property
-    def puntos_dibujados(self) -> list[int]:
-        """Obtiene la lista de IDs de puntos dibujados."""
-        return self._puntos_dibujados
-
-    @puntos_dibujados.setter
-    def puntos_dibujados(self, ids: list[int]) -> None:
-        """Establece la lista de IDs de puntos dibujados.
-
-        Args:
-            ids (list[int]): Lista de IDs de puntos dibujados.
-        """
-        self._puntos_dibujados = ids
-
-    # Metodos principales
-    def dibujar(self) -> list:
-        """Dibuja una linea en el lienzo.
-
-        Returns:
-            list: Lista de IDs de los elementos dibujados.
-        """
-        lista_puntos, self._puntos_dibujados = self.herramienta.dibujar_linea(
-            self.lienzo, self.color, self.tamanho, *self._puntos.flatten()
-        )
-        return lista_puntos
-
-    def mover(self, dx: int, dy: int) -> None:
-        """Mueve la linea desplazando ambos puntos.
-
-        Args:
-            dx (int): Desplazamiento en el eje x.
-            dy (int): Desplazamiento en el eje y.
-        """
-        self.borrar()
-        self._puntos += np.array([[dx, dy]])
-        self.dibujar()
-
-    def borrar(self) -> bool:
-        """Borra los puntos dibujados del lienzo.
-
-        Returns:
-            bool: True si se borro con exito, False si no habia puntos que borrar.
-        """
-        if len(self._puntos_dibujados) == 0:
-            return False
-        for punto_id in self._puntos_dibujados:
-            self.lienzo.delete(punto_id)
-        return True
-
-    def cambiar_color(self, color: str) -> None:
-        """Cambia el color de la linea.
-
-        Args:
-            color (str): El nuevo color de la linea.
-        """
-        self.color = color
-        for punto in self._puntos_dibujados:
-            self.lienzo.itemconfig(punto, fill=color, outline=color)
-
-    def cambiar_outline(self, color: str) -> None:
-        """Cambia el outline de la linea para resaltar cuando esta seleccionada.
-
-        Args:
-            color (str): El nuevo color del outline.
-        """
-        for punto in self._puntos_dibujados:
-            self.lienzo.itemconfig(
-                punto, outline=color
-            )  # Cambia el outline a un color especifico
-
-
-class Puntos(ObjetoDibujo):
-    """Clase que representa una figura geometrica basada en puntos."""
+class Poligono(ObjetoDibujo):
+    """Clase que representa un polígono definido por varios puntos."""
 
     def __init__(
         self,
@@ -277,107 +162,137 @@ class Puntos(ObjetoDibujo):
         tamanho: int = Default.DRAWING_SIZE,
     ) -> None:
         """
-        Inicializa la figura geometrica con una lista de puntos.
+        Inicializa el polígono con una lista de puntos.
 
         Args:
-            lista_puntos (list[Punto]): Lista de puntos que definen la figura.
+            lista_puntos (list[Punto]): Lista de puntos que definen el polígono.
             lienzo (Canvas): La instancia de lienzo principal de tkinter.
-            color (str): Color de los puntos.
+            color (str): Color del polígono.
             herramienta (AlgoritmoDibujo): Herramienta utilizada para dibujar.
-            tamanho (int): Tamano de los puntos.
+            tamanho (int): Tamaño del polígono.
         """
         super().__init__(lienzo, color, herramienta, tamanho)
-        self._lista_puntos: list[Punto] = lista_puntos
+        # Representar puntos como columnas
+        self._puntos: np.ndarray = np.array(
+            [[punto.x for punto in lista_puntos], [punto.y for punto in lista_puntos]]
+        )
         self._puntos_dibujados: list[int] = []
 
     def __str__(self) -> str:
-        """Devuelve una representacion en cadena de los puntos."""
-        return f"Puntos: {', '.join(str(punto) for punto in self._lista_puntos)}"
+        """Devuelve una representación en cadena del polígono."""
+        puntos_str = ", ".join(
+            f"({x}, {y})" for x, y in zip(self._puntos[0], self._puntos[1])
+        )
+        return f"Polígono con puntos: {puntos_str}"
 
     @property
-    def lista_puntos(self) -> list[Punto]:
-        """Obtiene la lista de puntos que componen la figura."""
-        return self._lista_puntos
+    def puntos(self) -> np.ndarray:
+        """Obtiene la matriz de puntos como columnas."""
+        return self._puntos
 
-    @property
-    def puntos_dibujados(self) -> list[int]:
-        """Obtiene la lista de IDs de puntos dibujados."""
-        return self._puntos_dibujados
-
-    @puntos_dibujados.setter
-    def puntos_dibujados(self, ids: list[int]) -> None:
-        """Establece la lista de IDs de puntos dibujados.
+    @puntos.setter
+    def puntos(self, nueva_matriz: np.ndarray) -> None:
+        """Establece una nueva matriz de puntos.
 
         Args:
-            ids (list[int]): Lista de IDs de puntos dibujados.
+            nueva_matriz (np.ndarray): Nueva matriz de puntos en formato columna.
         """
-        self._puntos_dibujados = ids
+        if nueva_matriz.shape[0] != 2:
+            raise ValueError("La matriz debe tener exactamente 2 filas (x y y).")
+        self._puntos = nueva_matriz
+
+    def cambiar_punto(self, indice: int, nuevo_punto: Punto) -> None:
+        """Cambia un punto específico en el polígono.
+
+        Args:
+            indice (int): Índice del punto a cambiar.
+            nuevo_punto (Punto): Nuevo punto que reemplazará al existente.
+        """
+        if 0 <= indice < self._puntos.shape[1]:
+            self._puntos[0, indice] = nuevo_punto.x
+            self._puntos[1, indice] = nuevo_punto.y
+        else:
+            raise IndexError("Índice fuera de rango para los puntos del polígono.")
 
     def dibujar(self) -> list:
-        """Dibuja la figura en el lienzo.
+        """Dibuja el polígono en el lienzo.
 
         Returns:
             list: Lista de IDs de los elementos dibujados.
         """
-        self.puntos_dibujados = [
-            self.lienzo.create_oval(
-                punto.x - self.tamanho / 2,
-                punto.y - self.tamanho / 2,
-                punto.x + self.tamanho / 2,
-                punto.y + self.tamanho / 2,
-                fill=self.color,
-                outline=self.color,
+        lista_puntos = []
+        num_puntos = self._puntos.shape[1]  # Número de puntos en columnas
+
+        for i in range(num_puntos):
+            p1 = self._puntos[:, i]  # Obtener el i-ésimo punto como columna
+            p2 = self._puntos[:, (i + 1) % num_puntos]  # Conectar al siguiente punto
+            id_dibujo = self.herramienta.dibujar_linea(
+                self.lienzo, self.color, self.tamanho, *p1, *p2
             )
-            for punto in self.lista_puntos
-        ]
-        return self.puntos_dibujados
+            lista_puntos.extend(id_dibujo)
 
-    def mover(self, dx: int, dy: int) -> None:
-        """Mueve los puntos de la figura en el lienzo.
-
-        Args:
-            dx (int): Desplazamiento en el eje x.
-            dy (int): Desplazamiento en el eje y.
-        """
-        self.borrar()
-        for punto in self.lista_puntos:
-            punto.x += dx
-            punto.y += dy
-        self.dibujar()
+        self.puntos_dibujados = lista_puntos
+        return lista_puntos
 
     def borrar(self) -> bool:
         """Borra los puntos dibujados del lienzo.
 
         Returns:
-            bool: True si se borro con exito, False si no habia puntos que borrar.
+            bool: True si se borró con éxito, False si no había puntos que borrar.
         """
-        if len(self.puntos_dibujados) == 0:
+        if len(self._puntos_dibujados) == 0:
             return False
-        for punto_id in self.puntos_dibujados:
+        for punto_id in self._puntos_dibujados:
             self.lienzo.delete(punto_id)
+        self._puntos_dibujados.clear()  # Limpia la lista después de borrar
         return True
 
     def cambiar_color(self, color: str) -> None:
-        """Cambia el color de los puntos.
+        """Cambia el color del polígono.
 
         Args:
-            color (str): El nuevo color de los puntos.
+            color (str): El nuevo color del polígono.
         """
         self.color = color
-        for punto in self.puntos_dibujados:
-            self.lienzo.itemconfig(punto, fill=color, outline=color)
+        for punto_id in self.puntos_dibujados:
+            self.lienzo.itemconfig(punto_id, fill=color, outline=color)
 
     def cambiar_outline(self, color: str) -> None:
-        """Cambia el outline de los puntos para resaltar cuando estan seleccionados.
+        """Cambia el outline del polígono para resaltar cuando está seleccionado.
 
         Args:
             color (str): El nuevo color del outline.
         """
-        for punto in self.puntos_dibujados:
-            self.lienzo.itemconfig(
-                punto, outline=color
-            )  # Cambia el outline a un color especifico
+        for punto_id in self.puntos_dibujados:
+            self.lienzo.itemconfig(punto_id, outline=color)
 
+    def transformar(self, transformaciones: dict) -> Transformacion:
+        """
+        Aplica todas las transformaciones a los puntos del polígono.
+
+        Args:
+            transformaciones (dict): Diccionario que contiene las transformaciones a aplicar al polígono.
+            Las claves del diccionario pueden incluir:
+                - 'traslacion': Parámetros para mover el polígono en el espacio.
+                - 'escalado': Parámetros para cambiar el tamaño del polígono.
+                - 'rotacion': Parámetros para rotar el polígono en torno a un punto.
+                - 'shearing': Parámetros para deformar el polígono en un eje específico.
+
+        Returns:
+            Transformacion: Un objeto de la clase Transformacion que encapsula las transformaciones aplicadas.
+            Este objeto puede ser utilizado posteriormente para revertir las transformaciones o realizar
+            cálculos adicionales si es necesario.
+        """
+        # Crear un objeto de Transformacion utilizando el diccionario de transformaciones
+        aplicacion_transformaciones = Transformacion(transformaciones)
+        
+        # como se va a mover hay que borrar y bolver a dibujar
+        self.borrar()
+        aplicacion_transformaciones.transformar(self._puntos)
+        self.dibujar()
+        
+        # Retornar el objeto de transformaciones, que puede ser utilizado para otros fines
+        return aplicacion_transformaciones
 
 class Figura(ObjetoDibujo):
     """
@@ -448,17 +363,6 @@ class Figura(ObjetoDibujo):
         for elemento in self._elementos:
             elemento.dibujar()
 
-    def mover(self, dx: int, dy: int) -> None:
-        """
-        Mueve todos los elementos de la coleccion.
-
-        Args:
-            dx (int): Desplazamiento en el eje x.
-            dy (int): Desplazamiento en el eje y.
-        """
-        for elemento in self._elementos:
-            elemento.mover(dx, dy)
-
     def cambiar_color(self, color: str) -> None:
         """
         Cambia el color de todos los elementos de la coleccion.
@@ -490,6 +394,19 @@ class Figura(ObjetoDibujo):
             elemento.borrar()
         self.eliminar_todo()
         return True
+
+    def transformar(self, transformaciones: dict) -> None:
+        """Aplica todas las transformaciones a todos los elementos de la figura utilizando operaciones matriciales.
+
+        Args:
+            transformaciones (dict): Diccionario con las transformaciones a aplicar.
+        """
+        for elemento in self._elementos:
+            if isinstance(
+                elemento, Poligono
+            ):  # Asegúrate de que el elemento es un Polígono
+                elemento.transformar(transformaciones)
+            # Aquí puedes añadir otras condiciones si tienes más tipos de elementos que necesiten transformaciones.
 
     # Iteración
     def __iter__(self) -> "Figura":

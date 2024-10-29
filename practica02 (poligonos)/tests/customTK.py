@@ -1,34 +1,43 @@
 import customtkinter as ctk
-import tkinter as tk
 
-class VentanaColor(ctk.CTk):
+class CustomSpinbox(ctk.CTkFrame):
+    def __init__(self, parent, min_value=0, max_value=100, initial_value=0, step=1, **kwargs):
+        super().__init__(parent, **kwargs)
+        
+        # Limites y paso del Spinbox
+        self.min_value = min_value
+        self.max_value = max_value
+        self.step = step
+        self.value = ctk.IntVar(value=initial_value)
+
+        # Botón para disminuir el valor
+        self.decrement_button = ctk.CTkButton(self, text="◀", width=20, command=self.decrement)
+        self.decrement_button.grid(row=0, column=0, padx=5, pady=5)
+
+        # Campo de entrada para mostrar el valor actual
+        self.entry = ctk.CTkEntry(self, width=50, textvariable=self.value, justify="center")
+        self.entry.grid(row=0, column=1, padx=5, pady=5)
+
+        # Botón para incrementar el valor
+        self.increment_button = ctk.CTkButton(self, text="▶", width=20, command=self.increment)
+        self.increment_button.grid(row=0, column=2, padx=5, pady=5)
+
+    def increment(self):
+        if self.value.get() + self.step <= self.max_value:
+            self.value.set(self.value.get() + self.step)
+
+    def decrement(self):
+        if self.value.get() - self.step >= self.min_value:
+            self.value.set(self.value.get() - self.step)
+
+class App(ctk.CTk):
     def __init__(self):
         super().__init__()
-
-        # Configuraciones de la ventana
-        self.title("Seleccionar Color")
         self.geometry("300x200")
+        
+        # Crear una instancia de CustomSpinbox
+        spinbox = CustomSpinbox(self, min_value=0, max_value=10, initial_value=5, step=1)
+        spinbox.pack(pady=20)
 
-        # Variable para el OptionMenu
-        self.color_seleccionado = tk.StringVar(value="Rojo")  # Valor inicial
-
-        # Crear el OptionMenu
-        self.option_menu = ctk.CTkOptionMenu(
-            self,
-            variable=self.color_seleccionado,
-            values=["Rojo", "Verde", "Azul", "Amarillo", "Negro", "Blanco"],
-            command=self.actualizar_color  # Llama a la función cuando se selecciona un nuevo color
-        )
-        self.option_menu.pack(pady=20)  # Añadir el OptionMenu al centro de la ventana
-
-        # Label para mostrar el color seleccionado
-        self.label_color = ctk.CTkLabel(self, text=f"Color seleccionado: {self.color_seleccionado.get()}")
-        self.label_color.pack(pady=10)
-
-    def actualizar_color(self, color):
-        # Actualiza el texto del label cuando se selecciona un nuevo color
-        self.label_color.configure(text=f"Color seleccionado: {color}")
-
-if __name__ == "__main__":
-    app = VentanaColor()
-    app.mainloop()
+app = App()
+app.mainloop()
