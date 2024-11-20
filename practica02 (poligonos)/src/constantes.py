@@ -74,6 +74,7 @@ class Texts:
 
     # Sección: Colores
     SELECT_COLOR = "Color seleccionado:"
+    SELECT_TOGGLE_FILL = "Rellenar figuras"
 
     # Sección: Herramientas
     SELECT_TOOL = "Herramienta seleccionada:"
@@ -143,6 +144,7 @@ class Texts:
     TRANS_REFLEXION_M = "Pendiente:"
     TRANS_REFLEXION_B = "Ordenada origen:"
 
+    REFLEXION_NINGUNA = "no-reflexion"
     REFLEXION_X_AXIS = "x-axis"
     REFLEXION_Y_AXIS = "y-axis"
     REFLEXION_ORIGEN = "origin"
@@ -167,6 +169,8 @@ class DrawingStrategies:
 class UserEvents:
     """Clase que define los eventos de interacción del usuario."""
 
+    DRAG = "<Motion>"  # Arrastre
+
     LEFT_CLICK = "<Button-1>"  # Clic izquierdo
     LEFT_DRAG = "<B1-Motion>"  # Arrastre con clic izquierdo
     LEFT_RELEASE = "<ButtonRelease-1>"  # Liberación del clic izquierdo
@@ -186,6 +190,8 @@ class UserEvents:
     TECLA_RIGHT = "<KeyPress-d>"  # Tecla 'D'
 
     CONTROL_Z = "<Control-z>"  # Combinación Ctrl+Z
+    CONTROL_Y = "<Control-y>"  # Combinación Ctrl+Y
+    ENTER = "<Return>"
 
     ARROW_UP = "<Up>"  # Flecha arriba
     ARROW_DOWN = "<Down>"  # Flecha abajo
@@ -194,6 +200,8 @@ class UserEvents:
 
     TECLA_G = "g"  # Tecla 'G'
     TECLA_H = "h"  # Tecla 'H'
+
+    TECLA_T = "t"  # Tecla 't'
 
 
 # Configuraciones por defecto
@@ -220,6 +228,7 @@ class Default:
 
     # Parámetros adicionales
     MIN_DISTANCE = 10  # Distancia mínima para interacciones
+    MIN_DISTANCE_SELECT = 20
 
     # Herramientas de dibujo
     DRAWING_COLOR = Color.BLACK  # Color de dibujo

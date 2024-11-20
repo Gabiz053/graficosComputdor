@@ -252,35 +252,54 @@ class VentanaMenu(Ventana):
         Returns:
             dict: Un diccionario con los valores de las transformaciones.
         """
-        # Obtener valores de translación
-        x_translation = self.input_translacion_x.get()
-        y_translation = self.input_translacion_y.get()
-        print(f"Translación: X = {x_translation}, Y = {y_translation}")
+        # Obtener valores de translación como números
+        try:
+            x_translation = float(self.input_translacion_x.get() or 0)
+            y_translation = float(self.input_translacion_y.get() or 0)
+            print(f"Translación: X = {x_translation}, Y = {y_translation}")
+        except ValueError:
+            print("Error: Los valores de translación deben ser números.")
 
-        # Obtener valores de escalado
-        x_scale = self.input_escalado_x.get()
-        y_scale = self.input_escalado_y.get()
-        print(f"Escalado: X = {x_scale}, Y = {y_scale}")
+        try:
+            x_scale = float(
+                self.input_escalado_x.get() or 1
+            )  # Por defecto, 1 para evitar escalado nulo
+            y_scale = float(self.input_escalado_y.get() or 1)
+            print(f"Escalado: X = {x_scale}, Y = {y_scale}")
+        except ValueError:
+            print("Error: Los valores de escalado deben ser números.")
 
-        # Obtener valores de rotación
-        rotation_angle = self.input_angulo_rotacion.get()
-        rotation_direction = self.input_rotacion_clockwise.get()
-        print(
-            f"Rotación: Ángulo = {rotation_angle}, Dirección = {'Clockwise' if rotation_direction else 'Counterclockwise'}"
-        )
+        try:
+            rotation_angle = float(self.input_angulo_rotacion.get() or 0)
+            rotation_direction = bool(
+                self.input_rotacion_clockwise.get()
+            )  # Asume que es un booleano o convertible
+            print(
+                f"Rotación: Ángulo = {rotation_angle}, Dirección = {'Clockwise' if rotation_direction else 'Counterclockwise'}"
+            )
+        except ValueError:
+            print("Error: El ángulo de rotación debe ser un número.")
 
-        # Obtener valores de shearing
-        shearing_x = self.input_shearing_x.get()
-        shearing_y = self.input_shearing_y.get()
-        print(f"Shearing: X = {shearing_x}, Y = {shearing_y}")
+        try:
+            shearing_x = float(self.input_shearing_x.get() or 0)
+            shearing_y = float(self.input_shearing_y.get() or 0)
+            print(f"Shearing: X = {shearing_x}, Y = {shearing_y}")
+        except ValueError:
+            print("Error: Los valores de shearing deben ser números.")
 
-        # Obtener valores de reflexión
-        reflexion_modo = self.input_reflexion_modo.get()
-        pendiente = self.input_reflexion_pendiente.get()
-        ordenada = self.input_reflexion_ordenada.get()
-        print(
-            f"Reflexión: Modo = {reflexion_modo}, Pendiente = {pendiente}, Ordenada = {ordenada}"
-        )
+        try:
+            reflexion_modo = (
+                self.input_reflexion_modo.get()
+            )  # Aquí asume que es un string válido
+            pendiente = float(self.input_reflexion_pendiente.get() or 0)
+            ordenada = float(self.input_reflexion_ordenada.get() or 0)
+            print(
+                f"Reflexión: Modo = {reflexion_modo}, Pendiente = {pendiente}, Ordenada = {ordenada}"
+            )
+        except ValueError:
+            print(
+                "Error: La pendiente y la ordenada de la reflexión deben ser números."
+            )
 
         # Crear un diccionario con los valores
         transformaciones = {
@@ -301,14 +320,14 @@ class VentanaMenu(Ventana):
         Deshace la última transformación aplicada en el lienzo.
         Aquí puedes implementar la lógica para revertir las transformaciones, dependiendo de cómo manejes el estado.
         """
-        # Implementar lógica para deshacer la transformación
+        print("Deshaciendo ultima transformacion")
 
     def _rehacer_transformaciones(self) -> None:
         """
         Rehace la última transformación aplicada en el lienzo.
         Aquí puedes implementar la lógica para revertir las transformaciones, dependiendo de cómo manejes el estado.
         """
-        # Implementar lógica para rehacer la transformación
+        print("Reshaciendo ultima transformacion borrada")
 
     def _restablecer_valores_por_defecto(self) -> None:
         """
@@ -323,10 +342,10 @@ class VentanaMenu(Ventana):
 
         # Restablecer valores de escalado
         self.input_escalado_x.delete(0, ctk.END)  # Eliminar el valor actual
-        self.input_escalado_x.insert(0, "0")  # Establecer a 0
+        self.input_escalado_x.insert(1, "1")  # Establecer a 1
 
         self.input_escalado_y.delete(0, ctk.END)  # Eliminar el valor actual
-        self.input_escalado_y.insert(0, "0")  # Establecer a 0
+        self.input_escalado_y.insert(1, "1")  # Establecer a 1
 
         # Restablecer valores de rotación
         self.input_angulo_rotacion.delete(0, ctk.END)  # Eliminar el valor actual
@@ -347,7 +366,7 @@ class VentanaMenu(Ventana):
         self.input_reflexion_ordenada.insert(0, "0")  # Establecer a 0
 
         # Restablecer modo de reflexión a su valor por defecto
-        self.input_reflexion_modo.set("x-axis")  # Establecer a x-axis
+        self.input_reflexion_modo.set(Texts.REFLEXION_NINGUNA)  # Establecer a x-axis
 
     def _crear_seccion_translacion(self, titulo: str, parent_frame) -> None:
         """
@@ -519,10 +538,11 @@ class VentanaMenu(Ventana):
         frame_reflexion = self._crear_frame_seccion(parent_frame, titulo)
 
         # Variable para almacenar la opción seleccionada
-        self.input_reflexion_modo = tk.StringVar(value="x-axis")  # Valor por defecto
+        self.input_reflexion_modo = tk.StringVar(value=Texts.REFLEXION_NINGUNA)  # Valor por defecto: "sin reflexión"
 
         # Opciones de radio buttons para la reflexión
         opciones = [
+            ("Ninguna", Texts.REFLEXION_NINGUNA),
             ("Eje X", Texts.REFLEXION_X_AXIS),
             ("Eje Y", Texts.REFLEXION_Y_AXIS),
             ("Origen", Texts.REFLEXION_ORIGEN),
@@ -530,7 +550,7 @@ class VentanaMenu(Ventana):
         ]
 
         # Añadir los primeros tres radio buttons en la primera columna
-        for index in range(3):
+        for index in range(4):
             text, value = opciones[index]
             radio_button = ctk.CTkRadioButton(
                 frame_reflexion,
@@ -544,9 +564,9 @@ class VentanaMenu(Ventana):
         # Añadir el radio button de "Línea" en la segunda columna
         radio_button_linea = ctk.CTkRadioButton(
             frame_reflexion,
-            text=opciones[3][0],  # Texto "Línea"
+            text=opciones[4][0],  # Texto "Línea"
             variable=self.input_reflexion_modo,
-            value=opciones[3][1],  # Valor "line"
+            value=opciones[4][1],  # Valor "line"
             command=self._activar_inputs_linea,
         )
         radio_button_linea.grid(
@@ -557,33 +577,32 @@ class VentanaMenu(Ventana):
         self.label_pendiente = ctk.CTkLabel(
             frame_reflexion, text=Texts.TRANS_REFLEXION_M
         )
-        self.label_pendiente.grid(row=3, column=1, padx=(10, 5), pady=5, sticky="e")
+        self.label_pendiente.grid(row=4, column=1, padx=(10, 5), pady=5, sticky="e")
 
         self.input_reflexion_pendiente = ctk.CTkEntry(
             frame_reflexion, width=100, fg_color=Default.ENTRY_COLOR, state="disabled"
         )
         self.input_reflexion_pendiente.grid(
-            row=3, column=2, padx=(0, 10), pady=5, sticky="nse"
+            row=4, column=2, padx=(0, 10), pady=5, sticky="nse"
         )
 
         # Etiqueta y entrada para "Ordenada en el origen"
         self.label_ordenada = ctk.CTkLabel(
             frame_reflexion, text=Texts.TRANS_REFLEXION_B
         )
-        self.label_ordenada.grid(row=4, column=1, padx=(10, 5), pady=5, sticky="e")
+        self.label_ordenada.grid(row=5, column=1, padx=(10, 5), pady=5, sticky="e")
 
         self.input_reflexion_ordenada = ctk.CTkEntry(
             frame_reflexion, width=100, fg_color=Default.ENTRY_COLOR, state="disabled"
         )
         self.input_reflexion_ordenada.grid(
-            row=4, column=2, padx=(0, 10), pady=5, sticky="nse"
+            row=5, column=2, padx=(0, 10), pady=5, sticky="nse"
         )
 
         # Configurar peso de las columnas
-        frame_reflexion.grid_columnconfigure(
-            0, weight=1
-        )  # Columna de radio buttons y etiquetas
+        frame_reflexion.grid_columnconfigure(0, weight=1)  # Columna de radio buttons y etiquetas
         frame_reflexion.grid_columnconfigure(1, weight=1)  # Columna de inputs
+
 
     def _activar_inputs_linea(self):
         """
@@ -820,10 +839,8 @@ class VentanaMenu(Ventana):
         Crea la sección de selección de colores en el menú de herramientas.
 
         Args:
-            parent_frame (tk.Frame):
-                Frame en el que se añadirá la sección de colores.
-            instance (object):
-                Instancia de la clase que contiene métodos a usar.
+            parent_frame (tk.Frame): Frame en el que se añadirá la sección de colores.
+            instance (object): Instancia de la clase que contiene métodos a usar.
 
         Esta sección incluye un botón que permite al usuario seleccionar un color
         para el pincel que utilizará en el lienzo.
@@ -836,10 +853,28 @@ class VentanaMenu(Ventana):
             text=Texts.SECTION_COLOR_SELECT,
             command=self._seleccionar_color,
         )
-        btn_seleccionar_color.grid(row=2, column=0, padx=10, pady=10, sticky="ew")
+        btn_seleccionar_color.grid(row=0, column=0, padx=10, pady=10, sticky="ew")
 
-        # Configurar peso de la columna
+        # Checkbox para elegir si el polígono estará relleno
+        self.relleno_activado = tk.BooleanVar(value=True)
+        self.checkbox_relleno = ctk.CTkCheckBox(
+            frame_colores,
+            text=Texts.SELECT_TOGGLE_FILL,
+            command=self._toggle_relleno,
+            variable=self.relleno_activado,
+        )
+        self.checkbox_relleno.grid(row=0, column=1, padx=10, pady=10, sticky="w")
+
+        # Configurar peso de las columnas para una distribución adecuada
         frame_colores.grid_columnconfigure(0, weight=1)
+        frame_colores.grid_columnconfigure(1, weight=0)
+
+    def _toggle_relleno(self):
+        """
+        Activa o desactiva el estado de relleno del polígono en función
+        del estado de la checkbox.
+        """
+        self.relleno_activado = self.checkbox_relleno.get()
 
     def _crear_seccion_borradores(self, titulo: str, parent_frame) -> None:
         """

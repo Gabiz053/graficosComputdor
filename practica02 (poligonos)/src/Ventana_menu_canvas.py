@@ -13,13 +13,15 @@ Fecha: 21 de septiembre de 2024
 
 # Librerías estándar
 import tkinter as tk
+import numpy as np
 
 # Módulos locales
 from ventana_menu import VentanaMenu
 from punto import Punto
-from forma import AlgoritmoDibujo, Linea, Figura
+from forma import Poligono, Figura
+from algoritmos_dibujo import AlgoritmoDibujo
 from constantes import Default, UserEvents, Color, Texts
-
+from transformaciones import Transformacion
 
 class VentanaMenuCanvas(VentanaMenu):
     """
@@ -62,15 +64,19 @@ class VentanaMenuCanvas(VentanaMenu):
         )
 
         # Inicialización de variables privadas relacionadas con el dibujo
-        self._punto_inicial: Punto | None = None  # Punto donde comienza el trazo
-        self._punto_final: Punto | None = None  # Punto donde finaliza el trazo
         self._figuras: Figura = Figura()  # Colección de figuras dibujadas en el lienzo
         self._nivel_zoom: float = Default.ZOOM_FACTOR  # Nivel actual de zoom
-        self._lineas_seleccionadas: list[Linea] = []  # Lista de líneas seleccionadas
-        self._offset_x: int = 0  # Desplazamiento horizontal para mover líneas
-        self._offset_y: int = 0  # Desplazamiento vertical para mover líneas
+        self._poligonos_seleccionados: list[Poligono] = (
+            []
+        )  # Lista de poligonos seleccionados
         self._scroll_total = 2000  # Máximo desplazamiento de scroll permitido
         self._grupos_figuras: list[Figura] = []  # Lista que almacena grupos de figuras
+        self._puntos_poligono = np.empty(
+            (3, 0)
+        )  # Un array de 3 filas vacio para guardar los puntos
+        
+        self.lista_transformaciones: list[(Poligono, np.ndarray)] = []  # Lista de transformaciones aplicadas a los poligonos
+        self.lista_transformaciones_rehacer: list[(Poligono, np.ndarray)] = []  # Lista de transformaciones que se pueden rehacer
 
     def _crear_contenido_ventana(self) -> None:
         """
@@ -91,30 +97,14 @@ class VentanaMenuCanvas(VentanaMenu):
 
         # Asignar eventos del ratón para interactuar con el lienzo
         lienzo.bind(UserEvents.LEFT_CLICK, self._iniciar_dibujo)
-        lienzo.bind(UserEvents.LEFT_DRAG, self._dibujar_en_movimiento)
-        lienzo.bind(UserEvents.LEFT_RELEASE, self._terminar_dibujo)
-        lienzo.bind(UserEvents.RIGHT_CLICK, self._seleccionar_linea)
+        lienzo.bind(UserEvents.DRAG, self._dibujar_en_movimiento)
+        self.ventana.bind(UserEvents.ENTER, self._terminar_dibujo)
         lienzo.bind(UserEvents.MOUSE_WHEEL, self._zoom)
 
-        # Vincular teclas WASD para mover líneas seleccionadas
-        self.ventana.bind(
-            UserEvents.TECLA_UP, lambda e: self._mover_linea(0, self.tamanho_pincel)
-        )  # Arriba
-        self.ventana.bind(
-            UserEvents.TECLA_LEFT, lambda e: self._mover_linea(-self.tamanho_pincel, 0)
-        )  # Izquierda
-        self.ventana.bind(
-            UserEvents.TECLA_DOWN, lambda e: self._mover_linea(0, -self.tamanho_pincel)
-        )  # Abajo
-        self.ventana.bind(
-            UserEvents.TECLA_RIGHT, lambda e: self._mover_linea(self.tamanho_pincel, 0)
-        )  # Derecha
+        lienzo.bind(UserEvents.RIGHT_CLICK, self._seleccionar_poligono)
 
-        # Asignar eventos para comandos adicionales
+        # # Asignar eventos para comandos adicionales
         self.ventana.bind(UserEvents.SPACE, self._realizar_accion)
-        self.ventana.bind(
-            UserEvents.CONTROL_Z, lambda e: self._deshacer_accion()
-        )  # Control + Z para deshacer
 
         # Eventos para mover el lienzo usando las flechas del teclado
         self.ventana.bind(
@@ -140,6 +130,17 @@ class VentanaMenuCanvas(VentanaMenu):
         self.ventana.bind(
             UserEvents.TECLA_H, lambda e: self._desagrupar_figuras()
         )  # Desagrupar con tecla 'H'
+        
+        # cosas de transformaciones
+        self.ventana.bind(
+            UserEvents.TECLA_T, lambda e: self._aplicar_transformaciones()
+        )  # transformar con tecla 'T'
+        self.ventana.bind(
+            UserEvents.CONTROL_Z, lambda e: self._deshacer_transformaciones()
+        )  # deshacer transformacion hecha
+        self.ventana.bind(
+            UserEvents.CONTROL_Y, lambda e: self._rehacer_transformaciones()
+        )  # rehacer transformacion borrada
 
     ########### Manejo de eventos ###########
     def _crear_ejes(self) -> None:
@@ -159,8 +160,8 @@ class VentanaMenuCanvas(VentanaMenu):
         self.lienzo.xview_scroll(-10000, tk.UNITS)
         self.lienzo.yview_scroll(-10000, tk.UNITS)
 
-        self.lienzo.xview_scroll(121, tk.UNITS)
-        self.lienzo.yview_scroll(172, tk.UNITS)
+        self.lienzo.xview_scroll(37, tk.UNITS)
+        self.lienzo.yview_scroll(55, tk.UNITS)
 
     def _crear_punto(self, x: int, y: int) -> Punto:
         x_canvas = self.lienzo.canvasx(x)  # Obtener la coordenada X relativa al canvas
@@ -168,13 +169,51 @@ class VentanaMenuCanvas(VentanaMenu):
         return Punto(x_canvas, y_canvas)
 
     def _iniciar_dibujo(self, evento: tk.Event) -> None:
-        """
-        Inicia el proceso de dibujo cuando el usuario hace clic izquierdo en el lienzo.
+        """Inicia el proceso de dibujo cuando el usuario hace clic izquierdo en el lienzo."""
 
-        Args:
-            evento (tk.Event): Evento de clic del ratón que contiene las coordenadas.
-        """
-        self._punto_inicial = self._crear_punto(evento.x, evento.y)
+        # va a servir tanto para empezar el dibujo como para anhadir mas puntos
+        # ya que es al terminar cuando gestionamos que se borre todo lo demas
+        # conseguimos toda la info del punto  donde se hizo clic
+        punto_actual = self._crear_punto(evento.x, evento.y)
+
+        # posibles casos:
+
+        # con 2 o menos puntos no va a haber poligono, anhadimos el punto sin mas
+        if self._puntos_poligono.shape[1] <= 2:
+            self._puntos_poligono = np.append(
+                self._puntos_poligono, [[punto_actual.x], [punto_actual.y], [1]], axis=1
+            )
+
+        # puede haber poligono y sabemos que tenemos 3 puntos al menos
+        else:
+            # el punto inicial
+            punto_inicial = self._puntos_poligono[:, 0]
+
+            # si el punto  actual esta cerca del inicial, no anadimos nada y cerramos
+            # Coordenadas del punto inicial
+            x1 = punto_inicial[0]  # x del punto inicial
+            y1 = punto_inicial[1]  # y del punto inicial
+
+            # Coordenadas del otro punto
+            x2 = punto_actual.x
+            y2 = punto_actual.y
+
+            # Calcula la distancia
+            distancia_puntos = ((x2 - x1) ** 2 + (y2 - y1) ** 2) ** 0.5
+
+            # si estan cerquita , cerramos el poligono
+            if distancia_puntos < Default.MIN_DISTANCE_SELECT:
+                self._terminar_dibujo(evento)
+
+            # si no pues otro punto
+            else:
+                self._puntos_poligono = np.append(
+                    self._puntos_poligono,
+                    [[punto_actual.x], [punto_actual.y], [1]],
+                    axis=1,
+                )
+
+        # print(self._puntos_poligono)
 
     def _dibujar_en_movimiento(self, evento: tk.Event) -> None:
         """
@@ -184,169 +223,170 @@ class VentanaMenuCanvas(VentanaMenu):
         Args:
             evento (tk.Event): Evento de movimiento del ratón.
         """
-        if self._punto_inicial:
+        if self._puntos_poligono.size != 0:
             punto_provisional = self._crear_punto(evento.x, evento.y)
             self._actualizar_linea_temporal(punto_provisional.x, punto_provisional.y)
 
     def _actualizar_linea_temporal(self, x: int, y: int) -> None:
         """
-        Actualiza la línea temporal en el lienzo, utilizada como una vista previa
-        mientras el usuario está dibujando.
+        Actualiza las líneas temporales en el lienzo, mostrando una vista previa
+        de todo el polígono mientras el usuario está dibujando.
 
         Args:
             x (int): Coordenada X del punto actual.
             y (int): Coordenada Y del punto actual.
         """
-        self._lienzo.delete("linea_temporal")  # Elimina la línea temporal previa
+        self._lienzo.delete("linea_temporal")  # Elimina las líneas temporales previas
+
+        # Dibuja líneas entre los puntos existentes
+        num_puntos = self._puntos_poligono.shape[1]  # Número de puntos en el polígono
+
+        for i in range(num_puntos - 1):
+            p1 = self._puntos_poligono[:, i]  # Punto i
+            p2 = self._puntos_poligono[:, i + 1]  # Punto i+1
+            self._lienzo.create_line(
+                p1[0],
+                p1[1],
+                p2[0],
+                p2[1],
+                fill=self.color_seleccionado,
+                tags="linea_temporal",  # Etiqueta usada para identificar la línea temporal
+            )
+
+        # Dibuja la línea desde el último punto hasta el punto actual
+        ultimo_punto = self._puntos_poligono[:, -1]
         self._lienzo.create_line(
-            self._punto_inicial.x,
-            self._punto_inicial.y,
+            ultimo_punto[0],
+            ultimo_punto[1],
             x,
             y,
             fill=self.color_seleccionado,
-            tags="linea_temporal",  # Etiqueta usada para identificar la línea temporal
+            tags="linea_temporal",
         )
 
     def _terminar_dibujo(self, evento: tk.Event) -> None:
         """
-        Completa el proceso de dibujo y almacena la nueva línea en la colección
-        de figuras.
-
-        Args:
-            evento (tk.Event): Evento de liberación del botón del ratón.
+        Completa el proceso de dibujo y almacena el nuevo polígono en la colección de figuras.
         """
-        if not self._punto_inicial:
-            return  # No hay nada que dibujar si el punto inicial no está definido
-
-        self._punto_final = self._crear_punto(evento.x, evento.y)
+        # lo pirmero quitar todas las lineas temporales qe hayamos hecho
         self._lienzo.delete("linea_temporal")  # Elimina la línea temporal
 
-        # Crea y almacena una nueva línea
-        # Con las coordenadas ajustadas
-        self._punto_inicial = self.ajustar_coordenadas(self._punto_inicial, self.tamanho_pincel)
-        self._punto_final = self.ajustar_coordenadas(self._punto_final, self.tamanho_pincel)
-        
-        nueva_linea = Linea(
-            self._punto_inicial,
-            self._punto_final,
+        if self._puntos_poligono.size == 0:
+            print("prueba a poner algunos puntos en el lienzo!!")
+            return  # No hay nada que dibujar si el punto inicial no está definido
+
+        # aqui ya tenemos en puntos poligono todos los puntos en orden
+        # lo unico hay que ajustar las coordenadas segun el tamanho del pincel
+        # se pueden ajustar todas a la vez!
+        puntos_ajustados = self.ajustar_coordenadas(
+            self._puntos_poligono, self.tamanho_pincel
+        )
+
+        # ahora estan todos los puntos bien ajustados para pintarlos bien
+        nuevo_poligono = Poligono(
+            puntos_ajustados,
             self._lienzo,
             self.color_seleccionado,
             self.herramienta_seleccionada,
             self.tamanho_pincel,
+            self.relleno_activado,
         )
-        self._figuras.anhadir(nueva_linea)
-        print(nueva_linea)
-        lista_puntos = nueva_linea.dibujar()
 
-        # Ejecuta el comando de dibujo y lo añade al historial
-        # comando_dibujo = _DibujarLineaCommand(self._lienzo, nueva_linea, lista_puntos)
-        # lista_puntos = self._command_manager.execute(comando_dibujo)
-        # print(lista_puntos)
-        self._anadir_texto(lista_puntos)
+        self._figuras.anhadir(nuevo_poligono)
+        print(nuevo_poligono)
 
-        # Reinicia los puntos
-        self._punto_inicial, self._punto_final = None, None
-        
-    def ajustar_coordenadas(self, punto: Punto, tamanho_pincel: int) -> Punto:
+        nuevo_poligono.dibujar()
+
+        # una vez acabamos, volvemos a limpiar el poligono para crear otro
+        self._puntos_poligono = np.empty((3, 0))
+
+    def ajustar_coordenadas(
+        self, puntos: np.ndarray, tamanho_pincel: int
+    ) -> np.ndarray:
         """
-        Encuentra el punto medio del píxel en el que está el punto dado, basado en el tamaño del pincel.
-        Ademas, cambia la y de signo para que esten las positivas hacia arriba
+        Ajusta las coordenadas de los puntos en el array según el tamaño del pincel.
+        Cambia la y de signo para que estén las positivas hacia arriba.
 
         Args:
-            punto (Punto): Coordenadas del punto (x, y).
+            puntos (np.ndarray): Array de puntos (3 x n) donde cada columna es un punto (x, y, 1).
             tamanho_pincel (int): Tamaño del pincel que define el tamaño del píxel.
 
         Returns:
-            Punto: Punto con las coordenadas ajustadas.
+            np.ndarray: Array de puntos ajustados (3 x n).
         """
 
-        # Encontrar las coordenadas del punto medio del píxel
-        x_medio = (punto.x // tamanho_pincel) * tamanho_pincel + tamanho_pincel // 2
-        y_medio = (-punto.y // tamanho_pincel) * tamanho_pincel + tamanho_pincel // 2
+        # Ajustar las coordenadas
+        x_medio = (puntos[0] // tamanho_pincel) * tamanho_pincel + (tamanho_pincel // 2)
+        y_medio = (-puntos[1] // tamanho_pincel) * tamanho_pincel + (
+            tamanho_pincel // 2
+        )
 
-        return Punto(x_medio, y_medio)
-    def _seleccionar_linea(self, event: tk.Event) -> None:
+        # Crear un nuevo array con las coordenadas ajustadas
+        puntos_ajustados = np.array(
+            [x_medio, y_medio, np.ones(puntos.shape[1])], dtype=int
+        )
+
+        return puntos_ajustados
+
+    def _seleccionar_poligono(self, event: tk.Event) -> None:
         """
-        Selecciona una línea o figura, o múltiples líneas si se mantiene presionada una tecla modificadora.
+        Selecciona un polígono, o múltiples polígonos si se mantiene presionada una tecla modificadora.
         """
         punto_real = self._crear_punto(event.x, event.y)
 
         # Comportamiento normal si no se mantiene Shift presionado
         if not event.state & 0x0001:  # Verifica si Shift no está presionado
             # Restablecer el color de todas las líneas seleccionadas
-            for figura in self._lineas_seleccionadas:
+            for figura in self._poligonos_seleccionados:
                 figura.cambiar_outline(figura.color)
-            self._lineas_seleccionadas.clear()
+            self._poligonos_seleccionados.clear()
 
-        # Buscar la nueva figura cercana al punto clicado
+        # Buscar el nuevo polígono cercano al punto clicado
         for figura in self._figuras:
             if (
-                isinstance(figura, Linea)
-                and self._es_cercano_a_linea(punto_real.x, punto_real.y, figura)
-            ) or (
                 isinstance(figura, Figura)
-                and self._es_cercano_a_figura(punto_real.x, punto_real.y, figura)
+                and self._es_dentro_figura(punto_real.x, -punto_real.y, figura)
+            ) or (
+                isinstance(figura, Poligono)
+                and self._es_punto_dentro_poligono(punto_real.x, -punto_real.y, figura)
             ):
-                if figura not in self._lineas_seleccionadas:
-                    self._lineas_seleccionadas.append(figura)
+                if figura not in self._poligonos_seleccionados:
+                    self._poligonos_seleccionados.append(figura)
                     figura.cambiar_outline("red")  # Marcarla como seleccionada
                 else:
                     # Si la figura ya estaba seleccionada, deseleccionarla
-                    self._lineas_seleccionadas.remove(figura)
+                    self._poligonos_seleccionados.remove(figura)
                     figura.cambiar_outline(figura.color)
                 break  # Deja de buscar después de encontrar la primera figura
 
-    def _es_cercano_a_figura(self, x: int, y: int, figura: Figura) -> bool:
+    def _es_dentro_figura(self, x: int, y: int, figura: Figura) -> bool:
         """
-        Verifica si un punto está cerca de una figura compuesta por líneas.
+        Verifica si un punto está cerca de una figura compuesta por poligonos.
         """
-        for linea in figura._elementos:
-            if self._es_cercano_a_linea(x, y, linea):
+        for poligono in figura._elementos:
+            if self._es_punto_dentro_poligono(x, y, poligono):
                 return True
         return False
 
-    def _es_cercano_a_linea(self, x: int, y: int, linea: Linea) -> bool:
+    def _es_punto_dentro_poligono(self, x: int, y: int, poligono: Poligono) -> bool:
         """
-        Verifica si el punto (x, y) está lo suficientemente cerca de la línea
-        especificada.
-
-        Args:
-            x (int): Coordenada X del punto.
-            y (int): Coordenada Y del punto.
-            linea (Linea): Línea con la que se compara la distancia.
-
-        Returns:
-            bool: True si el punto está cerca de la línea, False en caso contrario.
+        Verifica si un punto (x, y) está dentro de un polígono.
         """
-        x1, y1 = linea.punto_inicial.x, -linea.punto_inicial.y
-        x2, y2 = linea.punto_final.x, -linea.punto_final.y
-        distancia_minima = Default.MIN_DISTANCE
+        puntos = poligono.puntos  # Asumiendo que _puntos_poligono es un array 2D
+        n = puntos.shape[1]  # Número de vértices
+        dentro = False
 
-        # Cálculo de la distancia entre el punto (x, y) y la línea definida por (x1, y1) y (x2, y2)
-        distancia_punto_a_linea = abs(
-            (y2 - y1) * x - (x2 - x1) * y + x2 * y1 - y2 * x1
-        ) / (((y2 - y1) ** 2 + (x2 - x1) ** 2) ** 0.5)
+        for i in range(n):
+            x1, y1 = puntos[0, i], puntos[1, i]
+            x2, y2 = puntos[0, (i + 1) % n], puntos[1, (i + 1) % n]
 
-        # Cálculo de la distancia acumulada desde el punto (x, y) hasta los puntos finales de la línea
-        distancia_acumulada = abs(y - y1) + abs(y - y2) + abs(x - x1) + abs(x - x2)
-
-        # Verifica si cualquiera de las distancias es menor que la distancia mínima permitida
-        return min(distancia_punto_a_linea, distancia_acumulada) < distancia_minima
-
-    def _mover_linea(self, x, y) -> None:
-        """
-        Mueve la línea seleccionada en el lienzo de acuerdo al desplazamiento
-        del cursor del ratón.
-
-        Args:
-            event (tk.Event): Evento de movimiento del ratón.
-        """
-        for figura in self._lineas_seleccionadas:
-            grupo = self.pertenece_grupo(figura)
-            if grupo is not None:
-                grupo.mover(x, y)
-            else:
-                figura.mover(x, y)
+            # Verifica si el rayo cruza el borde del polígono
+            if (y1 > y) != (y2 > y):  # El rayo cruza la línea
+                # Calcular el punto de intersección
+                interseccion_x = (x2 - x1) * (y - y1) / (y2 - y1) + x1
+                if x < interseccion_x:  # Solo contar si está a la izquierda del rayo
+                    dentro = not dentro
+        return dentro
 
     def _zoom(self, evento: tk.Event) -> None:
         """
@@ -411,8 +451,8 @@ class VentanaMenuCanvas(VentanaMenu):
 
         # Centra el canvas
         self._centrar_canvas()
-        self.lienzo.xview_scroll(-19, tk.UNITS)
-        self.lienzo.yview_scroll(-24, tk.UNITS)
+        self.lienzo.xview_scroll(-12, tk.UNITS)
+        self.lienzo.yview_scroll(-16, tk.UNITS)
 
     def _borrar_todo(self) -> None:
         """
@@ -422,13 +462,8 @@ class VentanaMenuCanvas(VentanaMenu):
         self._lienzo.delete("all")
         self._figuras.eliminar_todo()
         self._crear_ejes()
-
-    def _deshacer_accion(self):
-
-        if len(self._figuras.elementos) != 0:
-            super()._deshacer_accion()
-            ultimo = self._figuras._elementos.pop()
-            self._figuras.eliminar(ultimo)
+        self.lista_transformaciones.clear()
+        self.lista_transformaciones_rehacer.clear()
 
     def _mover_canvas(self, dx: int, dy: int) -> None:
         """
@@ -450,14 +485,6 @@ class VentanaMenuCanvas(VentanaMenu):
         # Desplazamiento vertical del canvas
         self.lienzo.yview_scroll(dy, tk.UNITS)
 
-    def _realizar_accion(self, event: tk.Event):
-
-        if self._accion == Texts.SECTION_ACTIONS_DELETE:
-            self._borrar()
-
-        elif self._accion == Texts.SECTION_ACTIONS_CHANGE_COLOR:
-            self._cambiar_color()
-
     def _seleccionar_agrupar(self) -> None:
         """
         Selecciona la acción de agrupar las líneas o figuras seleccionadas.
@@ -478,12 +505,57 @@ class VentanaMenuCanvas(VentanaMenu):
         super()._seleccionar_desagrupar()
         self._desagrupar_figuras()
 
+    def _agrupar_figuras(self) -> None:
+        """
+        Agrupa las líneas seleccionadas en un nuevo grupo (Figura).
+        """
+        if self._poligonos_seleccionados:
+            nuevo_grupo = Figura()
+
+            for poligono in self._poligonos_seleccionados:
+                nuevo_grupo.anhadir(poligono)
+
+            self._grupos_figuras.append(nuevo_grupo)
+            print(
+                f"Nuevo grupo creado con {len(self._poligonos_seleccionados)} poligonos."
+            )
+
+            # Desmarcar las líneas seleccionadas
+            for poligono in self._poligonos_seleccionados:
+                poligono.cambiar_outline(poligono.color)
+            self._poligonos_seleccionados.clear()
+
+    def _desagrupar_figuras(self) -> None:
+        """
+        Desagrupa las líneas seleccionadas si pertenecen a un grupo.
+        """
+        if self._poligonos_seleccionados:
+            for figura in self._grupos_figuras:
+                if any(
+                    poligono in figura._elementos
+                    for poligono in self._poligonos_seleccionados
+                ):
+                    # Eliminar el grupo
+                    self._grupos_figuras.remove(figura)
+                    print(f"Grupo desagregado: {figura}")
+
+                    # Mover las líneas del grupo fuera
+                    for poligono in figura._elementos:
+                        if isinstance(poligono, Poligono):
+                            self._figuras.anhadir(poligono)
+
+                    # Desmarcar las líneas seleccionadas
+                    for poligono in self._poligonos_seleccionados:
+                        poligono.cambiar_outline(poligono.color)
+                    self._poligonos_seleccionados.clear()
+                    return
+
     def _cambiar_color(self):
         color = self._abrir_seleccion_color()
-        for linea in self._lineas_seleccionadas:
-            linea.cambiar_color(color)
+        for poligono in self._poligonos_seleccionados:
+            poligono.cambiar_color(color)
 
-            grupo = self.pertenece_grupo(linea)
+            grupo = self.pertenece_grupo(poligono)
             if grupo is not None:
                 grupo.cambiar_color(color)
 
@@ -497,74 +569,94 @@ class VentanaMenuCanvas(VentanaMenu):
         Returns:
             bool: True si la línea pertenece al grupo, False en caso contrario.
         """
-        for (
-            grupo
-        ) in self._grupos_figuras:  # Asumiendo que self.grupos es una lista de grupos
-            if (
-                linea in grupo._elementos
-            ):  # Asumiendo que cada grupo tiene una lista de líneas
+        for grupo in self._grupos_figuras:
+            if linea in grupo._elementos:
                 return grupo
         return None
 
     def _borrar(self) -> None:
         """
-        Borra las líneas seleccionadas del lienzo y de la lista de figuras.
+        Borra los polígonos seleccionados del lienzo y de la lista de figuras.
+        Además, actualiza las listas de deshacer y rehacer para eliminar 
+        cualquier transformación asociada a los polígonos eliminados.
         """
-        # Crear una copia de la lista de líneas seleccionadas
-        lineas_a_borrar = self._lineas_seleccionadas.copy()
+        # Crear una copia de los polígonos seleccionados para evitar modificaciones durante la iteración
+        poligonos_a_borrar = self._poligonos_seleccionados.copy()
 
-        for linea in lineas_a_borrar:
-            linea.borrar()  # Llama al método para borrar la línea del lienzo
-            self._lineas_seleccionadas.remove(
-                linea
-            )  # Elimina de la lista de líneas seleccionadas
-            self.figuras.eliminar(linea)  # Elimina de la lista de figuras
-            grupo = self.pertenece_grupo(linea)
+        for poligono in poligonos_a_borrar:
+            # Llamar al método para borrar el polígono del lienzo
+            poligono.borrar()
+
+            # Eliminar el polígono de las listas internas
+            self._poligonos_seleccionados.remove(poligono)
+            self._figuras.eliminar(poligono)
+
+            # Eliminar transformaciones asociadas al polígono de las listas de deshacer y rehacer
+            self._actualizar_listas_deshacer_rehacer(poligono)
+
+            # Si el polígono pertenece a un grupo, borrar el grupo
+            grupo = self.pertenece_grupo(poligono)
             if grupo is not None:
                 grupo.borrar()
 
-    def _agrupar_figuras(self) -> None:
+    def _actualizar_listas_deshacer_rehacer(self, poligono):
         """
-        Agrupa las líneas seleccionadas en un nuevo grupo (Figura).
+        Actualiza las listas de deshacer y rehacer para eliminar 
+        cualquier transformación asociada con el polígono dado.
         """
-        if self._lineas_seleccionadas:
-            nuevo_grupo = Figura()
+        def filtrar_lista(lista):
+            return [tupla for tupla in lista if tupla[0] != poligono]
 
-            for linea in self._lineas_seleccionadas:
-                nuevo_grupo.anhadir(linea)
+        # Actualizar las listas
+        self.lista_transformaciones = filtrar_lista(self.lista_transformaciones)
+        self.lista_transformaciones_rehacer = filtrar_lista(self.lista_transformaciones_rehacer)
 
-            self._grupos_figuras.append(nuevo_grupo)
-            print(f"Nuevo grupo creado con {len(self._lineas_seleccionadas)} líneas.")
+        # Depuración: imprime el estado de las figuras y polígonos seleccionados
+        print("Figuras restantes:", self._figuras.elementos)
+        print("Polígonos seleccionados restantes:", self._poligonos_seleccionados)
 
-            # Desmarcar las líneas seleccionadas
-            for linea in self._lineas_seleccionadas:
-                linea.cambiar_outline(linea.color)
-            self._lineas_seleccionadas.clear()
+    def _realizar_accion(self, event: tk.Event):
+        if self._accion == Texts.SECTION_ACTIONS_DELETE:
+            self._borrar()
 
-    def _desagrupar_figuras(self) -> None:
-        """
-        Desagrupa las líneas seleccionadas si pertenecen a un grupo.
-        """
-        if self._lineas_seleccionadas:
-            for figura in self._grupos_figuras:
-                if any(
-                    linea in figura._elementos for linea in self._lineas_seleccionadas
-                ):
-                    # Eliminar el grupo
-                    self._grupos_figuras.remove(figura)
-                    print(f"Grupo desagregado: {figura}")
+        elif self._accion == Texts.SECTION_ACTIONS_CHANGE_COLOR:
+            self._cambiar_color()
 
-                    # Mover las líneas del grupo fuera
-                    for linea in figura._elementos:
-                        if isinstance(linea, Linea):
-                            self._figuras.anhadir(linea)
+    def _aplicar_transformaciones(self) -> dict:
+        transformaciones = super()._aplicar_transformaciones()
 
-                    # Desmarcar las líneas seleccionadas
-                    for linea in self._lineas_seleccionadas:
-                        linea.cambiar_outline(linea.color)
-                    self._lineas_seleccionadas.clear()
-                    return
-
+        # aplicamos la transformacion a cada poligono seleccionado
+        for poligono in self._poligonos_seleccionados:
+            # guardamos los puntos antes de transformar para poder volver a ellos
+            self.lista_transformaciones.append((poligono, poligono.puntos))
+            poligono.transformar(transformaciones)
+            
+            # print(self.lista_transformaciones)
+            
+    def _deshacer_transformaciones(self):
+        if len(self.lista_transformaciones) != 0:
+            super()._deshacer_transformaciones()
+            poligono, puntos = self.lista_transformaciones.pop()
+            # guardamos los puntos antes de transformar para poder volver a ellos
+            self.lista_transformaciones_rehacer.append((poligono, poligono.puntos))
+            # ahora ponemos al poligono en los puntos anteriores
+            poligono.borrar()
+            poligono.puntos = puntos
+            poligono.dibujar()
+        else:
+            print("No hay transformaciones para deshacer")
+    
+    def _rehacer_transformaciones(self):
+        if len(self.lista_transformaciones_rehacer) != 0:
+            super()._rehacer_transformaciones()
+            poligono, puntos = self.lista_transformaciones_rehacer.pop()
+            # ya no guardamos nada, se pierde
+            # ahora ponemos al poligono en los puntos anteriores
+            poligono.borrar()
+            poligono.puntos = puntos
+            poligono.dibujar()
+        else:
+            print("No hay transformaciones para rehacer")
     ########### Getters y setters ###########
 
     @property

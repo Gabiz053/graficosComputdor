@@ -147,36 +147,34 @@ class ObjetoDibujo(ABC):
         """
         raise NotImplementedError(ErrorMessages.NOT_IMPLEMENTED)
 
-class Linea(ObjetoDibujo):
-    pass
 
 class Poligono(ObjetoDibujo):
     """Clase que representa un polígono definido por varios puntos."""
 
     def __init__(
         self,
-        lista_puntos: list[Punto],
+        puntos: np.ndarray,
         lienzo: Canvas,
         color: str = Default.DRAWING_COLOR,
         herramienta: AlgoritmoDibujo = Default.DRAWING_TOOL,
         tamanho: int = Default.DRAWING_SIZE,
+        rellenar: bool = True,
     ) -> None:
         """
-        Inicializa el polígono con una lista de puntos.
+        Inicializa el polígono con un array de puntos.
 
         Args:
-            lista_puntos (list[Punto]): Lista de puntos que definen el polígono.
+            puntos (np.ndarray): Array de puntos (3 x n) que definen el polígono.
             lienzo (Canvas): La instancia de lienzo principal de tkinter.
             color (str): Color del polígono.
             herramienta (AlgoritmoDibujo): Herramienta utilizada para dibujar.
             tamanho (int): Tamaño del polígono.
         """
         super().__init__(lienzo, color, herramienta, tamanho)
-        # Representar puntos como columnas
-        self._puntos: np.ndarray = np.array(
-            [[punto.x for punto in lista_puntos], [punto.y for punto in lista_puntos]]
-        )
-        self._puntos_dibujados: list[int] = []
+        self._puntos: np.ndarray = puntos  # Asigna el array de puntos directamente
+        self._puntos_contorno: list[int] = []
+        self._puntos_relleno: list[int] = []
+        self._rellenar = rellenar
 
     def __str__(self) -> str:
         """Devuelve una representación en cadena del polígono."""
@@ -197,8 +195,8 @@ class Poligono(ObjetoDibujo):
         Args:
             nueva_matriz (np.ndarray): Nueva matriz de puntos en formato columna.
         """
-        if nueva_matriz.shape[0] != 2:
-            raise ValueError("La matriz debe tener exactamente 2 filas (x y y).")
+        if nueva_matriz.shape[0] != 3:
+            raise ValueError("La matriz debe tener exactamente 3 filas (x , y y todo 1).")
         self._puntos = nueva_matriz
 
     def cambiar_punto(self, indice: int, nuevo_punto: Punto) -> None:
@@ -215,24 +213,99 @@ class Poligono(ObjetoDibujo):
             raise IndexError("Índice fuera de rango para los puntos del polígono.")
 
     def dibujar(self) -> list:
-        """Dibuja el polígono en el lienzo.
+        """Dibuja el polígono en el lienzo y lo rellena en tiempo real.
 
         Returns:
             list: Lista de IDs de los elementos dibujados.
         """
-        lista_puntos = []
-        num_puntos = self._puntos.shape[1]  # Número de puntos en columnas
+        # Dibuja el contorno del polígono
+        contorno_ids = self._dibujar_contorno()
+        relleno_ids = []
+
+        if self._rellenar:
+            # Rellena el interior del polígono
+            relleno_ids = self._rellenar_interior()
+
+        # Combina ambos conjuntos de IDs para poder borrarlos después
+        self._puntos_contorno = contorno_ids
+        self._puntos_relleno = relleno_ids
+        return self._puntos_contorno, self._puntos_relleno
+
+    def _dibujar_contorno(self) -> list:
+        """Dibuja el contorno del polígono en el lienzo.
+
+        Returns:
+            list: Lista de IDs de los elementos de contorno dibujados.
+        """
+        contorno_ids = []
+        num_puntos = self._puntos.shape[1]
 
         for i in range(num_puntos):
-            p1 = self._puntos[:, i]  # Obtener el i-ésimo punto como columna
-            p2 = self._puntos[:, (i + 1) % num_puntos]  # Conectar al siguiente punto
-            id_dibujo = self.herramienta.dibujar_linea(
-                self.lienzo, self.color, self.tamanho, *p1, *p2
-            )
-            lista_puntos.extend(id_dibujo)
+            x1 = self._puntos[0, i]
+            y1 = self._puntos[1, i]
+            x2 = self._puntos[0, (i + 1) % num_puntos]
+            y2 = self._puntos[1, (i + 1) % num_puntos]
 
-        self.puntos_dibujados = lista_puntos
-        return lista_puntos
+            _, lista_dibujados = self.herramienta.dibujar_linea(
+                self.lienzo, self.color, self.tamanho, x1, y1, x2, y2
+            )
+            contorno_ids.extend(lista_dibujados)
+
+        return contorno_ids
+
+    def _rellenar_interior(self) -> list:
+        """Rellena el interior del polígono usando el método de escaneo de líneas.
+
+        Returns:
+            list: Lista de IDs de los elementos de relleno dibujados.
+        """
+        relleno_ids = []
+        y_min = int(min(-self._puntos[1]))  # Cambia el signo de Y
+        y_max = int(max(-self._puntos[1]))  # Cambia el signo de Y
+
+        for y_scan in range(y_min, y_max + 1):
+            intersecciones = self._calcular_intersecciones(-y_scan)  # Invertir y_scan
+
+            for j in range(0, len(intersecciones) - 1, 2):
+                x_start, x_end = intersecciones[j], intersecciones[j + 1]
+                linea_id = self.lienzo.create_line(
+                    x_start, y_scan, x_end, y_scan, fill=self.color
+                )
+                relleno_ids.append(linea_id)
+
+        return relleno_ids
+        # _, linea_dibujada = self.herramienta.dibujar_linea(
+        #     self.lienzo, self.color, self.tamanho, x_start, y_scan, x_end, y_scan
+        # )
+
+        # Si quisiera usar mi metodo de pintar lineas para esto. pero va muy lento
+        # asi que hago un pcoo de trampa y uso el del canvas
+
+    def _calcular_intersecciones(self, y_scan: int) -> list:
+        """Calcula las intersecciones de una línea horizontal con los lados del polígono.
+
+        Args:
+            y_scan (int): Coordenada Y de la línea de escaneo.
+
+        Returns:
+            list: Lista de coordenadas X donde se producen intersecciones.
+        """
+        intersecciones = []
+        num_puntos = self._puntos.shape[1]
+
+        for i in range(num_puntos):
+            x1, y1 = self._puntos[0, i], self._puntos[1, i]
+            x2, y2 = (
+                self._puntos[0, (i + 1) % num_puntos],
+                self._puntos[1, (i + 1) % num_puntos],
+            )
+
+            if (y1 <= y_scan < y2) or (y2 <= y_scan < y1):
+                x_inter = x1 + (y_scan - y1) * (x2 - x1) / (y2 - y1)
+                intersecciones.append(int(x_inter))
+
+        intersecciones.sort()
+        return intersecciones
 
     def borrar(self) -> bool:
         """Borra los puntos dibujados del lienzo.
@@ -240,33 +313,36 @@ class Poligono(ObjetoDibujo):
         Returns:
             bool: True si se borró con éxito, False si no había puntos que borrar.
         """
-        if len(self._puntos_dibujados) == 0:
+        if len(self._puntos_contorno) == 0:
             return False
-        for punto_id in self._puntos_dibujados:
+        for punto_id in self._puntos_contorno + self._puntos_relleno:
             self.lienzo.delete(punto_id)
-        self._puntos_dibujados.clear()  # Limpia la lista después de borrar
+        self._puntos_contorno.clear()  # Limpia la lista después de borrar
+        self._puntos_relleno.clear()
         return True
 
     def cambiar_color(self, color: str) -> None:
-        """Cambia el color del polígono.
-
-        Args:
-            color (str): El nuevo color del polígono.
-        """
+        """Cambia el color del polígono."""
         self.color = color
-        for punto_id in self.puntos_dibujados:
-            self.lienzo.itemconfig(punto_id, fill=color, outline=color)
+        for punto_id in self._puntos_contorno + self._puntos_relleno:
+            # Cambiar solo el color de relleno (para líneas y polígonos rellenos)
+            try:
+                self.lienzo.itemconfig(punto_id, fill=color)
+            except Exception as e:
+                # pass
+                print(f"Error cambiando el color del elemento con ID {punto_id}: {e}")
 
     def cambiar_outline(self, color: str) -> None:
-        """Cambia el outline del polígono para resaltar cuando está seleccionado.
+        """Cambia el contorno del polígono."""
+        for punto_id in self._puntos_contorno:
+            try:
+                # Cambiar solo el color del contorno (para polígonos)
+                self.lienzo.itemconfig(punto_id, outline=color)
+            except Exception as e:
+                # pass
+                print(f"Error cambiando el outline del elemento con ID {punto_id}: {e}")
 
-        Args:
-            color (str): El nuevo color del outline.
-        """
-        for punto_id in self.puntos_dibujados:
-            self.lienzo.itemconfig(punto_id, outline=color)
-
-    def transformar(self, transformaciones: dict) -> Transformacion:
+    def transformar(self, transformaciones: dict) -> list:
         """
         Aplica todas las transformaciones a los puntos del polígono.
 
@@ -284,15 +360,23 @@ class Poligono(ObjetoDibujo):
             cálculos adicionales si es necesario.
         """
         # Crear un objeto de Transformacion utilizando el diccionario de transformaciones
-        aplicacion_transformaciones = Transformacion(transformaciones)
-        
-        # como se va a mover hay que borrar y bolver a dibujar
+        # print(transformaciones)
+        aplicacion_transformaciones = Transformacion(transformaciones, self._puntos)
+
+        # Borrar el polígono actual antes de redibujarlo
         self.borrar()
-        aplicacion_transformaciones.transformar(self._puntos)
+        # print(self._puntos)
+
+        # Aplicar las transformaciones
+        self._puntos = aplicacion_transformaciones.transformar(self._puntos)
+        # print(self._puntos)
+
+        # Dibujar el polígono actualizado
         self.dibujar()
-        
-        # Retornar el objeto de transformaciones, que puede ser utilizado para otros fines
-        return aplicacion_transformaciones
+
+        # Retornar el objeto de transformaciones
+        return aplicacion_transformaciones, self._puntos
+
 
 class Figura(ObjetoDibujo):
     """
@@ -335,11 +419,7 @@ class Figura(ObjetoDibujo):
             bool: True si se elimino con exito, False si no estaba presente.
         """
         elemento.borrar()  # Intenta borrar del lienzo
-        return True
-
-    def eliminar(self, elemento: ObjetoDibujo) -> bool:
-        """Elimina un objeto de dibujo específico de la colección."""
-        elemento.borrar()  # Intenta borrar del lienzo
+        self._elementos.remove(elemento)
         return True
 
     def eliminar_todo(self) -> None:
@@ -392,6 +472,7 @@ class Figura(ObjetoDibujo):
         """
         for elemento in self._elementos:
             elemento.borrar()
+            
         self.eliminar_todo()
         return True
 

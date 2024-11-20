@@ -4,16 +4,23 @@ from constantes import Texts
 
 
 class Transformacion:
-    def __init__(self, transformaciones):
+    def __init__(self, transformaciones, puntos_poligono):
         """
         Inicializa la clase Transformacion, creando matrices de transformación e inversa.
 
         Argumentos:
             transformaciones (dict): Diccionario con parámetros de cada tipo de transformación.
         """
+        self._puntos = puntos_poligono
+        # calculamos directamente el centro del poligono por si lo usamos
+        self.x_center = np.mean(self._puntos[0, :])
+        self.y_center = np.mean(self._puntos[1, :])
+    
         self.matriz_transformacion, self.matriz_inversa = self._crear_matrices(
             transformaciones
         )
+        
+        self.transformaciones = transformaciones
 
     def _crear_matrices(self, transformaciones):
         """
@@ -30,13 +37,25 @@ class Transformacion:
             Texts.TRANS_TRASLACION, (0, 0)
         )
         x_scale, y_scale = transformaciones.get(Texts.TRANS_ESCALADO, (1, 1))
+
         rotation_angle, rotation_direction = transformaciones.get(
             Texts.TRANS_ROTACION, (0, True)
         )
         shearing_x, shearing_y = transformaciones.get(Texts.TRANS_SHEARING, (0, 0))
+
         reflexion_modo, pendiente, ordenada = transformaciones.get(
             Texts.TRANS_REFLEXION, (None, None, None)
         )
+
+        # nos aseguramos que tengan el tipo correcto
+        x_translation = int(x_translation)
+        y_translation = int(y_translation)
+        x_scale = float(x_scale)
+        y_scale = float(y_scale)
+        rotation_angle = float(rotation_angle)
+        rotation_direction = bool(rotation_direction)
+        shearing_x = float(shearing_x)
+        shearing_y = float(shearing_y)
 
         # Generar las matrices de transformación
         matriz_traslacion, matriz_traslacion_inv = self._traslacion(
@@ -79,6 +98,12 @@ class Transformacion:
         return matriz, matriz_inv
 
     def _escalado(self, x_scale, y_scale):
+        # 1. Mover el centro al origen
+        traslacion, traslacion_inv = self._traslacion(
+            self.x_center, self.y_center
+        )
+
+        # 2. Escalar correctamente
         matriz = np.array([[x_scale, 0, 0], [0, y_scale, 0], [0, 0, 1]])
         matriz_inv = np.array(
             [
@@ -87,9 +112,19 @@ class Transformacion:
                 [0, 0, 1],
             ]
         )
+        # 3. multiplicar para obtener las matrices
+        matriz = traslacion @ matriz @ traslacion_inv
+        matriz_inv = traslacion_inv @ matriz_inv @ traslacion
+
         return matriz, matriz_inv
 
     def _rotacion(self, rotation_angle, rotation_direction):
+        
+        # 1. Mover los puntos al origen
+        traslacion, traslacion_inv = self._traslacion(
+            self.x_center, self.y_center
+        )
+        
         angle_rad = np.radians(rotation_angle)
         if rotation_direction:  # clockwise
             matriz = np.array(
@@ -121,9 +156,19 @@ class Transformacion:
                     [0, 0, 1],
                 ]
             )
+        # ahora hacemos la combinación de las matrices
+        matriz = traslacion @ matriz @ traslacion_inv
+        matriz_inv = traslacion_inv @ matriz_inv @ traslacion
+        
         return matriz, matriz_inv
 
     def _shearing(self, shearing_x, shearing_y):
+        
+        # 1. Mover los puntos al origen
+        traslacion, traslacion_inv = self._traslacion(
+            self.x_center, self.y_center
+        )
+        
         # Cizallamiento en X
         matriz_x = np.array([[1, shearing_x, 0], [0, 1, 0], [0, 0, 1]])
 
@@ -142,6 +187,10 @@ class Transformacion:
         matriz_inv = (
             matriz_inv_x @ matriz_inv_y
         )  # Primero revertir shearing en Y y luego en X
+        
+        # ahora hacemos la combinación de las matrices
+        matriz = traslacion @ matriz @ traslacion_inv
+        matriz_inv = traslacion_inv @ matriz_inv @ traslacion
 
         return matriz, matriz_inv
 
@@ -155,7 +204,7 @@ class Transformacion:
         elif reflexion_modo == Texts.REFLEXION_ORIGEN:
             matriz = np.array([[-1, 0, 0], [0, -1, 0], [0, 0, 1]])
 
-        if reflexion_modo == Texts.REFLEXION_LINE:
+        elif reflexion_modo == Texts.REFLEXION_LINE:
             m = pendiente if pendiente is not None else 0
             b = ordenada if ordenada is not None else 0
 
@@ -166,8 +215,8 @@ class Transformacion:
             angulo_rotacion = np.arctan(m)
             matriz_rotacion = np.array(
                 [
-                    [np.cos(angulo_rotacion), -np.sin(angulo_rotacion), 0],
-                    [np.sin(angulo_rotacion), np.cos(angulo_rotacion), 0],
+                    [np.cos(-angulo_rotacion), -np.sin(-angulo_rotacion), 0],
+                    [np.sin(-angulo_rotacion), np.cos(-angulo_rotacion), 0],
                     [0, 0, 1],
                 ]
             )
@@ -178,8 +227,8 @@ class Transformacion:
             # 4. Rotación inversa para volver a la posición original
             matriz_rotacion_inversa = np.array(
                 [
-                    [np.cos(-angulo_rotacion), -np.sin(-angulo_rotacion), 0],
-                    [np.sin(-angulo_rotacion), np.cos(-angulo_rotacion), 0],
+                    [np.cos(angulo_rotacion), -np.sin(angulo_rotacion), 0],
+                    [np.sin(angulo_rotacion), np.cos(angulo_rotacion), 0],
                     [0, 0, 1],
                 ]
             )
@@ -206,7 +255,8 @@ class Transformacion:
                 @ matriz_rotacion_inversa
                 @ matriz_traducir_a_posicion_final
             )
-
+        else:
+            matriz = np.array([[1, 0, 0], [0, 1, 0], [0, 0, 1]])  # no rotamos
         # La inversa de una reflexión es la misma operación (reflejar de vuelta te lleva al mismo sitio)
         return matriz, matriz
 
@@ -220,16 +270,16 @@ class Transformacion:
         Retorna:
             np.ndarray: Los puntos transformados.
         """
-        return self.matriz_transformacion @ puntos
-
-    def deshacer_transformacion(self, puntos):
+        return (self.matriz_transformacion @ puntos).astype(int)
+    
+    def revertir(self, puntos):
         """
-        Aplica la matriz inversa de la transformación a los puntos dados.
+        Aplica la matriz de transformación a los puntos dados.
 
         Argumentos:
-            puntos (np.ndarray): Matriz de puntos a revertir.
+            puntos (np.ndarray): Matriz de puntos a transformar.
 
         Retorna:
-            np.ndarray: Los puntos después de revertir la transformación.
+            np.ndarray: Los puntos transformados.
         """
-        return self.matriz_inversa @ puntos
+        return (self.matriz_inversa @ puntos).astype(int)
