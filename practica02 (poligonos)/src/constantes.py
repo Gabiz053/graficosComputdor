@@ -200,9 +200,9 @@ class UserEvents:
 
     TECLA_G = "g"  # Tecla 'G'
     TECLA_H = "h"  # Tecla 'H'
-
-    TECLA_T = "t"  # Tecla 't'
-
+    
+    CONTROL_LEFT = "<KeyPress-Control_L>"  # Tecla 'Control' izquierda
+    ALT_LEFT = "<KeyPress-Alt_L>"  # Tecla 'Alt' izquierda
 
 # Configuraciones por defecto
 class Default:

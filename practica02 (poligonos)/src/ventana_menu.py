@@ -624,7 +624,7 @@ class VentanaMenu(Ventana):
 
     def _crear_seccion_peli(self, titulo: str, parent_frame) -> None:
         """
-        Crea la sección Peli con un botón para generar.
+        Crea la sección Peli con botones para generar y guardar el frame.
 
         Args:
             titulo (str): Título de la sección.
@@ -638,17 +638,31 @@ class VentanaMenu(Ventana):
             text=Texts.TRANS_PELI_CREAR,
             command=self._generar_peli,  # Método que manejará la generación
         )
-        boton_generar.grid(row=2, column=0, padx=20, pady=10, sticky="nsew")
+        boton_generar.grid(row=2, column=0, padx=(20, 10), pady=10, sticky="nsew")  # Padding ajustado
 
-        # Configurar peso de la columna
+        # Botón para guardar
+        boton_guardar = ctk.CTkButton(
+            frame_peli,
+            text="Guardar Frame",  # Texto del botón
+            command=self._guardar_frame,  # Método que manejará el guardado
+        )
+        boton_guardar.grid(row=2, column=1, padx=(10, 20), pady=10, sticky="nsew")  # Padding ajustado
+
+        # Configurar peso de las columnas
         frame_peli.grid_columnconfigure(0, weight=1)
+        frame_peli.grid_columnconfigure(1, weight=1)
 
     def _generar_peli(self):
         """
         Método que maneja la lógica para generar algo relacionado con la sección Peli.
         """
-        # Aquí va la lógica para generar lo que necesites.
         print("Generando...")
+
+    def _guardar_frame(self):
+        """
+        Método que maneja la lógica para guardar el frame actual.
+        """
+        print("Guardando frame...")
 
     def _crear_frame_izquierdo(self, ventana) -> ctk.CTkFrame:
         """

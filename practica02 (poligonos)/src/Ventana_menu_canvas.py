@@ -98,13 +98,13 @@ class VentanaMenuCanvas(VentanaMenu):
         # Asignar eventos del ratón para interactuar con el lienzo
         lienzo.bind(UserEvents.LEFT_CLICK, self._iniciar_dibujo)
         lienzo.bind(UserEvents.DRAG, self._dibujar_en_movimiento)
-        self.ventana.bind(UserEvents.ENTER, self._terminar_dibujo)
+        self.ventana.bind(UserEvents.CONTROL_LEFT, self._terminar_dibujo)
         lienzo.bind(UserEvents.MOUSE_WHEEL, self._zoom)
 
         lienzo.bind(UserEvents.RIGHT_CLICK, self._seleccionar_poligono)
 
         # # Asignar eventos para comandos adicionales
-        self.ventana.bind(UserEvents.SPACE, self._realizar_accion)
+        self.ventana.bind(UserEvents.ALT_LEFT, self._realizar_accion)
 
         # Eventos para mover el lienzo usando las flechas del teclado
         self.ventana.bind(
@@ -133,7 +133,7 @@ class VentanaMenuCanvas(VentanaMenu):
         
         # cosas de transformaciones
         self.ventana.bind(
-            UserEvents.TECLA_T, lambda e: self._aplicar_transformaciones()
+            UserEvents.ENTER, lambda e: self._aplicar_transformaciones()
         )  # transformar con tecla 'T'
         self.ventana.bind(
             UserEvents.CONTROL_Z, lambda e: self._deshacer_transformaciones()
@@ -141,6 +141,11 @@ class VentanaMenuCanvas(VentanaMenu):
         self.ventana.bind(
             UserEvents.CONTROL_Y, lambda e: self._rehacer_transformaciones()
         )  # rehacer transformacion borrada
+        
+        # cosas peli
+        self.ventana.bind(
+            UserEvents.SPACE, lambda e: self._guardar_frame()
+        )  # generar un frame de la peli
 
     ########### Manejo de eventos ###########
     def _crear_ejes(self) -> None:

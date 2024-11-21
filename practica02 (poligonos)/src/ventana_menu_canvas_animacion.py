@@ -36,16 +36,19 @@ class VentanaMenuCanvasAnimacion(VentanaMenuCanvas):
             **kwargs: Argumentos adicionales para VentanaMenuCanvas.
         """
         super().__init__(*args, **kwargs)
-        self.animaciones = []  # Lista para almacenar las animaciones en curso
         self.animacion_activa = False  # Estado de la animación
+        self.lista_frames: list = []  # Lista de frames para la animación
+        self.frame_index = 0  # Índice del frame actual
 
     def iniciar_animacion(self) -> None:
         """
         Inicia la animación en el lienzo.
         """
-        if not self.animacion_activa:
+        if not self.animacion_activa and self.lista_frames:
             self.animacion_activa = True
-            self._ejecutar_animacion()  # Llama al método que ejecuta la animación
+            self.frame_index = 0  # Reiniciar el índice del frame
+            self.lienzo.delete("all")  # Limpiar el lienzo
+            self._ejecutar_animacion()
 
     def detener_animacion(self) -> None:
         """
@@ -59,26 +62,56 @@ class VentanaMenuCanvasAnimacion(VentanaMenuCanvas):
         Método privado que ejecuta la lógica de la animación.
         Este método se llamará repetidamente mientras la animación esté activa.
         """
-        # tiene que estar la animacion activa y que queden animaciones en curso
-        if self.animacion_activa and len(self.lista_transformaciones) != 0:
-
-            self._actualizar_canvas()  # Método para actualizar el canvas
+        if self.animacion_activa and self.frame_index < len(self.lista_frames):
+            self._actualizar_canvas()  # Dibujar el frame actual
+            self.frame_index += 1  # Pasar al siguiente frame
 
             # Programar la siguiente ejecución de la animación
             self.ventana.after(1000, self._ejecutar_animacion)
+        else:
+            self.detener_animacion()  # Detener si no hay más frames
 
     def _actualizar_canvas(self) -> None:
         """
         Actualiza el contenido del canvas para reflejar los cambios de la animación.
         """
-        # Implementa la lógica para actualizar el canvas aquí
-        # Por ejemplo, mover figuras, redibujar, etc.
-        poligono, puntos = self.lista_transformaciones.pop(0)
+        # Limpiar el lienzo para dibujar el siguiente frame
+        self.lienzo.delete("all")
 
-        poligono.borrar()
-        poligono.puntos = puntos
-        poligono.dibujar()
+        # Obtener el frame actual
+        frame_actual = self.lista_frames[self.frame_index]
+
+        # Dibujar cada figura con sus puntos en el frame actual
+        for figura, puntos in frame_actual.items():
+            figura.puntos = puntos  # Actualizar los puntos de la figura
+            figura.dibujar()  # Dibujar la figura en el canvas
 
     def _generar_peli(self):
+        """
+        Genera la animación iniciándola desde el principio.
+        """
         super()._generar_peli()
         self.iniciar_animacion()
+
+    def _guardar_frame(self):
+        """
+        Guarda un frame con las figuras actuales y sus puntos.
+        
+        - Si es la primera vez que una figura aparece, registra su estado inicial.
+        - Guarda las posiciones actuales de las figuras en un frame.
+        """
+        super()._guardar_frame()
+
+        # Crear un diccionario para almacenar las figuras y sus puntos en este frame
+        info_frame = {}
+
+        for figura in self._figuras:
+            # Registrar cada figura y sus puntos actuales
+            info_frame[figura] = figura.puntos.copy()
+
+        # Añadir este frame a la lista de frames
+        self.lista_frames.append(info_frame)
+
+        print(f"Frame {len(self.lista_frames)} guardado:")
+        for figura, puntos in info_frame.items():
+            print(f"  Figura: {figura}, Puntos: {puntos}")
