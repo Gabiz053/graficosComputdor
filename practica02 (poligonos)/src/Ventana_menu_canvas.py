@@ -99,7 +99,7 @@ class VentanaMenuCanvas(VentanaMenu):
         lienzo.bind(UserEvents.LEFT_CLICK, self._iniciar_dibujo)
         lienzo.bind(UserEvents.DRAG, self._dibujar_en_movimiento)
         self.ventana.bind(UserEvents.CONTROL_LEFT, self._terminar_dibujo)
-        lienzo.bind(UserEvents.MOUSE_WHEEL, self._zoom)
+        # lienzo.bind(UserEvents.MOUSE_WHEEL, self._zoom)
 
         lienzo.bind(UserEvents.RIGHT_CLICK, self._seleccionar_poligono)
 

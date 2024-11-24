@@ -20,56 +20,84 @@ class VentanaMenuCanvasAnimacion(VentanaMenuCanvas):
     """
     Clase que extiende VentanaMenuCanvas para manejar animaciones en el lienzo.
 
-    Esta clase proporciona métodos para iniciar, detener y gestionar animaciones
-    en el canvas, separando la lógica de animación de la lógica de dibujo.
+    Esta clase proporciona métodos para iniciar, detener, pausar, y continuar
+    animaciones en el canvas, incluyendo bucles infinitos si se activa.
     """
 
     def __init__(self, *args, **kwargs) -> None:
         """
         Constructor de la clase VentanaMenuCanvasAnimacion.
 
-        Inicializa la ventana con un lienzo interactivo y configura las propiedades
-        necesarias para la animación.
-
         Args:
             *args: Argumentos adicionales para VentanaMenuCanvas.
             **kwargs: Argumentos adicionales para VentanaMenuCanvas.
         """
         super().__init__(*args, **kwargs)
-        self.animacion_activa = False  # Estado de la animación
+        self.animacion_activa = False  # Indica si la animación está activa
         self.lista_frames: list = []  # Lista de frames para la animación
         self.frame_index = 0  # Índice del frame actual
+        self.delay = 2  # Retraso entre frames (2 FPS por defecto)
 
     def iniciar_animacion(self) -> None:
         """
-        Inicia la animación en el lienzo.
+        Inicia o reinicia la animación en el lienzo.
         """
         if not self.animacion_activa and self.lista_frames:
             self.animacion_activa = True
-            self.frame_index = 0  # Reiniciar el índice del frame
+            if self.frame_index >= len(self.lista_frames):  # Si se llegó al final
+                self.frame_index = 0  # Reiniciar desde el principio
             self.lienzo.delete("all")  # Limpiar el lienzo
+            self.actualizar_fps()
+            self._ejecutar_animacion()
+
+    def _pausar_animacion(self) -> None:
+        """
+        Pausa la animación en el lienzo.
+        """
+        super()._pausar_animacion()
+        self.animacion_activa = False
+
+    def _reanudar_animacion(self) -> None:
+        """
+        Reanuda la animación desde el frame actual.
+        """
+        super()._reanudar_animacion()
+        if not self.animacion_activa:
+            self.animacion_activa = True
+            self.actualizar_fps()
             self._ejecutar_animacion()
 
     def detener_animacion(self) -> None:
         """
-        Detiene la animación en el lienzo.
+        Detiene completamente la animación y reinicia el índice de frame.
         """
         self.animacion_activa = False
-        print("Animación acabada")
+        self.frame_index = 0
+        print("Animación detenida")
 
     def _ejecutar_animacion(self) -> None:
         """
         Método privado que ejecuta la lógica de la animación.
         Este método se llamará repetidamente mientras la animación esté activa.
         """
-        if self.animacion_activa and self.frame_index < len(self.lista_frames):
+        if self.animacion_activa:
             self._actualizar_canvas()  # Dibujar el frame actual
             self.frame_index += 1  # Pasar al siguiente frame
 
+            if self.frame_index >= len(self.lista_frames):  # Fin de frames
+                self.loop_activo = bool(
+                    self.bucle_animacion.get()
+                )  # Obtener valor del checkbox
+                # print(self.loop_activo)
+                if self.loop_activo:  # Si el bucle está activo
+                    self.actualizar_fps()
+                    self.frame_index = 0  # Reiniciar
+                else:
+                    self.detener_animacion()  # Detener la animación
+                    return
+
             # Programar la siguiente ejecución de la animación
-            self.ventana.after(1000, self._ejecutar_animacion)
-        else:
-            self.detener_animacion()  # Detener si no hay más frames
+            self.ventana.after(self.delay, self._ejecutar_animacion)
 
     def _actualizar_canvas(self) -> None:
         """
@@ -82,23 +110,14 @@ class VentanaMenuCanvasAnimacion(VentanaMenuCanvas):
         frame_actual = self.lista_frames[self.frame_index]
 
         # Dibujar cada figura con sus puntos en el frame actual
-        for figura, puntos in frame_actual.items():
+        for figura, (puntos, color) in frame_actual.items():
             figura.puntos = puntos  # Actualizar los puntos de la figura
+            figura.color = color
             figura.dibujar()  # Dibujar la figura en el canvas
-
-    def _generar_peli(self):
-        """
-        Genera la animación iniciándola desde el principio.
-        """
-        super()._generar_peli()
-        self.iniciar_animacion()
 
     def _guardar_frame(self):
         """
         Guarda un frame con las figuras actuales y sus puntos.
-        
-        - Si es la primera vez que una figura aparece, registra su estado inicial.
-        - Guarda las posiciones actuales de las figuras en un frame.
         """
         super()._guardar_frame()
 
@@ -107,11 +126,30 @@ class VentanaMenuCanvasAnimacion(VentanaMenuCanvas):
 
         for figura in self._figuras:
             # Registrar cada figura y sus puntos actuales
-            info_frame[figura] = figura.puntos.copy()
+            info_frame[figura] = (figura.puntos.copy(), figura.color)
 
         # Añadir este frame a la lista de frames
         self.lista_frames.append(info_frame)
 
         print(f"Frame {len(self.lista_frames)} guardado:")
-        for figura, puntos in info_frame.items():
+        for figura, (puntos, color) in info_frame.items():
             print(f"  Figura: {figura}, Puntos: {puntos}")
+
+    def _generar_peli(self):
+        """
+        Genera la animación iniciándola desde el principio.
+        """
+        super()._generar_peli()
+        self.iniciar_animacion()
+
+    def actualizar_fps(self) -> None:
+        """
+        Actualiza el delay de la animación basado en los FPS ingresados.
+        """
+        try:
+            fps = float(self.input_fps.get())
+            if fps > 0:
+                self.delay = int(1000 / fps)  # Convertir FPS a milisegundos
+                # print(f"FPS actualizado: {fps}")
+        except ValueError:
+            print("FPS inválido. Usando el valor anterior.")

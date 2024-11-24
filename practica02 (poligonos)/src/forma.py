@@ -269,13 +269,13 @@ class Poligono(ObjetoDibujo):
             for j in range(0, len(intersecciones) - 1, 2):
                 x_start, x_end = intersecciones[j], intersecciones[j + 1]
                 linea_id = self.lienzo.create_line(
-                    x_start, y_scan, x_end, y_scan, fill=self.color
+                    x_start, y_scan, x_end + 1, y_scan, fill=self.color
                 )
                 relleno_ids.append(linea_id)
 
         return relleno_ids
         # _, linea_dibujada = self.herramienta.dibujar_linea(
-        #     self.lienzo, self.color, self.tamanho, x_start, y_scan, x_end, y_scan
+        #     self.lienzo, self.color, self.tamanho, x_start, -y_scan, x_end, -y_scan
         # )
 
         # Si quisiera usar mi metodo de pintar lineas para esto. pero va muy lento
@@ -301,7 +301,7 @@ class Poligono(ObjetoDibujo):
             )
 
             if (y1 <= y_scan < y2) or (y2 <= y_scan < y1):
-                x_inter = x1 + (y_scan - y1) * (x2 - x1) / (y2 - y1)
+                x_inter = (x1 + (y_scan - y1) * (x2 - x1) / (y2 - y1))
                 intersecciones.append(int(x_inter))
 
         intersecciones.sort()

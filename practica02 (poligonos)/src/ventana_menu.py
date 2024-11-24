@@ -624,33 +624,63 @@ class VentanaMenu(Ventana):
 
     def _crear_seccion_peli(self, titulo: str, parent_frame) -> None:
         """
-        Crea la sección Peli con botones para generar y guardar el frame.
+        Crea la sección Peli con botones para controlar la animación, input para FPS y una opción de bucle.
 
         Args:
             titulo (str): Título de la sección.
-            parent_frame (tk.Frame): Frame en el que se añadirá la sección Peli.
+            parent_frame (ctk.CTkFrame): Frame en el que se añadirá la sección Peli.
         """
         frame_peli = self._crear_frame_seccion(parent_frame, titulo)
 
-        # Botón para generar
-        boton_generar = ctk.CTkButton(
-            frame_peli,
-            text=Texts.TRANS_PELI_CREAR,
-            command=self._generar_peli,  # Método que manejará la generación
-        )
-        boton_generar.grid(row=2, column=0, padx=(20, 10), pady=10, sticky="nsew")  # Padding ajustado
+        # Primera fila: Botón para generar frame, borrar último frame y checkbox de bucle
+        boton_generar = ctk.CTkButton(frame_peli, text="Generar Frame", command=self._guardar_frame)
+        boton_generar.grid(row=2, column=0, padx=10, pady=5, sticky="w")
 
-        # Botón para guardar
-        boton_guardar = ctk.CTkButton(
-            frame_peli,
-            text="Guardar Frame",  # Texto del botón
-            command=self._guardar_frame,  # Método que manejará el guardado
-        )
-        boton_guardar.grid(row=2, column=1, padx=(10, 20), pady=10, sticky="nsew")  # Padding ajustado
+        boton_borrar = ctk.CTkButton(frame_peli, text="Borrar Último Frame", command=self._borrar_ultimo_frame)
+        boton_borrar.grid(row=2, column=1, padx=10, pady=5, sticky="w")
 
-        # Configurar peso de las columnas
-        frame_peli.grid_columnconfigure(0, weight=1)
-        frame_peli.grid_columnconfigure(1, weight=1)
+        self.bucle_animacion = ctk.BooleanVar(value=True)  # Activar bucle por defecto
+        checkbox_bucle = ctk.CTkCheckBox(frame_peli, text="Loop?", variable=self.bucle_animacion)
+        checkbox_bucle.grid(row=2, column=2, padx=10, pady=5, sticky="w")
+
+        # Segunda fila: Botón para pausar, continuar, y entrada para FPS
+        boton_parar = ctk.CTkButton(frame_peli, text="Parar", command=self._pausar_animacion)
+        boton_parar.grid(row=3, column=0, padx=10, pady=5, sticky="w")
+
+        boton_continuar = ctk.CTkButton(frame_peli, text="Continuar", command=self._reanudar_animacion)
+        boton_continuar.grid(row=3, column=1, padx=10, pady=5, sticky="w")
+
+        label_fps = ctk.CTkLabel(frame_peli, text="FPS")
+        label_fps.grid(row=3, column=2, padx=10, pady=5, sticky="e")
+        self.input_fps = ctk.CTkEntry(frame_peli, width=50)  # Ancho ajustado según customtkinter
+        self.input_fps.insert(0, "2")  # Valor predeterminado de FPS
+        self.input_fps.grid(row=3, column=2, padx=10, pady=5, sticky="w")
+
+        # Tercera fila: Botón para iniciar la animación
+        boton_iniciar = ctk.CTkButton(frame_peli, text="Iniciar Animación", command=self._generar_peli)
+        boton_iniciar.grid(row=4, column=0, columnspan=3, padx=10, pady=10, sticky="ew")
+
+
+    def _borrar_ultimo_frame(self):
+        """
+        Lógica para borrar el último frame generado.
+        """
+        print("Borrando ultimo frame...")
+        pass
+
+    def _pausar_animacion(self):
+        """
+        Lógica para pausar la animación.
+        """
+        print("Pausando animación...")
+        pass
+
+    def _reanudar_animacion(self):
+        """
+        Lógica para reanudar la animación.
+        """
+        print("Reanudando animación...")
+        pass
 
     def _generar_peli(self):
         """
@@ -1056,24 +1086,30 @@ class VentanaMenu(Ventana):
         # Texto con los atajos
         atajos_texto = """
         Atajos de Teclado:
+        ------------------
 
-        Ctrl + Z: Deshacer
-        Esc: Cerrar ventana
+        General:
+        - Esc: Cerrar ventana
+        - Flechas: Mover canvas
+        - Rueda del ratón: Zoom
 
-        Click Izquierdo: Iniciar dibujo
-        Click Derecho: Seleccionar línea
-        Arrastrar: Dibujar en movimiento
-        Rueda del ratón: Zoom
-        Espacio: Realizar acción
+        Dibujo y Selección:
+        - Click Izquierdo: Iniciar dibujo
+        - Click Derecho: Seleccionar figura
+        - Arrastrar: Dibujar en movimiento
 
-        W: Mover arriba
-        A: Mover izquierda
-        S: Mover abajo
-        D: Mover derecha
-        Flechas: Mover canvas
+        Agrupación:
+        - G: Agrupar figuras
+        - H: Desagrupar figuras
 
-        G: Agrupar figuras
-        H: Desagrupar figuras
+        Transformaciones y Acciones:
+        - Ctrl + Z: Deshacer transformaciones
+        - Ctrl + Y: Rehacer transformaciones
+        - Espacio: Guardar frame
+
+        Otros:
+        - Ctrl Izq: Terminar dibujo
+        - Alt Izq: Realizar acción personalizada
         """
 
         # Mostrar los atajos en un widget de texto
