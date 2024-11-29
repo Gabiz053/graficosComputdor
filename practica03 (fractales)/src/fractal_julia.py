@@ -2,35 +2,70 @@
 Archivo: fractal_julia.py
 
 Descripción:
-Este archivo implementa la clase `FractalJulia`, que permite generar y visualizar fractales
-de Julia en una ventana interactiva. Utiliza CustomTkinter para una interfaz gráfica moderna
-y facilita la configuración de parámetros como los límites del plano complejo, el color y 
-el conjunto de Julia seleccionado.
+Este archivo contiene la implementación de la clase `FractalJulia`, que representa
+una ventana interactiva diseñada para la visualización de fractales de Julia.
+
+Características principales:
+- Configuración personalizada del color del fractal.
+- Uso de CustomTkinter para la interfaz gráfica.
+- Integración con Matplotlib para futuras visualizaciones del fractal.
 
 Autor: Gabriel Gómez García
 Fecha: 27 de Noviembre de 2024
 """
 
 # Imports estándar
-import numpy as np
-import matplotlib.pyplot as plt
-from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
-from matplotlib.figure import Figure
-
-# Importación de Tkinter y CustomTkinter para la interfaz gráfica
-import tkinter as tk
-import customtkinter as ctk
+import numpy as np  # Para cálculos numéricos avanzados.
+import matplotlib.pyplot as plt  # Para gráficos y visualizaciones.
 
 # Imports locales
-from ventana import Ventana
-from constantes import Default, Texts
+from ventana_fractal import VentanaFractal  # Clase base para ventanas.
+from constantes import Default, Texts, Fractales  # Constantes y textos predeterminados.
+from concurrent.futures import ProcessPoolExecutor
 
 
-class FractalJulia(Ventana):
+def calcular_fila_julia(row, width, height, x_min, x_max, y_min, y_max, max_iter, c):
+    x, y = np.linspace(x_min, x_max, width), np.linspace(y_min, y_max, height)
+    Z = x + 1j * y[row]
+    img_row = np.zeros(width)
+    for col in range(width):
+        z = Z[col]
+        iterations = 0
+        while abs(z) <= 2 and iterations < max_iter:
+            z = z * z + c
+            iterations += 1
+        img_row[col] = iterations
+    return img_row
+
+
+def generar_fractal_julia(width, height, x_min, x_max, y_min, y_max, max_iter, c):
+    img = np.zeros((height, width))
+    with ProcessPoolExecutor() as executor:
+        futures = [
+            executor.submit(
+                calcular_fila_julia,
+                row,
+                width,
+                height,
+                x_min,
+                x_max,
+                y_min,
+                y_max,
+                max_iter,
+                c,
+            )
+            for row in range(height)
+        ]
+        for row, future in enumerate(futures):
+            img[row, :] = future.result()
+    return img
+
+
+class FractalJulia(VentanaFractal):
     """
     Clase que representa una ventana interactiva para la visualización de fractales de Julia.
 
-    Esta clase hereda de `Ventana` y permite la configuración de parámetros esenciales
+    Esta clase hereda de `VentanaFractal` y permite la configuración de parámetros esenciales
     para la generación del fractal, incluyendo el plano complejo, los colores y el conjunto
     específico de Julia.
     """
@@ -72,25 +107,43 @@ class FractalJulia(Ventana):
         self.julia_ymax = julia_ymax
         self.julia_color_seleccionado = julia_color_seleccionado
 
-    def _crear_contenido_ventana(self) -> None:
+        self.max_iter = 300  # Número máximo de iteraciones para el cálculo
+
+    def _generar_fractal(self) -> None:
         """
-        Crea y configura los elementos de la ventana para la visualización del fractal.
-
-        Este método genera un área de visualización para mostrar el fractal de Julia,
-        utilizando los parámetros definidos.
+        Genera el fractal del conjunto de Julia y lo muestra en el canvas.
         """
-        # Crear un frame para el área de visualización
-        frame_visualizacion = ctk.CTkFrame(self.ventana, corner_radius=10)
-        frame_visualizacion.pack(fill="both", expand=True, padx=10, pady=10)
+        # Definir el número complejo c para el fractal de Julia
+        c = complex(self.julia_real, self.julia_imaginario)
 
-        # Añadir un texto inicial o una etiqueta para indicar el propósito del área
-        label_info = ctk.CTkLabel(frame_visualizacion, text="Fractal generado: Julia")
-        label_info.pack(pady=20, padx=20)
+        # Inicializar el área de visualización del fractal
+        self.x_min, self.x_max = self.julia_xmin, self.julia_xmax
+        self.y_min, self.y_max = self.julia_ymin, self.julia_ymax
 
-        # Depuración: Mostrar en la consola los parámetros seleccionados
-        print("Parámetros seleccionados para el fractal de Julia:")
-        print(f"  - Parte real: {self.julia_real}")
-        print(f"  - Parte imaginaria: {self.julia_imaginario}")
-        print(f"  - Xmin: {self.julia_xmin}, Xmax: {self.julia_xmax}")
-        print(f"  - Ymin: {self.julia_ymin}, Ymax: {self.julia_ymax}")
-        print(f"  - Color seleccionado: {self.julia_color_seleccionado}")
+        # Llamar a la función que dibuja el fractal en el canvas
+        self._dibujar_julia(c)
+
+        # Depuración: Mostrar el color seleccionado en la consola
+        print("Color seleccionado:", self.julia_color_seleccionado)
+        # Actualizar el canvas con el nuevo fractal
+        self.canvas.draw()
+
+    ###################################################################################
+
+    def _dibujar_julia(self, c):
+        width, height = 2000, 2000
+        img = generar_fractal_julia(
+            width,
+            height,
+            self.x_min,
+            self.x_max,
+            self.y_min,
+            self.y_max,
+            self.max_iter,
+            c,
+        )
+        plt.imshow(
+            img,
+            cmap=self.julia_color_seleccionado,
+            extent=(self.x_min, self.x_max, self.y_min, self.y_max),
+        )

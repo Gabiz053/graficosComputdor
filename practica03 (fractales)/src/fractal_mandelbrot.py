@@ -17,21 +17,57 @@ Fecha: 27 de Noviembre de 2024
 # Imports estándar
 import numpy as np  # Para cálculos numéricos avanzados.
 import matplotlib.pyplot as plt  # Para gráficos y visualizaciones.
-from matplotlib.backends.backend_tkagg import (
-    FigureCanvasTkAgg,
-)  # Integración de Matplotlib en Tkinter.
-from matplotlib.figure import Figure  # Clase base para las figuras de Matplotlib.
-
-# Importación de Tkinter y CustomTkinter para la interfaz gráfica
-import tkinter as tk  # Biblioteca estándar para interfaces gráficas.
-import customtkinter as ctk  # Biblioteca para interfaces gráficas modernas.
 
 # Imports locales
-from ventana import Ventana  # Clase base para ventanas.
+from ventana_fractal import VentanaFractal  # Clase base para ventanas.
 from constantes import Default, Texts  # Constantes y textos predeterminados.
+from concurrent.futures import ProcessPoolExecutor
 
 
-class FractalMandelbrot(Ventana):
+def calcular_fila_mandelbrot(
+    row, width, height, x_min, x_max, y_min, y_max, max_iter, complejidad
+):
+    x, y = np.linspace(x_min, x_max, width), np.linspace(y_min, y_max, height)
+    C = x + 1j * y[row]
+    Z = np.zeros_like(C)
+    img_row = np.zeros(width)
+    for col in range(width):
+        z = 0
+        c = C[col]
+        iterations = 0
+        while abs(z) <= 2 and iterations < max_iter:
+            z = (z**complejidad) + c
+            iterations += 1
+        img_row[col] = iterations
+    # processor_id = os.getpid()
+    # print(f"Procesador {processor_id} está procesando la fila {row}")
+    return img_row
+
+
+def generar_fractal(width, height, x_min, x_max, y_min, y_max, max_iter, complejidad):
+    img = np.zeros((height, width))
+    with ProcessPoolExecutor() as executor:
+        futures = [
+            executor.submit(
+                calcular_fila_mandelbrot,
+                row,
+                width,
+                height,
+                x_min,
+                x_max,
+                y_min,
+                y_max,
+                max_iter,
+                complejidad,
+            )
+            for row in range(height)
+        ]
+        for row, future in enumerate(futures):
+            img[row, :] = future.result()
+    return img
+
+
+class FractalMandelbrot(VentanaFractal):
     """
     Clase que representa una ventana interactiva para la visualización de fractales de Mandelbrot.
 
@@ -48,6 +84,7 @@ class FractalMandelbrot(Ventana):
         height: int = Default.WINDOW_HEIGHT,
         title: str = Default.WINDOW_TITLE,
         color_seleccionado: str = Texts.MANDELBROT_COLORES_DEFAULT,
+        complejidad: int = 2,
     ) -> None:
         """
         Inicializa una nueva instancia de la clase FractalMandelbrot.
@@ -61,27 +98,52 @@ class FractalMandelbrot(Ventana):
         """
         super().__init__(width, height, title)
         self.color_seleccionado = color_seleccionado
+        self.complejidad = complejidad
 
-    def _crear_contenido_ventana(self) -> None:
+    def _generar_fractal(self) -> None:
         """
-        Crea y configura los elementos de la ventana para la visualización del fractal.
-
-        Este método genera un área de visualización para mostrar el fractal de Mandelbrot,
-        utilizando el color seleccionado por el usuario.
-
-        Elementos creados:
-        - Un frame (`CTkFrame`) como contenedor principal.
-        - Una etiqueta (`CTkLabel`) para mostrar información inicial.
+        Genera el fractal del conjunto de Mandelbrot y lo muestra en el canvas.
         """
-        # Crear un frame para el área de visualización
-        frame_visualizacion = ctk.CTkFrame(self.ventana, corner_radius=10)
-        frame_visualizacion.pack(fill="both", expand=True, padx=10, pady=10)
+        # Parámetros del fractal
+        self.max_iter = 100  # Número máximo de iteraciones para determinar si un punto pertenece al conjunto
 
-        # Añadir un texto inicial o una etiqueta para indicar el propósito del área
-        label_info = ctk.CTkLabel(
-            frame_visualizacion, text="Fractal generado: Mandelbrot"
-        )
-        label_info.pack(pady=20, padx=20)
+        # Inicializar el área de visualización del fractal
+        self.x_min, self.x_max = -2.0, 1.0
+        self.y_min, self.y_max = -1.5, 1.5
+
+        # Llamar a la función que dibuja el fractal en el canvas
+        self._dibujar_mandelbrot()
 
         # Depuración: Mostrar el color seleccionado en la consola
+        # print("Color seleccionado:", self.color_seleccionado)
+        # Actualizar el canvas con el nuevo fractal
+        self.canvas.draw()
+
+    ###################################################################################
+
+    def _generar_fractal(self) -> None:
+        self.max_iter = 100  # Número máximo de iteraciones
+        self.x_min, self.x_max = -2.0, 1.0
+        self.y_min, self.y_max = -1.5, 1.5
+        self._dibujar_mandelbrot()
         print("Color seleccionado:", self.color_seleccionado)
+        print("Complejidad seleccionada: ", self.complejidad)
+        self.canvas.draw()
+
+    def _dibujar_mandelbrot(self):
+        width, height = 2000, 2000
+        img = generar_fractal(
+            width,
+            height,
+            self.x_min,
+            self.x_max,
+            self.y_min,
+            self.y_max,
+            self.max_iter,
+            self.complejidad,
+        )
+        plt.imshow(
+            img,
+            cmap=self.color_seleccionado,
+            extent=(self.x_min, self.x_max, self.y_min, self.y_max),
+        )

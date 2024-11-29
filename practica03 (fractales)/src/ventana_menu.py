@@ -229,7 +229,7 @@ class VentanaMenu(Ventana):
         nivel_seleccionado: int = self.recursivo_nivel_seleccionado
 
         # Crear y mostrar la ventana de fractales
-        fractal = FractalRecursivo(
+        self.fractal = FractalRecursivo(
             width,
             height,
             title,
@@ -237,8 +237,9 @@ class VentanaMenu(Ventana):
             color_seleccionado,
             nivel_seleccionado,
         )
-        fractal.mostrar_ventana()
-
+        
+        self.fractal.mostrar_ventana()
+        
     ################### FRACTAL JULIA ###################
     def _crear_seccion_julia(
         self, titulo: str, parent_frame: ctk.CTkScrollableFrame
@@ -364,10 +365,10 @@ class VentanaMenu(Ventana):
         if algoritmo == Texts.JULIA_ALGORITMOS[1]:
             real = 0.355
             imaginario = 0.355
-            xmin = -2.0
-            xmax = 2.0
-            ymin = -2.0
-            ymax = 2.0
+            xmin = -1.5
+            xmax = 1.5
+            ymin = -1.5
+            ymax = 1.5
         elif algoritmo == Texts.JULIA_ALGORITMOS[2]:
             real = -0.70176
             imaginario = -0.3842
@@ -378,10 +379,10 @@ class VentanaMenu(Ventana):
         elif algoritmo == Texts.JULIA_ALGORITMOS[3]:
             real = 0.285
             imaginario = 0.01
-            xmin = -2.0
-            xmax = 2.0
-            ymin = -2.0
-            ymax = 2.0
+            xmin = -1.5
+            xmax = 1.5
+            ymin = -1.5
+            ymax = 1.5
         else:
             # Si no se encuentra el algoritmo, no hace nada
             print(f"Algoritmo '{algoritmo}' borrando.")
@@ -484,7 +485,7 @@ class VentanaMenu(Ventana):
         )
         fractal.mostrar_ventana()
 
-    ################### FRACTAL MANDELBROT ###################
+################### FRACTAL MANDELBROT ###################
     def _crear_seccion_mandelbrot(
         self, titulo: str, parent_frame: ctk.CTkScrollableFrame
     ) -> None:
@@ -497,6 +498,7 @@ class VentanaMenu(Ventana):
         """
         # variables que vamos a usar
         self.mandelbrot_color_seleccionado = Texts.MANDELBROT_COLORES_DEFAULT
+        self.mandelbrot_complejidad = 2  # Valor por defecto de la complejidad
 
         frame_mandelbrot = self._crear_frame_seccion(parent_frame, titulo)
         frame_mandelbrot.grid(row=3, column=0, pady=(10, 0), padx=10, sticky="nsew")
@@ -508,7 +510,7 @@ class VentanaMenu(Ventana):
             command=self.mandelbrot_generar_fractal,
         )
         boton_generar.grid(
-            row=3, column=0, pady=(10, 10), padx=10, sticky="ew", columnspan=4
+            row=3, column=0, pady=(10, 10), padx=10, sticky="ew", columnspan=8
         )
 
         # Etiqueta para el color
@@ -527,12 +529,30 @@ class VentanaMenu(Ventana):
             command=self.mandelbrot_elegir_color,
         )
         desplegable_color.grid(
-            row=2, column=1, pady=(10, 5), padx=10, sticky="nsew", columnspan=3
+            row=2, column=1, pady=(10, 5), padx=10, sticky="nsew",
         )
 
+        # Etiqueta para complejidad
+        etiqueta_complejidad = ctk.CTkLabel(
+            frame_mandelbrot,
+            text="Complejidad",
+            anchor="w",
+        )
+        etiqueta_complejidad.grid(row=2, column=2, pady=(10, 5), padx=(10, 5), sticky="e")
+
+        # Entrada para complejidad
+        self.entrada_complejidad = ctk.CTkEntry(
+            frame_mandelbrot,
+            width=50,
+            justify="center",
+        )
+        self.entrada_complejidad.insert(0, str(self.mandelbrot_complejidad))  # Valor por defecto
+        self.entrada_complejidad.grid(row=2, column=3, pady=(10, 5), padx=(5, 10), sticky="w")
+
         # Configurar columnas para un diseño adaptable
-        for i in range(4):
+        for i in range(5):
             frame_mandelbrot.grid_columnconfigure(i, weight=1)
+
 
     def mandelbrot_elegir_color(self, color) -> None:
         """ """
@@ -551,9 +571,10 @@ class VentanaMenu(Ventana):
         title: str = Fractales.TITLE_MANDELBROT
 
         color_seleccionado: str = self.mandelbrot_color_seleccionado
+        complejidad = int(self.entrada_complejidad.get())
 
         # Crear y mostrar la ventana del fractal Mandelbrot
-        fractal = FractalMandelbrot(width, height, title, color_seleccionado)
+        fractal = FractalMandelbrot(width, height, title, color_seleccionado, complejidad)
         fractal.mostrar_ventana()
 
     ################### FRACTAL IFS ###################
@@ -571,7 +592,7 @@ class VentanaMenu(Ventana):
         # La lista que va a contener todas las funciones
         self.lista_funciones = []
         self.ifs_color_seleccionado = Texts.IFS_COLOR_DEFAULT
-        self.ifs_default_prob = ctk.BooleanVar(value=False)
+        self.ifs_default_prob = ctk.BooleanVar(value=True)
 
         frame_ifs = self._crear_frame_seccion(parent_frame, titulo)
         frame_ifs.grid(row=4, column=0, pady=(10, 0), padx=10, sticky="nsew")
@@ -649,6 +670,17 @@ class VentanaMenu(Ventana):
         boton_modificar_funcion.grid(
             row=7, column=0, columnspan=2, pady=(10, 10), padx=10, sticky="ew"
         )
+        
+        # Menú desplegable para elegir algoritmos
+        dropdown_algoritmo = ctk.CTkOptionMenu(
+            frame_ifs,
+            values=Texts.IFS_ALGORITMOS,
+            command=self.ifs_actualizar_algoritmo,
+        )
+        dropdown_algoritmo.set(Texts.IFS_ALGORITMOS[0])
+        dropdown_algoritmo.grid(
+            row=7, column=3,  pady=(10, 10), padx=10, sticky="ew"
+        )
 
         boton_borrar_ultima = ctk.CTkButton(
             frame_ifs,
@@ -702,6 +734,36 @@ class VentanaMenu(Ventana):
             frame_ifs.grid_columnconfigure(i, weight=1)
             frame_ifs.grid_rowconfigure(i, weight=1)
 
+
+    def ifs_actualizar_algoritmo(self, eleccion: str) -> None:
+        """
+        Actualiza la lista de funciones IFS según el algoritmo seleccionado.
+
+        Args:
+            eleccion (str): Algoritmo elegido, debe estar en IFS_ALGORITMOS.
+        """
+        if eleccion not in Texts.IFS_PREDEFINIDOS.keys():
+            print(f"Error: '{eleccion}' no es un algoritmo válido.")
+            return
+
+        # Eliminar funciones actuales
+        self.lista_funciones.clear()
+
+        # Recuperar funciones predefinidas para el algoritmo seleccionado
+        funciones = Texts.IFS_PREDEFINIDOS.get(eleccion, [])
+        for valores, prob, color in funciones:
+            
+            self.lista_funciones.append((valores, prob, color))
+
+        # Actualizar visualización
+        self.input_iterations.delete(0, "end")
+        self.input_threshold.delete(0, "end")
+        
+        self.input_iterations.insert(0, 100000)
+        self.input_threshold.insert(0, 50)
+        
+        self.ifs_pintar_funciones()
+    
     def ifs_elegir_color(self) -> None:
         """Abre un selector de color y actualiza el color seleccionado."""
         self.ifs_color_seleccionado = self._abrir_seleccion_color()
@@ -800,10 +862,12 @@ class VentanaMenu(Ventana):
         height: int = Fractales.WINDOW_HEIGHT
         title: str = Fractales.TITLE_IFS
         lista_funciones: list = self.lista_funciones
-        ifs_default_prob = bool(self.ifs_default_prob.get())
+        ifs_default_prob = bool(self.checkbox_default_pro.get())
+        iterations: int = int(self.input_iterations.get())
+        threshold: int = int(self.input_threshold.get())
 
         # Crear y mostrar la ventana del fractal IFS
-        fractal = FractalIFS(width, height, title, lista_funciones, ifs_default_prob)
+        fractal = FractalIFS(width, height, title, lista_funciones, ifs_default_prob, iterations, threshold)
         fractal.mostrar_ventana()
 
     ################### Métodos auxiliares para crear cada frame y modularizarlo ###################
